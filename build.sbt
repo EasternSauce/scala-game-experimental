@@ -27,4 +27,4 @@ libraryDependencies += "io.circe" %% "circe-generic" % "0.14.1"
 
 libraryDependencies += "com.softwaremill.quicklens" %% "quicklens" % "1.7.5"
 
-libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.3.6"
+libraryDependencies += "org.typelevel" %% "cats-core" % "2.2.0"

@@ -4,7 +4,7 @@ import com.badlogic.gdx.Game
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.maps.tiled.{TiledMap, TmxMapLoader}
 
-class MyGdxGame extends Game {
+object MyGdxGame extends Game {
 
   var spriteBatch: SpriteBatch = _
 
@@ -17,9 +17,6 @@ class MyGdxGame extends Game {
 
   var mapLoader: TmxMapLoader = _
 
-  var playScreen: PlayScreen = _
-
-
   override def create(): Unit = {
 
     spriteBatch = new SpriteBatch()
@@ -31,8 +28,10 @@ class MyGdxGame extends Game {
       case (areaId, directory) => areaId -> mapLoader.load(directory + "/tile_map.tmx")
     }
 
-    playScreen = new PlayScreen(spriteBatch, maps)
+    PlayScreen.setSpriteBatch(spriteBatch)
+    PlayScreen.setMaps(maps)
+    PlayScreen.init()
 
-    setScreen(playScreen)
+    setScreen(PlayScreen)
   }
 }

@@ -7,11 +7,11 @@ object DesktopApplication {
   def main(arg: Array[String]): Unit = {
 
     val config = new Lwjgl3ApplicationConfiguration
-    config.setWindowedMode(1360, 720)
+    config.setWindowedMode(Constants.WindowWidth, Constants.WindowHeight)
     config.setTitle("game")
     //config.setForegroundFPS(144)
     config.useVsync(false)
 
-    new Lwjgl3Application(new MyGdxGame, config)
+    new Lwjgl3Application(MyGdxGame, config)
   }
 }

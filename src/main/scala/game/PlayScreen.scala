@@ -1,36 +1,57 @@
 package game
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import com.badlogic.gdx.{Gdx, Screen}
 import com.badlogic.gdx.graphics.{GL20, OrthographicCamera}
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
+import com.badlogic.gdx.{Gdx, Screen}
+import model.GameState.updateCreatures
+import model.{GameState, Player}
 
-class PlayScreen(
-                  val spriteBatch: SpriteBatch,
-                  val maps: Map[String, TiledMap]
-                ) extends Screen {
-  val worldCamera: OrthographicCamera = new OrthographicCamera()
+object PlayScreen extends Screen {
 
-  val worldViewport: Viewport =
-    new FitViewport(
-      1650f / 32,
-      864f / 32,
-      worldCamera
-    )
+  var spriteBatch: SpriteBatch = _
+  var maps: Map[String, TiledMap] = _
+
+  var worldCamera: OrthographicCamera = _
+
+  var worldViewport: Viewport = _
 
   val cameraPosX = 5
   val cameraPosY = 9
 
-  private var tiledMapRenderer: OrthogonalTiledMapRenderer = new OrthogonalTiledMapRenderer(maps("area1"), 4.0f / 32)
+  implicit var gameState: GameState = _
+
+  var tiledMapRenderer: OrthogonalTiledMapRenderer = _
+
+  def init(): Unit = {
+    worldCamera = new OrthographicCamera()
+
+    worldViewport = new FitViewport(
+      Constants.ViewpointWorldWidth / Constants.PPM,
+      Constants.ViewpointWorldHeight / Constants.PPM,
+      worldCamera
+    )
+
+    tiledMapRenderer = new OrthogonalTiledMapRenderer(maps("area1"), Constants.MapScale / Constants.PPM)
+
+    gameState = GameState(creatures = Map("player" -> Player("player", 0, 0)))
+  }
+
+  def setSpriteBatch(spriteBatch: SpriteBatch): Unit = this.spriteBatch = spriteBatch
+
+  def setMaps(maps: Map[String, TiledMap]): Unit = this.maps = maps
 
   def updateCamera(): Unit = {
 
     val camPosition = worldCamera.position
 
-    camPosition.x = (math.floor(cameraPosX * 100) / 100).toFloat
-    camPosition.y = (math.floor(cameraPosY * 100) / 100).toFloat
+    val playerPosX = gameState.creatures("player").posX
+    val playerPosY = gameState.creatures("player").posY
+
+    camPosition.x = (math.floor(playerPosX * 100) / 100).toFloat
+    camPosition.y = (math.floor(playerPosY * 100) / 100).toFloat
 
     worldCamera.update()
 
@@ -50,10 +71,6 @@ class PlayScreen(
 
     tiledMapRenderer.render(Array(0, 1))
 
-
-
-    println("zzz")
-
     spriteBatch.begin()
 
     spriteBatch.end()
@@ -61,15 +78,18 @@ class PlayScreen(
     tiledMapRenderer.render(Array(2, 3))
   }
 
-
   def update(delta: Float): Unit = {
     tiledMapRenderer.setView(worldCamera)
     updateCamera()
+
+    gameState = updateCreatures().run(gameState).value._1
+
+    println(gameState.creatures("player").posX + " " + gameState.creatures("player").posY)
   }
 
-    override def resize(width: Int, height: Int): Unit = {
-      worldViewport.update(width, height)
-    }
+  override def resize(width: Int, height: Int): Unit = {
+    worldViewport.update(width, height)
+  }
 
   override def pause(): Unit = {}
 
