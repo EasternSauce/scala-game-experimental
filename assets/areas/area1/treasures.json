@@ -1,0 +1,81 @@
+{
+  "treasures": [
+    {
+      "id": "0",
+      "location": {
+        "x": 3.3498409,
+        "y": 117.0075
+      },
+      "template": "woodenSword",
+      "quantity": 1,
+      "damage": 40,
+      "armor": null
+    },
+    {
+      "id": "1",
+      "location": {
+        "x": 193.0733,
+        "y": 195.07004
+      },
+      "template": "healingPowder",
+      "quantity": 4,
+      "damage": null,
+      "armor": null
+    },
+    {
+      "id": "2",
+      "location": {
+        "x": 194.52385,
+        "y": 131.70982
+      },
+      "template": "leatherArmor",
+      "quantity": 1,
+      "damage": null,
+      "armor": 11
+    },
+    {
+      "id": "3",
+      "location": {
+        "x": 122.728416,
+        "y": 187.07265
+      },
+      "template": "healingPowder",
+      "quantity": 2,
+      "damage": null,
+      "armor": null
+    },
+    {
+      "id": "4",
+      "location": {
+        "x": 21.52385,
+        "y": 108.70982
+      },
+      "template": "ironSword",
+      "quantity": 1,
+      "damage": 55,
+      "armor": null
+    },
+    {
+      "id": "5",
+      "location": {
+        "x": 155.0759,
+        "y": 4.510345
+      },
+      "template": "steelGloves",
+      "quantity": 1,
+      "damage": null,
+      "armor": 8
+    },
+    {
+      "id": "6",
+      "location": {
+        "x": 194.79572,
+        "y": 60.24926
+      },
+      "template": "crossbow",
+      "quantity": 1,
+      "damage": 39,
+      "armor": null
+    }
+  ]
+}

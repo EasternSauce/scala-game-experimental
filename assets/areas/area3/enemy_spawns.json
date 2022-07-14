@@ -1,0 +1,176 @@
+[
+  {
+    "id": "0",
+    "enemyType": "Skeleton",
+    "x": 49.1875,
+    "y": 43.34375,
+    "weaponType": "ironSword"
+  },
+  {
+    "id": "1",
+    "enemyType": "Skeleton",
+    "x": 50,
+    "y": 43.34375,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "2",
+    "enemyType": "Ghost",
+    "x": 6.4375,
+    "y": 50.375,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "3",
+    "enemyType": "Goblin",
+    "x": 99.65625,
+    "y": 64.78125,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "4",
+    "enemyType": "Goblin",
+    "x": 98.0625,
+    "y": 20.375,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "5",
+    "enemyType": "Goblin",
+    "x": 98.0625,
+    "y": 21.875,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "6",
+    "enemyType": "Skeleton",
+    "x": 13.90625,
+    "y": 84.96875,
+    "weaponType": "ironSword"
+  },
+  {
+    "id": "7",
+    "enemyType": "Skeleton",
+    "x": 54.71875,
+    "y": 115.375,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "8",
+    "enemyType": "Goblin",
+    "x": 53.90625,
+    "y": 115.375,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "9",
+    "enemyType": "Goblin",
+    "x": 54.71875,
+    "y": 116.25,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "10",
+    "enemyType": "Ghost",
+    "x": 69.46875,
+    "y": 154.65625,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "11",
+    "enemyType": "Skeleton",
+    "x": 69.46875,
+    "y": 155.46875,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "12",
+    "enemyType": "Goblin",
+    "x": 127.03125,
+    "y": 159,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "13",
+    "enemyType": "Goblin",
+    "x": 127.03125,
+    "y": 159.375,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "14",
+    "enemyType": "Ghost",
+    "x": 162,
+    "y": 157.46875,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "15",
+    "enemyType": "Ghost",
+    "x": 83.03125,
+    "y": 183.09375,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "16",
+    "enemyType": "Goblin",
+    "x": 83.03125,
+    "y": 183.75,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "17",
+    "enemyType": "Goblin",
+    "x": 82.1875,
+    "y": 183.09375,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "18",
+    "enemyType": "Skeleton",
+    "x": 166.1875,
+    "y": 182.96875,
+    "weaponType": "ironSword"
+  },
+  {
+    "id": "19",
+    "enemyType": "Skeleton",
+    "x": 167.1875,
+    "y": 182.96875,
+    "weaponType": "ironSword"
+  },
+  {
+    "id": "20",
+    "enemyType": "Ghost",
+    "x": 166.1875,
+    "y": 183.4375,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "21",
+    "enemyType": "Goblin",
+    "x": 166.1875,
+    "y": 181.5625,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "22",
+    "enemyType": "Goblin",
+    "x": 185.375,
+    "y": 138.875,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "23",
+    "enemyType": "FireDemon",
+    "x": 164.46875,
+    "y": 93.25,
+    "weaponType": "demonTrident",
+    "blockades": [
+      {
+        "x": 164.46875,
+        "y": 100
+      }
+    ]
+  }
+]

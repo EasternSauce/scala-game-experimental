@@ -1,0 +1,268 @@
+[
+  {
+    "id": "0",
+    "enemyType": "Serpent",
+    "x": 108.0625,
+    "y": 183.6875,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "1",
+    "enemyType": "Skeleton",
+    "x": 11.15625,
+    "y": 191.28125,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "2",
+    "enemyType": "Skeleton",
+    "x": 55.78125,
+    "y": 157.75,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "3",
+    "enemyType": "Skeleton",
+    "x": 102.0625,
+    "y": 145.5,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "4",
+    "enemyType": "Skeleton",
+    "x": 96.78125,
+    "y": 137.5,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "5",
+    "enemyType": "Skeleton",
+    "x": 131.15625,
+    "y": 147.09375,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "6",
+    "enemyType": "Skeleton",
+    "x": 131.15625,
+    "y": 145.3125,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "7",
+    "enemyType": "Skeleton",
+    "x": 189.96875,
+    "y": 166.96875,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "8",
+    "enemyType": "Skeleton",
+    "x": 189.96875,
+    "y": 165.625,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "9",
+    "enemyType": "Wolf",
+    "x": 51.96875,
+    "y": 84.1875,
+    "weaponType": null
+  },
+  {
+    "id": "10",
+    "enemyType": "Skeleton",
+    "x": 84.90625,
+    "y": 81.96875,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "11",
+    "enemyType": "Wolf",
+    "x": 15.96875,
+    "y": 95.15625,
+    "weaponType": null
+  },
+  {
+    "id": "12",
+    "enemyType": "Wolf",
+    "x": 15,
+    "y": 95.15625,
+    "weaponType": null
+  },
+  {
+    "id": "13",
+    "enemyType": "Wolf",
+    "x": 15,
+    "y": 93.75,
+    "weaponType": null
+  },
+  {
+    "id": "14",
+    "enemyType": "Skeleton",
+    "x": 97.625,
+    "y": 41.8125,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "15",
+    "enemyType": "Skeleton",
+    "x": 97.625,
+    "y": 40.625,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "16",
+    "enemyType": "Skeleton",
+    "x": 82,
+    "y": 57.34375,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "17",
+    "enemyType": "Skeleton",
+    "x": 81.25,
+    "y": 57.34375,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "18",
+    "enemyType": "Skeleton",
+    "x": 82,
+    "y": 59.375,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "19",
+    "enemyType": "Skeleton",
+    "x": 14.15625,
+    "y": 28.3125,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "20",
+    "enemyType": "Skeleton",
+    "x": 14.6875,
+    "y": 28.3125,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "21",
+    "enemyType": "Skeleton",
+    "x": 14.15625,
+    "y": 31.25,
+    "weaponType": "woodenSword"
+  },
+  {
+    "id": "22",
+    "enemyType": "Wolf",
+    "x": 54.65625,
+    "y": 17.28125,
+    "weaponType": null
+  },
+  {
+    "id": "23",
+    "enemyType": "Wolf",
+    "x": 54.65625,
+    "y": 17.28125,
+    "weaponType": null
+  },
+  {
+    "id": "24",
+    "enemyType": "Wolf",
+    "x": 54.65625,
+    "y": 17.8125,
+    "weaponType": null
+  },
+  {
+    "id": "25",
+    "enemyType": "Skeleton",
+    "x": 81.03125,
+    "y": 7.03125,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "26",
+    "enemyType": "Wolf",
+    "x": 131.5625,
+    "y": 33.46875,
+    "weaponType": null
+  },
+  {
+    "id": "27",
+    "enemyType": "Wolf",
+    "x": 131.5625,
+    "y": 34.375,
+    "weaponType": null
+  },
+  {
+    "id": "28",
+    "enemyType": "Skeleton",
+    "x": 132.8125,
+    "y": 33.46875,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "29",
+    "enemyType": "Skeleton",
+    "x": 130.1875,
+    "y": 5.34375,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "30",
+    "enemyType": "Skeleton",
+    "x": 130.625,
+    "y": 5.34375,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "31",
+    "enemyType": "Skeleton",
+    "x": 130.1875,
+    "y": 5.9375,
+    "weaponType": "crossbow"
+  },
+  {
+    "id": "32",
+    "enemyType": "Goblin",
+    "x": 175.71875,
+    "y": 50.9375,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "33",
+    "enemyType": "Goblin",
+    "x": 175.71875,
+    "y": 50.1875,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "34",
+    "enemyType": "Goblin",
+    "x": 175,
+    "y": 50.1875,
+    "weaponType": "poisonDagger"
+  },
+  {
+    "id": "35",
+    "enemyType": "Wolf",
+    "x": 179.875,
+    "y": 91.09375,
+    "weaponType": null
+  },
+  {
+    "id": "36",
+    "enemyType": "Wolf",
+    "x": 179.875,
+    "y": 91.875,
+    "weaponType": null
+  },
+  {
+    "id": "37",
+    "enemyType": "Skeleton",
+    "x": 191.65625,
+    "y": 131.6875,
+    "weaponType": "crossbow"
+  }
+]

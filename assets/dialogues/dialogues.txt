@@ -1,0 +1,11 @@
+a1;Hello there, this is the first sentence.;c3
+a2;>Ask about something.;ga3
+a2o1;>Trade.;t
+a2o2;>Goodbye.;e
+a3;Talk about something.;c3
+a3o1;>Opt1
+a3o2;>Opt2
+a3o3;>Opt3;ga4
+a4;Talk more about something.;ga5
+a5;Talk even more about something;c1
+a5o1;>Goodbye.;e

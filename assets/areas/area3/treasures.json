@@ -1,0 +1,37 @@
+{
+  "treasures": [
+    {
+      "id": "0",
+      "location": {
+        "x": 128.60706,
+        "y": 28.857159
+      },
+      "template": "steelHelmet",
+      "quantity": 1,
+      "damage": null,
+      "armor": 13
+    },
+    {
+      "id": "1",
+      "location": {
+        "x": 72.77565,
+        "y": 190.06566
+      },
+      "template": "lifeRing",
+      "quantity": 1,
+      "damage": null,
+      "armor": null
+    },
+    {
+      "id": "2",
+      "location": {
+        "x": 147.60712,
+        "y": 185.07004
+      },
+      "template": "trident",
+      "quantity": 1,
+      "damage": 78,
+      "armor": null
+    }
+  ]
+}

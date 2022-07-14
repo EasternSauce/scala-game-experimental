@@ -1,0 +1,15 @@
+{
+  "treasures": [
+    {
+      "id": "0",
+      "location": {
+        "x": 5.926711,
+        "y": 57.294647
+      },
+      "template": "healingPowder",
+      "quantity": 3,
+      "damage": null,
+      "armor": null
+    }
+  ]
+}

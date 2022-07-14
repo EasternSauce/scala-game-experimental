@@ -1,0 +1,223 @@
+
+packed_atlas.png
+size: 2048,2048
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+arrow
+  rotate: false
+  xy: 1206, 954
+  size: 40, 40
+  orig: 40, 40
+  offset: 0, 0
+  index: -1
+background
+  rotate: false
+  xy: 1092, 1460
+  size: 624, 436
+  orig: 624, 436
+  offset: 0, 0
+  index: -1
+background2
+  rotate: false
+  xy: 2, 1320
+  size: 1088, 576
+  orig: 1088, 576
+  offset: 0, 0
+  index: -1
+bag
+  rotate: false
+  xy: 1542, 1392
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+bubble
+  rotate: false
+  xy: 1294, 1326
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+cursor
+  rotate: false
+  xy: 1816, 1638
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+downarrow
+  rotate: false
+  xy: 422, 580
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+explosion
+  rotate: false
+  xy: 514, 996
+  size: 1344, 64
+  orig: 1344, 64
+  offset: 0, 0
+  index: -1
+explosion_windup
+  rotate: false
+  xy: 514, 930
+  size: 448, 64
+  orig: 448, 64
+  offset: 0, 0
+  index: -1
+female1
+  rotate: false
+  xy: 1864, 1768
+  size: 96, 128
+  orig: 96, 128
+  offset: 0, 0
+  index: -1
+fist_slam
+  rotate: false
+  xy: 2, 68
+  size: 200, 80
+  orig: 200, 80
+  offset: 0, 0
+  index: -1
+fist_slam_windup
+  rotate: false
+  xy: 1092, 1310
+  size: 200, 80
+  orig: 200, 80
+  offset: 0, 0
+  index: -1
+ghost
+  rotate: false
+  xy: 204, 162
+  size: 96, 128
+  orig: 96, 128
+  offset: 0, 0
+  index: -1
+goblet
+  rotate: false
+  xy: 708, 822
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+goblet_lit
+  rotate: false
+  xy: 2, 2
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+goblin
+  rotate: false
+  xy: 1092, 1180
+  size: 96, 128
+  orig: 96, 128
+  offset: 0, 0
+  index: -1
+ice_shard
+  rotate: false
+  xy: 514, 718
+  size: 152, 72
+  orig: 152, 72
+  offset: 0, 0
+  index: -1
+male1
+  rotate: false
+  xy: 1718, 1542
+  size: 96, 128
+  orig: 96, 128
+  offset: 0, 0
+  index: -1
+male2
+  rotate: false
+  xy: 324, 484
+  size: 96, 128
+  orig: 96, 128
+  offset: 0, 0
+  index: -1
+nice_icons
+  rotate: false
+  xy: 2, 614
+  size: 510, 704
+  orig: 510, 704
+  offset: 0, 0
+  index: -1
+pillar
+  rotate: false
+  xy: 324, 432
+  size: 25, 50
+  orig: 25, 50
+  offset: 0, 0
+  index: -1
+serpent
+  rotate: false
+  xy: 1718, 1672
+  size: 144, 224
+  orig: 144, 224
+  offset: 0, 0
+  index: -1
+skeleton
+  rotate: false
+  xy: 514, 1062
+  size: 576, 256
+  orig: 576, 256
+  offset: 0, 0
+  index: -1
+slash
+  rotate: false
+  xy: 708, 888
+  size: 240, 40
+  orig: 240, 40
+  offset: 0, 0
+  index: -1
+slash_windup
+  rotate: false
+  xy: 964, 954
+  size: 240, 40
+  orig: 240, 40
+  offset: 0, 0
+  index: -1
+taurus
+  rotate: false
+  xy: 2, 292
+  size: 320, 320
+  orig: 320, 320
+  offset: 0, 0
+  index: -1
+treasure
+  rotate: false
+  xy: 1718, 1508
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+trident_thrust
+  rotate: false
+  xy: 1092, 1426
+  size: 704, 32
+  orig: 704, 32
+  offset: 0, 0
+  index: -1
+trident_thrust_windup
+  rotate: false
+  xy: 1092, 1392
+  size: 448, 32
+  orig: 448, 32
+  offset: 0, 0
+  index: -1
+wolf
+  rotate: false
+  xy: 2, 150
+  size: 200, 140
+  orig: 200, 140
+  offset: 0, 0
+  index: -1
+wolf2
+  rotate: false
+  xy: 514, 792
+  size: 192, 136
+  orig: 192, 136
+  offset: 0, 0
+  index: -1
