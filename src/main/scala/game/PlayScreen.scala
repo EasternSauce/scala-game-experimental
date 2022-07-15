@@ -1,13 +1,18 @@
 package game
 
+import cats.data.State
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.{GL20, OrthographicCamera}
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Screen}
+import com.softwaremill.quicklens.ModifyPimp
 import model.GameState.updateCreatures
 import model.{GameState, Player}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object PlayScreen extends Screen {
 
@@ -21,7 +26,7 @@ object PlayScreen extends Screen {
   val cameraPosX = 5
   val cameraPosY = 9
 
-  implicit var gameState: GameState = _
+  var gameState: AtomicSTRef[GameState] = _
 
   var tiledMapRenderer: OrthogonalTiledMapRenderer = _
 
@@ -36,7 +41,33 @@ object PlayScreen extends Screen {
 
     tiledMapRenderer = new OrthogonalTiledMapRenderer(maps("area1"), Constants.MapScale / Constants.PPM)
 
-    gameState = GameState(creatures = Map("player" -> Player("player", 0, 0)))
+    gameState = AtomicSTRef(GameState(creatures = Map("player" -> Player("player", 0, 0))))
+
+    Future {
+      while(true) {
+        Thread.sleep(500)
+        val stateChange: State[GameState, Unit] = {
+          State.modify {
+            implicit state: GameState => GameState.creatureLens("player").using(_.modify(_.posX).using(_ + 1))
+          }
+        }
+        gameState.commit(stateChange)
+      }
+
+    }
+
+    Future {
+      while(true) {
+        Thread.sleep(1000)
+        val stateChange: State[GameState, Unit] = {
+          State.modify {
+            implicit state: GameState => GameState.creatureLens("player").using(_.modify(_.posY).using(_ + 1))
+          }
+        }
+        gameState.commit(stateChange)
+      }
+
+    }
   }
 
   def setSpriteBatch(spriteBatch: SpriteBatch): Unit = this.spriteBatch = spriteBatch
@@ -47,8 +78,8 @@ object PlayScreen extends Screen {
 
     val camPosition = worldCamera.position
 
-    val playerPosX = gameState.creatures("player").posX
-    val playerPosY = gameState.creatures("player").posY
+    val playerPosX = gameState.aref.get().creatures("player").posX
+    val playerPosY = gameState.aref.get().creatures("player").posY
 
     camPosition.x = (math.floor(playerPosX * 100) / 100).toFloat
     camPosition.y = (math.floor(playerPosY * 100) / 100).toFloat
@@ -82,9 +113,13 @@ object PlayScreen extends Screen {
     tiledMapRenderer.setView(worldCamera)
     updateCamera()
 
-    gameState = updateCreatures().run(gameState).value._1
+    implicit val gs: GameState = gameState.aref.get()
 
-    println(gameState.creatures("player").posX + " " + gameState.creatures("player").posY)
+//    gameState = updateCreatures().run(gameState).value._1
+
+//    gameState.commit(updateCreatures())
+
+    println(gameState.aref.get().creatures("player").posX + " " + gameState.aref.get().creatures("player").posY)
   }
 
   override def resize(width: Int, height: Int): Unit = {
