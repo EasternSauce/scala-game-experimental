@@ -26,8 +26,9 @@ object AtomicSTRef {
 
   def update[A](na: A) = StateT[Id, A, List[ExternalEvent]](a => (na, List()))
 
-  def apply[A](a: A) = new AtomicSTRef[A] {
-    private val ref = new AtomicReference(a)
-    def aref = ref
-  }
+  def apply[A](a: A) =
+    new AtomicSTRef[A] {
+      private val ref = new AtomicReference(a)
+      def aref = ref
+    }
 }

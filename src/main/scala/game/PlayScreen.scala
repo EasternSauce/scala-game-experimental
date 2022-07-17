@@ -8,10 +8,9 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.softwaremill.quicklens.ModifyPimp
-import game.PlayScreen.gameState
 import game.WorldDirection.WorldDirection
+import model.GameState.{creature, handlePlayerMovementInput, updateCreatures}
 import model.{CreatureState, GameState, Player}
-import model.GameState.{creatureState, handlePlayerMovementInput, updateCreatures}
 
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -44,36 +43,38 @@ object PlayScreen extends Screen {
 
     tiledMapRenderer = new OrthogonalTiledMapRenderer(maps("area1"), Constants.MapScale / Constants.PPM)
 
-    gameState = AtomicSTRef(GameState(creatures = Map("player" -> Player(CreatureState("player", 0, 0))), currentPlayer = "player"))
+    gameState = AtomicSTRef(
+      GameState(creatures = Map("player" -> Player(CreatureState("player", Vec2(0, 0)))), currentPlayer = "player")
+    )
 
     val increaseX: State[GameState, List[ExternalEvent]] = {
       State { implicit state: GameState =>
-        (GameState.creatureLens("player").using(_.modify(_.posX).using(_ + 0.005f)), List())
+        (GameState.creatureLens("player").using(_.modify(_.pos.x).using(_ + 0.005f)), List())
       }
     }
 
     val increaseY: State[GameState, List[ExternalEvent]] = {
       State { implicit state: GameState =>
-        (GameState.creatureLens("player").using(_.modify(_.posY).using(_ + 0.005f)), List())
+        (GameState.creatureLens("player").using(_.modify(_.pos.y).using(_ + 0.005f)), List())
       }
 
     }
 
-    Future {
-      while (true) {
-        Thread.sleep(5)
-        gameState.commit(increaseX)
-      }
-
-    }
-
-    Future {
-      while (true) {
-        Thread.sleep(15)
-        gameState.commit(increaseY)
-      }
-
-    }
+//    Future {
+//      while (true) {
+//        Thread.sleep(5)
+//        gameState.commit(increaseX)
+//      }
+//
+//    }
+//
+//    Future {
+//      while (true) {
+//        Thread.sleep(15)
+//        gameState.commit(increaseY)
+//      }
+//
+//    }
 
     Future(updateState())
   }
@@ -88,8 +89,8 @@ object PlayScreen extends Screen {
 
     implicit val gs = gameState.aref.get()
 
-    val playerPosX = creatureState("player").posX
-    val playerPosY = creatureState("player").posY
+    val playerPosX = creature("player").state.pos.x
+    val playerPosY = creature("player").state.pos.y
 
     camPosition.x = (math.floor(playerPosX * 100) / 100).toFloat
     camPosition.y = (math.floor(playerPosY * 100) / 100).toFloat
