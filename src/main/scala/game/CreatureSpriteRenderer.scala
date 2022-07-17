@@ -1,11 +1,11 @@
 package game
 
 import com.badlogic.gdx.graphics.g2d._
-import game.WorldDirection.WorldDirection
 import model.GameState
 import model.GameState.{creature, player}
+import model.WorldDirection.WorldDirection
 
-class CreatureSpriteRenderer(creatureId: String) {
+case class CreatureSpriteRenderer(creatureId: String) {
   var sprite: Sprite = _
 
   var facingTextures: Array[TextureRegion] = _

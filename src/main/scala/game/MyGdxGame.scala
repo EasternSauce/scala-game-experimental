@@ -30,7 +30,7 @@ object MyGdxGame extends Game {
 
     PlayScreen.setSpriteBatch(spriteBatch)
     PlayScreen.setMaps(maps)
-    PlayScreen.init()
+    PlayScreen.init(atlas)
 
     setScreen(PlayScreen)
   }

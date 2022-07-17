@@ -1,20 +1,17 @@
 package game
 
 import cats.data.State
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import cats.implicits.toTraverseOps
+import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.graphics.{GL20, OrthographicCamera}
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.softwaremill.quicklens.ModifyPimp
-import game.WorldDirection.WorldDirection
 import model.GameState.{creature, handlePlayerMovementInput, updateCreatures}
-import model.{CreatureState, GameState, Player}
-
-import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import model.WorldDirection.WorldDirection
+import model._
 
 object PlayScreen extends Screen {
 
@@ -32,7 +29,9 @@ object PlayScreen extends Screen {
 
   var tiledMapRenderer: OrthogonalTiledMapRenderer = _
 
-  def init(): Unit = {
+  val debugEnabled = false
+
+  def init(atlas: TextureAtlas): Unit = {
     worldCamera = new OrthographicCamera()
 
     worldViewport = new FitViewport(
@@ -41,11 +40,18 @@ object PlayScreen extends Screen {
       worldCamera
     )
 
-    tiledMapRenderer = new OrthogonalTiledMapRenderer(maps("area1"), Constants.MapScale / Constants.PPM)
-
     gameState = AtomicSTRef(
-      GameState(creatures = Map("player" -> Player(CreatureState("player", Vec2(0, 0)))), currentPlayer = "player")
+      GameState(
+        creatures = Map("player" -> Player(CreatureState("player", Vec2(0, 0), areaId = "area1"))),
+        currentPlayer = "player",
+        currentAreaId = "area1"
+      )
     )
+
+    tiledMapRenderer =
+      new OrthogonalTiledMapRenderer(maps(gameState.aref.get().currentAreaId), Constants.MapScale / Constants.PPM)
+
+    SpriteRendererController.init(atlas, gameState.aref.get(), maps)
 
     val increaseX: State[GameState, List[ExternalEvent]] = {
       State { implicit state: GameState =>
@@ -76,7 +82,6 @@ object PlayScreen extends Screen {
 //
 //    }
 
-    Future(updateState())
   }
 
   def setSpriteBatch(spriteBatch: SpriteBatch): Unit = this.spriteBatch = spriteBatch
@@ -87,7 +92,7 @@ object PlayScreen extends Screen {
 
     val camPosition = worldCamera.position
 
-    implicit val gs = gameState.aref.get()
+    implicit val gs: GameState = gameState.aref.get()
 
     val playerPosX = creature("player").state.pos.x
     val playerPosY = creature("player").state.pos.y
@@ -115,6 +120,8 @@ object PlayScreen extends Screen {
 
     spriteBatch.begin()
 
+    SpriteRendererController.renderAliveEntities(gameState.aref.get(), spriteBatch, debugEnabled)
+
     spriteBatch.end()
 
     tiledMapRenderer.render(Array(2, 3))
@@ -124,14 +131,15 @@ object PlayScreen extends Screen {
     tiledMapRenderer.setView(worldCamera)
     updateCamera()
 
+    SpriteRendererController.update(gameState.aref.get())
+
+    updateState(delta)
+
   }
 
-  @tailrec
-  def updateState(): Unit = {
+  def updateState(delta: Float): Unit = {
 
     implicit val gs: GameState = gameState.aref.get()
-
-    //    gameState = updateCreatures().run(gameState).value._1
 
     val playerDirectionInput: Map[WorldDirection, Boolean] = {
       Map(
@@ -142,16 +150,9 @@ object PlayScreen extends Screen {
       )
     }
 
-    val updates = for {
-      _ <- updateCreatures()
-      _ <- handlePlayerMovementInput(playerDirectionInput)
-    } yield ()
-
-    gameState.commit(updates)
-
-//    println(gameState.aref.get().creatures("player").posX + " " + gameState.aref.get().creatures("player").posY)
-
-    updateState()
+    gameState.commit(
+      List(updateCreatures(delta), handlePlayerMovementInput(playerDirectionInput)).sequence.map(_.flatten)
+    )
   }
 
   override def resize(width: Int, height: Int): Unit = {

@@ -1,8 +1,11 @@
 package model
 
 import cats.data.State
-import game.WorldDirection.WorldDirection
-import game.{ExternalEvent, Vec2, WorldDirection}
+import cats.implicits.toTraverseOps
+import com.softwaremill.quicklens._
+import game.ExternalEvent
+import model.GameState.{creature, creatureLens}
+import model.WorldDirection.WorldDirection
 
 trait Creature {
   val state: CreatureState
@@ -17,7 +20,9 @@ trait Creature {
   val neutralStanceFrame: Int
   val dirMap: Map[WorldDirection, Int]
 
-  def isMoving: Boolean = state.movingDir != Vec2(0, 0)
+  val speed: Float = 0.003f
+
+  def isMoving: Boolean = state.currentSpeed > 0f
 
   def facingDirection: WorldDirection = {
     state.movingDir.angleDeg() match {
@@ -28,7 +33,70 @@ trait Creature {
     }
   }
 
-  def update(): State[GameState, List[ExternalEvent]]
+  def moveInDir(dir: Vec2): State[GameState, List[ExternalEvent]] = {
+    State { implicit gameState: GameState =>
+      (
+        creatureLens(state.id)
+          .using(_.modify(_.movingDir).setTo(dir)),
+        List()
+      )
+    }
+  }
+
+  def startMoving(): State[GameState, List[ExternalEvent]] = {
+    State { implicit gameState =>
+      (
+        creatureLens(state.id)
+          .using(_.modify(_.currentSpeed).setTo(this.speed).modify(_.animationTimer).using(_.restart())),
+        List()
+      )
+    }
+  }
+
+  def stopMoving(): State[GameState, List[ExternalEvent]] = {
+    State { implicit gameState =>
+      (
+        creatureLens(state.id)
+          .using(_.modify(_.currentSpeed).setTo(0f)),
+        List()
+      )
+    }
+  }
+
+  def isAlive = true // TODO
+
+  def update(delta: Float): State[GameState, List[ExternalEvent]] = {
+    List(updateTimers(delta), updatePosition()).sequence.map(_.flatten)
+  }
+
+  def updatePosition(): State[GameState, List[ExternalEvent]] = {
+    State { implicit gameState =>
+      (
+        creatureLens(state.id).using(
+          _.modify(_.pos.x)
+            .using(_ + state.currentSpeed * creature(state.id).state.movingDir.x)
+            .modify(_.pos.y)
+            .using(_ + state.currentSpeed * creature(state.id).state.movingDir.y)
+        ),
+        List()
+      )
+    }
+  }
+
+  def updateTimers(delta: Float): State[GameState, List[ExternalEvent]] = {
+    State { implicit gameState =>
+      (
+        creatureLens(state.id)
+          .using(
+            _.modifyAll(_.animationTimer)
+              .using(_.update(delta))
+          ),
+        List()
+      )
+
+    }
+
+  }
 
   def copy(state: CreatureState): Creature
 }
