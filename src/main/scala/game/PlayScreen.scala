@@ -6,11 +6,14 @@ import com.badlogic.gdx.graphics.{GL20, OrthographicCamera}
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
-import com.badlogic.gdx.{Gdx, Screen}
+import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.softwaremill.quicklens.ModifyPimp
-import model.GameState.updateCreatures
-import model.{GameState, Player}
+import game.PlayScreen.gameState
+import game.WorldDirection.WorldDirection
+import model.{CreatureState, GameState, Player}
+import model.GameState.{creatureState, handlePlayerMovementInput, updateCreatures}
 
+import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -41,33 +44,38 @@ object PlayScreen extends Screen {
 
     tiledMapRenderer = new OrthogonalTiledMapRenderer(maps("area1"), Constants.MapScale / Constants.PPM)
 
-    gameState = AtomicSTRef(GameState(creatures = Map("player" -> Player("player", 0, 0))))
+    gameState = AtomicSTRef(GameState(creatures = Map("player" -> Player(CreatureState("player", 0, 0))), currentPlayer = "player"))
 
-    Future {
-      while(true) {
-        Thread.sleep(500)
-        val stateChange: State[GameState, Unit] = {
-          State.modify {
-            implicit state: GameState => GameState.creatureLens("player").using(_.modify(_.posX).using(_ + 1))
-          }
-        }
-        gameState.commit(stateChange)
+    val increaseX: State[GameState, List[ExternalEvent]] = {
+      State { implicit state: GameState =>
+        (GameState.creatureLens("player").using(_.modify(_.posX).using(_ + 0.005f)), List())
+      }
+    }
+
+    val increaseY: State[GameState, List[ExternalEvent]] = {
+      State { implicit state: GameState =>
+        (GameState.creatureLens("player").using(_.modify(_.posY).using(_ + 0.005f)), List())
       }
 
     }
 
     Future {
-      while(true) {
-        Thread.sleep(1000)
-        val stateChange: State[GameState, Unit] = {
-          State.modify {
-            implicit state: GameState => GameState.creatureLens("player").using(_.modify(_.posY).using(_ + 1))
-          }
-        }
-        gameState.commit(stateChange)
+      while (true) {
+        Thread.sleep(5)
+        gameState.commit(increaseX)
       }
 
     }
+
+    Future {
+      while (true) {
+        Thread.sleep(15)
+        gameState.commit(increaseY)
+      }
+
+    }
+
+    Future(updateState())
   }
 
   def setSpriteBatch(spriteBatch: SpriteBatch): Unit = this.spriteBatch = spriteBatch
@@ -78,8 +86,10 @@ object PlayScreen extends Screen {
 
     val camPosition = worldCamera.position
 
-    val playerPosX = gameState.aref.get().creatures("player").posX
-    val playerPosY = gameState.aref.get().creatures("player").posY
+    implicit val gs = gameState.aref.get()
+
+    val playerPosX = creatureState("player").posX
+    val playerPosY = creatureState("player").posY
 
     camPosition.x = (math.floor(playerPosX * 100) / 100).toFloat
     camPosition.y = (math.floor(playerPosY * 100) / 100).toFloat
@@ -113,13 +123,34 @@ object PlayScreen extends Screen {
     tiledMapRenderer.setView(worldCamera)
     updateCamera()
 
+  }
+
+  @tailrec
+  def updateState(): Unit = {
+
     implicit val gs: GameState = gameState.aref.get()
 
-//    gameState = updateCreatures().run(gameState).value._1
+    //    gameState = updateCreatures().run(gameState).value._1
 
-//    gameState.commit(updateCreatures())
+    val playerDirectionInput: Map[WorldDirection, Boolean] = {
+      Map(
+        WorldDirection.Left -> Gdx.input.isKeyPressed(Input.Keys.A),
+        WorldDirection.Right -> Gdx.input.isKeyPressed(Input.Keys.D),
+        WorldDirection.Down -> Gdx.input.isKeyPressed(Input.Keys.S),
+        WorldDirection.Up -> Gdx.input.isKeyPressed(Input.Keys.W)
+      )
+    }
 
-    println(gameState.aref.get().creatures("player").posX + " " + gameState.aref.get().creatures("player").posY)
+    val updates = for {
+      _ <- updateCreatures()
+      _ <- handlePlayerMovementInput(playerDirectionInput)
+    } yield ()
+
+    gameState.commit(updates)
+
+//    println(gameState.aref.get().creatures("player").posX + " " + gameState.aref.get().creatures("player").posY)
+
+    updateState()
   }
 
   override def resize(width: Int, height: Int): Unit = {

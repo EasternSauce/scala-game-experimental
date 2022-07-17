@@ -2,19 +2,23 @@ package model
 
 import cats.data.State
 import com.softwaremill.quicklens._
-import model.GameState.creatureLens
+import game.ExternalEvent
+import model.GameState.{creatureLens, creatureState}
 
-case class Player(id: String, posX: Float, posY: Float) extends Creature {
-  def update(): State[GameState, Unit] =
-    State.modify { implicit gameState =>
-      creatureLens(id).using(
-        _.modify(_.posX)
-          .using(_ + 0.0005f)
-          .modify(_.posY)
-          .using(_ + 0.0005f)
+case class Player(state: CreatureState) extends Creature {
+  def update(): State[GameState, List[ExternalEvent]] =
+    State { implicit gameState =>
+      (
+        creatureLens(state.id).using(
+          _.modify(_.posX)
+            .using(_ + 0.0005f * creatureState(state.id).movingDir.x)
+            .modify(_.posY)
+            .using(_ + 0.0005f * creatureState(state.id).movingDir.y)
+        ),
+        List()
       )
 
     }
 
-  override def copy(id: String = id, posX: Float = posX, posY: Float = posY): Creature = Player(id, posX, posY)
+  override def copy(state: CreatureState = state): Creature = Player(state)
 }

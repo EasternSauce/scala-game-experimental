@@ -1,13 +1,13 @@
 package model
 
 import cats.data.State
+import game.{ExternalEvent, Vec2}
+import game.WorldDirection.WorldDirection
 
 trait Creature {
-  val id: String
-  val posX: Float
-  val posY: Float
+  val state: CreatureState
   
-  def update(): State[GameState, Unit]
+  def update(): State[GameState, List[ExternalEvent]]
 
-  def copy(id: String = id, posX: Float = posX, posY: Float = posY): Creature
+  def copy(state: CreatureState): Creature
 }
