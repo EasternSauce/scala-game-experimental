@@ -1,14 +1,15 @@
 package game
 
-import cats.data.State
 import cats.implicits.toTraverseOps
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.graphics.{GL20, OrthographicCamera}
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
-import com.softwaremill.quicklens.ModifyPimp
+import game.physics.PhysicsEngineController
+import game.renderer.SpriteRendererController
 import model.GameState.{creature, handlePlayerMovementInput, updateCreatures}
 import model.WorldDirection.WorldDirection
 import model._
@@ -22,14 +23,13 @@ object PlayScreen extends Screen {
 
   var worldViewport: Viewport = _
 
-  val cameraPosX = 5
-  val cameraPosY = 9
-
   var gameState: AtomicSTRef[GameState] = _
 
   var tiledMapRenderer: OrthogonalTiledMapRenderer = _
 
-  val debugEnabled = false
+  val debugEnabled = true
+
+  val b2DebugRenderer: Box2DDebugRenderer = new Box2DDebugRenderer()
 
   def init(atlas: TextureAtlas): Unit = {
     worldCamera = new OrthographicCamera()
@@ -42,7 +42,7 @@ object PlayScreen extends Screen {
 
     gameState = AtomicSTRef(
       GameState(
-        creatures = Map("player" -> Player(CreatureState("player", Vec2(0, 0), areaId = "area1"))),
+        creatures = Map("player" -> Player(CreatureState(id = "player", pos = Vec2(19, 4), areaId = "area1"))),
         currentPlayer = "player",
         currentAreaId = "area1"
       )
@@ -52,35 +52,7 @@ object PlayScreen extends Screen {
       new OrthogonalTiledMapRenderer(maps(gameState.aref.get().currentAreaId), Constants.MapScale / Constants.PPM)
 
     SpriteRendererController.init(atlas, gameState.aref.get(), maps)
-
-    val increaseX: State[GameState, List[ExternalEvent]] = {
-      State { implicit state: GameState =>
-        (GameState.creatureLens("player").using(_.modify(_.pos.x).using(_ + 0.005f)), List())
-      }
-    }
-
-    val increaseY: State[GameState, List[ExternalEvent]] = {
-      State { implicit state: GameState =>
-        (GameState.creatureLens("player").using(_.modify(_.pos.y).using(_ + 0.005f)), List())
-      }
-
-    }
-
-//    Future {
-//      while (true) {
-//        Thread.sleep(5)
-//        gameState.commit(increaseX)
-//      }
-//
-//    }
-//
-//    Future {
-//      while (true) {
-//        Thread.sleep(15)
-//        gameState.commit(increaseY)
-//      }
-//
-//    }
+    PhysicsEngineController.init(gameState = gameState.aref.get(), maps)
 
   }
 
@@ -125,6 +97,11 @@ object PlayScreen extends Screen {
     spriteBatch.end()
 
     tiledMapRenderer.render(Array(2, 3))
+
+    val currentTerrain = PhysicsEngineController.physicsWorlds(gameState.aref.get().currentAreaId)
+
+    if (debugEnabled) b2DebugRenderer.render(currentTerrain.b2world, worldCamera.combined)
+
   }
 
   def update(delta: Float): Unit = {

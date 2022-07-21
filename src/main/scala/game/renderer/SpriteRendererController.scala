@@ -1,4 +1,4 @@
-package game
+package game.renderer
 
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.maps.tiled.TiledMap
@@ -6,11 +6,11 @@ import model.GameState
 import model.GameState.creature
 
 object SpriteRendererController {
-  var creatureSpriteRenderers: Map[String, CreatureSpriteRenderer] = _
+  var creatureSpriteRenderers: Map[String, CreatureRenderer] = _
 
   def init(atlas: TextureAtlas, gameState: GameState, maps: Map[String, TiledMap]): Unit = {
     creatureSpriteRenderers =
-      gameState.creatures.keys.map(creatureId => creatureId -> CreatureSpriteRenderer(creatureId)).toMap
+      gameState.creatures.keys.map(creatureId => creatureId -> CreatureRenderer(creatureId)).toMap
     creatureSpriteRenderers.values.foreach(_.init(gameState, atlas))
   }
 
