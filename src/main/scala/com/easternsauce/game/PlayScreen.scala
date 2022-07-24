@@ -1,8 +1,8 @@
 package com.easternsauce.game
 
-import cats.implicits.toTraverseOps
+import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
-import com.badlogic.gdx.graphics.{GL20, OrthographicCamera}
+import com.badlogic.gdx.graphics.{Color, GL20, OrthographicCamera}
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
@@ -10,18 +10,23 @@ import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.game.renderer.SpriteRendererController
-import com.easternsauce.model.GameState.{creature, handlePlayerMovementInput, updateCreatures}
+import com.easternsauce.model.GameState.{creature, handleCreaturePhysicsUpdate, handlePlayerMovementInput}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
+import com.easternsauce.model.creature.{CreatureState, Player, Skeleton}
 
 object PlayScreen extends Screen {
 
   var spriteBatch: SpriteBatch = _
+  var hudBatch: SpriteBatch = _
+
   var maps: Map[String, TiledMap] = _
 
   var worldCamera: OrthographicCamera = _
+  var hudCamera: OrthographicCamera = _
 
   var worldViewport: Viewport = _
+  var hudViewport: Viewport = _
 
   var gameState: AtomicSTRef[GameState] = _
 
@@ -33,6 +38,11 @@ object PlayScreen extends Screen {
 
   def init(atlas: TextureAtlas): Unit = {
     worldCamera = new OrthographicCamera()
+    hudCamera = {
+      val cam = new OrthographicCamera()
+      cam.position.set(Constants.WindowWidth / 2f, Constants.WindowHeight / 2f, 0)
+      cam
+    }
 
     worldViewport = new FitViewport(
       Constants.ViewpointWorldWidth / Constants.PPM,
@@ -40,9 +50,14 @@ object PlayScreen extends Screen {
       worldCamera
     )
 
+    hudViewport = new FitViewport(Constants.WindowWidth.toFloat, Constants.WindowHeight.toFloat, hudCamera)
+
     gameState = AtomicSTRef(
       GameState(
-        creatures = Map("player" -> Player(CreatureState(id = "player", pos = Vec2(22, 4), areaId = "area1"))),
+        creatures = Map(
+          "player" -> Player(CreatureState(id = "player", pos = Vec2(22, 4), areaId = "area1")),
+          "skellie" -> Skeleton(CreatureState(id = "skellie", pos = Vec2(24, 4), areaId = "area1"))
+        ),
         currentPlayerId = "player",
         currentAreaId = "area1"
       )
@@ -57,6 +72,7 @@ object PlayScreen extends Screen {
   }
 
   def setSpriteBatch(spriteBatch: SpriteBatch): Unit = this.spriteBatch = spriteBatch
+  def setHudBatch(hudBatch: SpriteBatch): Unit = this.hudBatch = hudBatch
 
   def setMaps(maps: Map[String, TiledMap]): Unit = this.maps = maps
 
@@ -82,6 +98,7 @@ object PlayScreen extends Screen {
     update(delta)
 
     spriteBatch.setProjectionMatrix(worldCamera.combined)
+    hudBatch.setProjectionMatrix(hudCamera.combined)
 
     Gdx.gl.glClearColor(0, 0, 0, 1)
 
@@ -95,6 +112,14 @@ object PlayScreen extends Screen {
     SpriteRendererController.renderAliveEntities(gameState.aref.get(), spriteBatch, debugEnabled)
 
     spriteBatch.end()
+
+    hudBatch.begin()
+
+    import com.easternsauce.game.Assets.bitmapFontToEnrichedBitmapFont
+    val fps = Gdx.graphics.getFramesPerSecond
+    Assets.defaultFont.draw(hudBatch, s"$fps fps", 3, Constants.WindowHeight - 3, Color.WHITE)
+
+    hudBatch.end()
 
     tiledMapRenderer.render(Array(2, 3))
 
@@ -129,12 +154,15 @@ object PlayScreen extends Screen {
     }
 
     gameState.commit(
-      List(updateCreatures(delta), handlePlayerMovementInput(playerDirectionInput)).sequence.map(_.flatten)
+      gs.creatures.keys.toList.foldMap(handleCreaturePhysicsUpdate) |+|
+        gs.creatures.values.toList.foldMap(_.update(delta)) |+|
+        handlePlayerMovementInput(playerDirectionInput)
     )
   }
 
   override def resize(width: Int, height: Int): Unit = {
     worldViewport.update(width, height)
+    hudViewport.update(width, height)
   }
 
   override def pause(): Unit = {}

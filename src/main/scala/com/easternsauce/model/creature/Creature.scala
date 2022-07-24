@@ -1,10 +1,10 @@
-package com.easternsauce.model
+package com.easternsauce.model.creature
 
 import cats.data.State
-import cats.implicits.toTraverseOps
-import com.easternsauce.model.GameState.{GameStateTransition, creature, modifyCreature}
+import com.easternsauce.model.GameState.{GameStateTransition, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
-import com.softwaremill.quicklens._
+import com.easternsauce.model.{GameState, Vec2, WorldDirection}
+import com.softwaremill.quicklens.ModifyPimp
 
 trait Creature {
   val state: CreatureState
@@ -58,21 +58,7 @@ trait Creature {
   def isAlive = true // TODO
 
   def update(delta: Float): GameStateTransition = {
-    List(updateTimers(delta) /*, updatePosition()*/ ).sequence.map(_.flatten)
-  }
-
-  def updatePosition(): GameStateTransition = {
-    State { implicit gameState =>
-      (
-        modifyCreature(state.id)(
-          _.modify(_.state.pos.x)
-            .using(_ + state.currentSpeed * creature(state.id).state.movingDir.x)
-            .modify(_.state.pos.y)
-            .using(_ + state.currentSpeed * creature(state.id).state.movingDir.y)
-        ),
-        List()
-      )
-    }
+    updateTimers(delta)
   }
 
   def updateTimers(delta: Float): GameStateTransition = {

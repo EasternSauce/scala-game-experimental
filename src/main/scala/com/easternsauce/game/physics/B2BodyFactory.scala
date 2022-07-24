@@ -2,7 +2,7 @@ package com.easternsauce.game.physics
 
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType
 import com.badlogic.gdx.physics.box2d._
-import com.easternsauce.model.Creature
+import com.easternsauce.model.creature.Creature
 
 object B2BodyFactory {
   private def createB2body(

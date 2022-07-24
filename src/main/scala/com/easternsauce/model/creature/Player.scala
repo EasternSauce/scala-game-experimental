@@ -1,5 +1,6 @@
-package com.easternsauce.model
+package com.easternsauce.model.creature
 
+import com.easternsauce.model.WorldDirection
 import com.easternsauce.model.WorldDirection.WorldDirection
 
 case class Player(state: CreatureState) extends Creature {

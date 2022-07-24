@@ -6,6 +6,7 @@ import cats.implicits._
 import com.easternsauce.game.ExternalEvent
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.model.WorldDirection.WorldDirection
+import com.easternsauce.model.creature.Creature
 import com.softwaremill.quicklens._
 
 case class GameState(creatures: Map[String, Creature] = Map(), currentPlayerId: String, currentAreaId: String) {}
@@ -31,13 +32,6 @@ object GameState {
   def creature(creatureId: String)(implicit gameState: GameState): Creature =
     gameState.creatures(creatureId)
 
-  def updateCreatures(delta: Float)(implicit gameState: GameState): GameStateTransition = {
-
-    gameState.creatures.values.toList.foldMap { creature =>
-      creature.update(delta)
-    }
-  }
-
   def player(implicit gameState: GameState): Creature = gameState.creatures(gameState.currentPlayerId)
 
   def handlePlayerMovementInput(
@@ -59,13 +53,17 @@ object GameState {
     val wasMoving = creature(gameState.currentPlayerId).isMoving
     val isMoving = movingDir != Vec2(0, 0)
 
-    val physicsPlayerPos = Vec2.fromVector2(PhysicsEngineController.creatureBodies(gameState.currentPlayerId).pos)
+    runMovingLogic(gameState, wasMoving, isMoving, movingDir)
 
-    runMovingLogic(gameState, wasMoving, isMoving, movingDir) |+|
-      State { implicit gameState =>
-        (modifyCreature(gameState.currentPlayerId)(_.modify(_.state.pos).setTo(physicsPlayerPos)), List())
-      }
+  }
 
+  def handleCreaturePhysicsUpdate(creatureId: String): GameStateTransition = {
+
+    val physicsPlayerPos = Vec2.fromVector2(PhysicsEngineController.creatureBodies(creatureId).pos)
+
+    State { implicit gameState =>
+      (modifyCreature(creatureId)(_.modify(_.state.pos).setTo(physicsPlayerPos)), List())
+    }
   }
 
   private def runMovingLogic(implicit

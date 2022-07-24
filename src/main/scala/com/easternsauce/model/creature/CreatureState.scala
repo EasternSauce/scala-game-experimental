@@ -1,4 +1,6 @@
-package com.easternsauce.model
+package com.easternsauce.model.creature
+
+import com.easternsauce.model.{SimpleTimer, Vec2}
 
 case class CreatureState(
   id: String,
