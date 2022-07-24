@@ -3,8 +3,7 @@ package model
 import cats.data.State
 import cats.implicits.toTraverseOps
 import com.softwaremill.quicklens._
-import game.ExternalEvent
-import model.GameState.{creature, creatureLens}
+import model.GameState.{GameStateTransition, creature, modifyCreature}
 import model.WorldDirection.WorldDirection
 
 trait Creature {
@@ -33,49 +32,42 @@ trait Creature {
     }
   }
 
-  def moveInDir(dir: Vec2): State[GameState, List[ExternalEvent]] = {
+  def moveInDir(dir: Vec2): GameStateTransition = {
     State { implicit gameState: GameState =>
+      (modifyCreature(state.id)(_.modify(_.state.movingDir).setTo(dir)), List())
+    }
+  }
+
+  def startMoving(): GameStateTransition = {
+    State { implicit gameState =>
       (
-        creatureLens(state.id)
-          .using(_.modify(_.movingDir).setTo(dir)),
+        modifyCreature(state.id)(
+          _.modify(_.state.currentSpeed).setTo(this.speed).modify(_.state.animationTimer).using(_.restart())
+        ),
         List()
       )
     }
   }
 
-  def startMoving(): State[GameState, List[ExternalEvent]] = {
+  def stopMoving(): GameStateTransition = {
     State { implicit gameState =>
-      (
-        creatureLens(state.id)
-          .using(_.modify(_.currentSpeed).setTo(this.speed).modify(_.animationTimer).using(_.restart())),
-        List()
-      )
-    }
-  }
-
-  def stopMoving(): State[GameState, List[ExternalEvent]] = {
-    State { implicit gameState =>
-      (
-        creatureLens(state.id)
-          .using(_.modify(_.currentSpeed).setTo(0f)),
-        List()
-      )
+      (modifyCreature(state.id)(_.modify(_.state.currentSpeed).setTo(0f)), List())
     }
   }
 
   def isAlive = true // TODO
 
-  def update(delta: Float): State[GameState, List[ExternalEvent]] = {
+  def update(delta: Float): GameStateTransition = {
     List(updateTimers(delta) /*, updatePosition()*/ ).sequence.map(_.flatten)
   }
 
-  def updatePosition(): State[GameState, List[ExternalEvent]] = {
+  def updatePosition(): GameStateTransition = {
     State { implicit gameState =>
       (
-        creatureLens(state.id).using(
-          _.modify(_.pos.x)
+        modifyCreature(state.id)(
+          _.modify(_.state.pos.x)
             .using(_ + state.currentSpeed * creature(state.id).state.movingDir.x)
-            .modify(_.pos.y)
+            .modify(_.state.pos.y)
             .using(_ + state.currentSpeed * creature(state.id).state.movingDir.y)
         ),
         List()
@@ -83,14 +75,13 @@ trait Creature {
     }
   }
 
-  def updateTimers(delta: Float): State[GameState, List[ExternalEvent]] = {
+  def updateTimers(delta: Float): GameStateTransition = {
     State { implicit gameState =>
       (
-        creatureLens(state.id)
-          .using(
-            _.modifyAll(_.animationTimer)
-              .using(_.update(delta))
-          ),
+        modifyCreature(state.id)(
+          _.modifyAll(_.state.animationTimer)
+            .using(_.update(delta))
+        ),
         List()
       )
 

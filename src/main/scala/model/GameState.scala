@@ -25,8 +25,8 @@ object GameState {
 
     }
 
-  def creatureLens(creatureId: String)(implicit gameState: GameState): PathModify[GameState, CreatureState] =
-    modify(gameState)(_.creatures.at(creatureId).state)
+  def modifyCreature(creatureId: String)(action: Creature => Creature)(implicit gameState: GameState): GameState =
+    modify(gameState)(_.creatures.at(creatureId)).using(action)
 
   def creature(creatureId: String)(implicit gameState: GameState): Creature =
     gameState.creatures(creatureId)
@@ -61,11 +61,10 @@ object GameState {
 
     val physicsPlayerPos = Vec2.fromVector2(PhysicsEngineController.creatureBodies(gameState.currentPlayerId).pos)
 
-    runMovingLogic(gameState, wasMoving, isMoving, movingDir) |+| (
+    runMovingLogic(gameState, wasMoving, isMoving, movingDir) |+|
       State { implicit gameState =>
-        (creatureLens(gameState.currentPlayerId).using(_.modify(_.pos).setTo(physicsPlayerPos)), List())
+        (modifyCreature(gameState.currentPlayerId)(_.modify(_.state.pos).setTo(physicsPlayerPos)), List())
       }
-    )
 
   }
 
