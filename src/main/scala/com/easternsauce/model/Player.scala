@@ -1,6 +1,6 @@
-package model
+package com.easternsauce.model
 
-import model.WorldDirection.WorldDirection
+import com.easternsauce.model.WorldDirection.WorldDirection
 
 case class Player(state: CreatureState) extends Creature {
   override val textureName: String = "male1"

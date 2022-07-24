@@ -1,4 +1,4 @@
-package model
+package com.easternsauce.model
 
 import scala.util.Random
 

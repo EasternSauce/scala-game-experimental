@@ -1,4 +1,4 @@
-package game
+package com.easternsauce.game
 
 object Constants {
   val PPM = 32

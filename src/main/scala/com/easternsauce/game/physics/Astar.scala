@@ -1,8 +1,8 @@
-package game.physics
+package com.easternsauce.game.physics
 
+import com.easternsauce.game.EnhancedChainingSyntax.enhancedScalaUtilChainingOps
+import com.easternsauce.model.Vec2
 import com.softwaremill.quicklens._
-import game.EnhancedChainingSyntax.enhancedScalaUtilChainingOps
-import model.Vec2
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Map

@@ -1,11 +1,11 @@
-package game.physics
+package com.easternsauce.game.physics
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.maps.tiled.{TiledMap, TiledMapTileLayer}
 import com.badlogic.gdx.math.{Intersector, Polygon, Vector2}
 import com.badlogic.gdx.physics.box2d.World
-import game.Constants
-import model.Vec2
+import com.easternsauce.game.Constants
+import com.easternsauce.model.Vec2
 
 import scala.collection.mutable.ListBuffer
 

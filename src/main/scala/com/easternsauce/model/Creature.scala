@@ -1,10 +1,10 @@
-package model
+package com.easternsauce.model
 
 import cats.data.State
 import cats.implicits.toTraverseOps
+import com.easternsauce.model.GameState.{GameStateTransition, creature, modifyCreature}
+import com.easternsauce.model.WorldDirection.WorldDirection
 import com.softwaremill.quicklens._
-import model.GameState.{GameStateTransition, creature, modifyCreature}
-import model.WorldDirection.WorldDirection
 
 trait Creature {
   val state: CreatureState

@@ -1,12 +1,12 @@
-package model
+package com.easternsauce.model
 
 import cats._
 import cats.data.State
 import cats.implicits._
+import com.easternsauce.game.ExternalEvent
+import com.easternsauce.game.physics.PhysicsEngineController
+import com.easternsauce.model.WorldDirection.WorldDirection
 import com.softwaremill.quicklens._
-import game.ExternalEvent
-import game.physics.PhysicsEngineController
-import model.WorldDirection.WorldDirection
 
 case class GameState(creatures: Map[String, Creature] = Map(), currentPlayerId: String, currentAreaId: String) {}
 

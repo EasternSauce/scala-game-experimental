@@ -1,4 +1,4 @@
-package game
+package com.easternsauce.game
 
 import cats.Id
 import cats.data.{State, StateT}
@@ -22,13 +22,13 @@ sealed trait AtomicSTRef[A] {
 
 object AtomicSTRef {
 
-  def get[A] = StateT[Id, A, A](a => (a, a))
+  def get[A]: StateT[Id, A, A] = StateT[Id, A, A](a => (a, a))
 
-  def update[A](na: A) = StateT[Id, A, List[ExternalEvent]](a => (na, List()))
+  def update[A](na: A): StateT[Id, A, List[ExternalEvent]] = StateT[Id, A, List[ExternalEvent]](a => (na, List()))
 
-  def apply[A](a: A) =
+  def apply[A](a: A): AtomicSTRef[A] =
     new AtomicSTRef[A] {
       private val ref = new AtomicReference(a)
-      def aref = ref
+      def aref: AtomicReference[A] = ref
     }
 }

@@ -1,9 +1,9 @@
-package game.renderer
+package com.easternsauce.game.renderer
 
 import com.badlogic.gdx.graphics.g2d._
-import model.GameState
-import model.GameState.{creature, player}
-import model.WorldDirection.WorldDirection
+import com.easternsauce.model.GameState
+import com.easternsauce.model.GameState.{creature, player}
+import com.easternsauce.model.WorldDirection.WorldDirection
 
 case class CreatureRenderer(creatureId: String) {
   var sprite: Sprite = _

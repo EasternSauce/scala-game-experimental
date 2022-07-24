@@ -1,4 +1,4 @@
-package game
+package com.easternsauce.game
 
 import cats.implicits.toTraverseOps
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
@@ -8,11 +8,11 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
-import game.physics.PhysicsEngineController
-import game.renderer.SpriteRendererController
-import model.GameState.{creature, handlePlayerMovementInput, updateCreatures}
-import model.WorldDirection.WorldDirection
-import model._
+import com.easternsauce.game.physics.PhysicsEngineController
+import com.easternsauce.game.renderer.SpriteRendererController
+import com.easternsauce.model.GameState.{creature, handlePlayerMovementInput, updateCreatures}
+import com.easternsauce.model.WorldDirection.WorldDirection
+import com.easternsauce.model._
 
 object PlayScreen extends Screen {
 

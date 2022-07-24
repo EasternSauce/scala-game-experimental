@@ -1,4 +1,4 @@
-package game.physics
+package com.easternsauce.game.physics
 
 import com.badlogic.gdx.math.Polygon
 import com.badlogic.gdx.physics.box2d._

@@ -1,9 +1,9 @@
-package game.renderer
+package com.easternsauce.game.renderer
 
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.maps.tiled.TiledMap
-import model.GameState
-import model.GameState.creature
+import com.easternsauce.model.GameState
+import com.easternsauce.model.GameState.creature
 
 object SpriteRendererController {
   var creatureSpriteRenderers: Map[String, CreatureRenderer] = _

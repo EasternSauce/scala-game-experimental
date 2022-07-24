@@ -1,4 +1,4 @@
-package game
+package com.easternsauce.game
 
 import com.badlogic.gdx.backends.lwjgl3.{Lwjgl3Application, Lwjgl3ApplicationConfiguration}
 

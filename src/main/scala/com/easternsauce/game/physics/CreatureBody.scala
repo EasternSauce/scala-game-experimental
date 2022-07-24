@@ -1,8 +1,8 @@
-package game.physics
+package com.easternsauce.game.physics
 
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.physics.box2d.Body
-import model.GameState
+import com.easternsauce.model.GameState
 
 case class CreatureBody(creatureId: String) {
   var b2Body: Body = _

@@ -1,8 +1,8 @@
-package game.physics
+package com.easternsauce.game.physics
 
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.physics.box2d.World
-import model.GameState
+import com.easternsauce.model.GameState
 
 case object PhysicsEngineController {
   var creatureBodies: Map[String, CreatureBody] = _

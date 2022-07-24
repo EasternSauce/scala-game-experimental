@@ -1,4 +1,4 @@
-package game
+package com.easternsauce.game
 
 import scala.language.implicitConversions
 
