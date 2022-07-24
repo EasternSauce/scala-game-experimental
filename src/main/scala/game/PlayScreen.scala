@@ -42,8 +42,8 @@ object PlayScreen extends Screen {
 
     gameState = AtomicSTRef(
       GameState(
-        creatures = Map("player" -> Player(CreatureState(id = "player", pos = Vec2(19, 4), areaId = "area1"))),
-        currentPlayer = "player",
+        creatures = Map("player" -> Player(CreatureState(id = "player", pos = Vec2(22, 4), areaId = "area1"))),
+        currentPlayerId = "player",
         currentAreaId = "area1"
       )
     )
@@ -109,6 +109,7 @@ object PlayScreen extends Screen {
     updateCamera()
 
     SpriteRendererController.update(gameState.aref.get())
+    PhysicsEngineController.update(gameState.aref.get())
 
     updateState(delta)
 

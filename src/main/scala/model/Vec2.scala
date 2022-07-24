@@ -30,3 +30,9 @@ case class Vec2(x: Float, y: Float) {
 
   def length: Float = vector2.len()
 }
+
+object Vec2 {
+  def fromVector2(vector2: Vector2): Vec2 = {
+    Vec2(vector2.x, vector2.y)
+  }
+}

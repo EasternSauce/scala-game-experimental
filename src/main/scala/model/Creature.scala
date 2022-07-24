@@ -20,7 +20,7 @@ trait Creature {
   val neutralStanceFrame: Int
   val dirMap: Map[WorldDirection, Int]
 
-  val speed: Float = 0.003f
+  val speed: Float = 15f
 
   def isMoving: Boolean = state.currentSpeed > 0f
 
@@ -66,7 +66,7 @@ trait Creature {
   def isAlive = true // TODO
 
   def update(delta: Float): State[GameState, List[ExternalEvent]] = {
-    List(updateTimers(delta), updatePosition()).sequence.map(_.flatten)
+    List(updateTimers(delta) /*, updatePosition()*/ ).sequence.map(_.flatten)
   }
 
   def updatePosition(): State[GameState, List[ExternalEvent]] = {

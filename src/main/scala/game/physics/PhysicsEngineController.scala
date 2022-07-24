@@ -27,7 +27,10 @@ case object PhysicsEngineController {
 
   }
 
-  def update(gameState: GameState): Unit = {}
+  def update(gameState: GameState): Unit = {
+    physicsWorlds(gameState.currentAreaId).step()
+    creatureBodies.values.foreach(_.update(gameState))
+  }
 
   def createContactListener(world: World): Unit = {}
 }

@@ -1,5 +1,6 @@
 package game.physics
 
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.physics.box2d.Body
 import model.GameState
 
@@ -14,5 +15,24 @@ case class CreatureBody(creatureId: String) {
     if (!creature.isAlive) b2Body.getFixtureList.get(0).setSensor(true)
   }
 
-  def update(gameState: GameState): Unit = {}
+  def update(gameState: GameState): Unit = {
+
+    val creature = gameState.creatures(creatureId)
+
+    val bodyCreated = PhysicsEngineController.creatureBodies.contains(creatureId)
+
+    val v = creature.state.currentSpeed
+    val normalMovingDir = creature.state.movingDir.normal
+    val vectorX = normalMovingDir.x * v
+    val vectorY = normalMovingDir.y * v
+
+    if (bodyCreated) {
+      setVelocity(new Vector2(vectorX, vectorY))
+    }
+  }
+
+  def pos: Vector2 = b2Body.getWorldCenter
+
+  def setVelocity(velocity: Vector2): Unit = b2Body.setLinearVelocity(velocity)
+
 }

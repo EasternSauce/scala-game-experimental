@@ -1,29 +1,48 @@
 package model
 
+import cats._
 import cats.data.State
-import cats.implicits.toTraverseOps
+import cats.implicits._
 import com.softwaremill.quicklens._
 import game.ExternalEvent
+import game.physics.PhysicsEngineController
 import model.WorldDirection.WorldDirection
 
-case class GameState(creatures: Map[String, Creature] = Map(), currentPlayer: String, currentAreaId: String) {}
+case class GameState(creatures: Map[String, Creature] = Map(), currentPlayerId: String, currentAreaId: String) {}
 
 object GameState {
+  type GameStateTransition = State[GameState, List[ExternalEvent]]
+
+  implicit def gameStateMonoid: Monoid[GameStateTransition] =
+    new Monoid[GameStateTransition] {
+      def empty: GameStateTransition =
+        State { state =>
+          (state, List())
+        }
+      def combine(x: GameStateTransition, y: GameStateTransition): GameStateTransition = {
+        List(x, y).sequence.map(_.flatten)
+      }
+
+    }
+
   def creatureLens(creatureId: String)(implicit gameState: GameState): PathModify[GameState, CreatureState] =
     modify(gameState)(_.creatures.at(creatureId).state)
 
   def creature(creatureId: String)(implicit gameState: GameState): Creature =
     gameState.creatures(creatureId)
 
-  def updateCreatures(delta: Float)(implicit gameState: GameState): State[GameState, List[ExternalEvent]] = {
-    gameState.creatures.map { case (_, creature) => creature.update(delta) }.toList.sequence.map(_.flatten)
+  def updateCreatures(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+
+    gameState.creatures.values.toList.foldMap { creature =>
+      creature.update(delta)
+    }
   }
 
-  def player(implicit gameState: GameState): Creature = gameState.creatures(gameState.currentPlayer)
+  def player(implicit gameState: GameState): Creature = gameState.creatures(gameState.currentPlayerId)
 
   def handlePlayerMovementInput(
     input: Map[WorldDirection, Boolean]
-  )(implicit gameState: GameState): State[GameState, List[ExternalEvent]] = {
+  )(implicit gameState: GameState): GameStateTransition = {
     val movingDirX = (input(WorldDirection.Left), input(WorldDirection.Right)) match {
       case (true, false) => -1
       case (false, true) => 1
@@ -37,25 +56,35 @@ object GameState {
 
     val movingDir = Vec2(movingDirX, movingDirY)
 
-    val wasMoving = creature(gameState.currentPlayer).isMoving
+    val wasMoving = creature(gameState.currentPlayerId).isMoving
     val isMoving = movingDir != Vec2(0, 0)
 
-    List(
-      {
-        (wasMoving, isMoving) match {
-          case (false, true) =>
-            creature(gameState.currentPlayer).startMoving()
-          case (true, false) =>
-            creature(gameState.currentPlayer).stopMoving()
-          case _ => State.pure[GameState, List[ExternalEvent]](List())
+    val physicsPlayerPos = Vec2.fromVector2(PhysicsEngineController.creatureBodies(gameState.currentPlayerId).pos)
 
-        }
-      }, {
-        if (isMoving) creature(gameState.currentPlayer).moveInDir(movingDir)
-        else State.pure[GameState, List[ExternalEvent]](List())
+    runMovingLogic(gameState, wasMoving, isMoving, movingDir) |+| (
+      State { implicit gameState =>
+        (creatureLens(gameState.currentPlayerId).using(_.modify(_.pos).setTo(physicsPlayerPos)), List())
       }
-    ).sequence.map(_.flatten)
+    )
 
   }
 
+  private def runMovingLogic(implicit
+    gameState: GameState,
+    wasMoving: Boolean,
+    isMoving: Boolean,
+    movingDir: Vec2
+  ): GameStateTransition = {
+    ((wasMoving, isMoving) match {
+      case (false, true) =>
+        creature(gameState.currentPlayerId).startMoving()
+      case (true, false) =>
+        creature(gameState.currentPlayerId).stopMoving()
+      case _ => Monoid[GameStateTransition].empty
+
+    }) |+|
+      (if (isMoving) creature(gameState.currentPlayerId).moveInDir(movingDir)
+       else Monoid[GameStateTransition].empty)
+
+  }
 }
