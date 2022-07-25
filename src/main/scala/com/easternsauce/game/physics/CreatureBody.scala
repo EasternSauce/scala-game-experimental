@@ -3,8 +3,9 @@ package com.easternsauce.game.physics
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.physics.box2d.Body
 import com.easternsauce.model.GameState
+import com.easternsauce.model.ids.CreatureId
 
-case class CreatureBody(creatureId: String) {
+case class CreatureBody(creatureId: CreatureId) {
   var b2Body: Body = _
 
   def init(gameState: GameState, physicsWorld: PhysicsWorld): Unit = {

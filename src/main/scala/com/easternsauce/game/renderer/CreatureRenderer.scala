@@ -4,8 +4,9 @@ import com.badlogic.gdx.graphics.g2d._
 import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.{creature, player}
 import com.easternsauce.model.WorldDirection.WorldDirection
+import com.easternsauce.model.ids.CreatureId
 
-case class CreatureRenderer(creatureId: String) {
+case class CreatureRenderer(creatureId: CreatureId) {
   var sprite: Sprite = _
 
   var facingTextures: Array[TextureRegion] = _

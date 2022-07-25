@@ -7,9 +7,14 @@ import com.easternsauce.game.ExternalEvent
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.creature.Creature
+import com.easternsauce.model.ids.{AreaId, CreatureId}
 import com.softwaremill.quicklens._
 
-case class GameState(creatures: Map[String, Creature] = Map(), currentPlayerId: String, currentAreaId: String) {}
+case class GameState(
+  creatures: Map[CreatureId, Creature] = Map(),
+  currentPlayerId: CreatureId,
+  currentAreaId: AreaId
+) {}
 
 object GameState {
   type GameStateTransition = State[GameState, List[ExternalEvent]]
@@ -26,10 +31,10 @@ object GameState {
 
     }
 
-  def modifyCreature(creatureId: String)(action: Creature => Creature)(implicit gameState: GameState): GameState =
+  def modifyCreature(creatureId: CreatureId)(action: Creature => Creature)(implicit gameState: GameState): GameState =
     modify(gameState)(_.creatures.at(creatureId)).using(action)
 
-  def creature(creatureId: String)(implicit gameState: GameState): Creature =
+  def creature(creatureId: CreatureId)(implicit gameState: GameState): Creature =
     gameState.creatures(creatureId)
 
   def player(implicit gameState: GameState): Creature = gameState.creatures(gameState.currentPlayerId)
@@ -57,7 +62,7 @@ object GameState {
 
   }
 
-  def handleCreaturePhysicsUpdate(creatureId: String): GameStateTransition = {
+  def handleCreaturePhysicsUpdate(creatureId: CreatureId): GameStateTransition = {
 
     val physicsPlayerPos = Vec2.fromVector2(PhysicsEngineController.creatureBodies(creatureId).pos)
 

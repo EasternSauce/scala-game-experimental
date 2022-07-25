@@ -3,6 +3,7 @@ package com.easternsauce.game
 import com.badlogic.gdx.Game
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.maps.tiled.{TiledMap, TmxMapLoader}
+import com.easternsauce.model.ids.AreaId
 
 object MyGdxGame extends Game {
 
@@ -12,9 +13,13 @@ object MyGdxGame extends Game {
   var atlas: TextureAtlas = _
 
   val mapsToLoad =
-    Map("area1" -> "assets/areas/area1", "area2" -> "assets/areas/area2", "area3" -> "assets/areas/area3")
+    Map(
+      AreaId("area1") -> "assets/areas/area1",
+      AreaId("area2") -> "assets/areas/area2",
+      AreaId("area3") -> "assets/areas/area3"
+    )
 
-  var maps: Map[String, TiledMap] = _
+  var maps: Map[AreaId, TiledMap] = _
 
   var mapLoader: TmxMapLoader = _
 

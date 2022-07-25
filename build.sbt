@@ -1,4 +1,4 @@
-name := "scala-com.easternsauce.game-experimental"
+name := "scala-game-experimental"
 
 version := "0.1"
 

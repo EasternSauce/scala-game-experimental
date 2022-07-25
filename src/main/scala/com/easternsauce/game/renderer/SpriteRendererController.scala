@@ -4,11 +4,12 @@ import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.creature
+import com.easternsauce.model.ids.{AreaId, CreatureId}
 
 object SpriteRendererController {
-  var creatureSpriteRenderers: Map[String, CreatureRenderer] = _
+  var creatureSpriteRenderers: Map[CreatureId, CreatureRenderer] = _
 
-  def init(atlas: TextureAtlas, gameState: GameState, maps: Map[String, TiledMap]): Unit = {
+  def init(atlas: TextureAtlas, gameState: GameState, maps: Map[AreaId, TiledMap]): Unit = {
     creatureSpriteRenderers =
       gameState.creatures.keys.map(creatureId => creatureId -> CreatureRenderer(creatureId)).toMap
     creatureSpriteRenderers.values.foreach(_.init(gameState, atlas))

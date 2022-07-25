@@ -3,12 +3,13 @@ package com.easternsauce.game.physics
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.physics.box2d.World
 import com.easternsauce.model.GameState
+import com.easternsauce.model.ids.{AreaId, CreatureId}
 
 case object PhysicsEngineController {
-  var creatureBodies: Map[String, CreatureBody] = _
-  var physicsWorlds: Map[String, PhysicsWorld] = _
+  var creatureBodies: Map[CreatureId, CreatureBody] = _
+  var physicsWorlds: Map[AreaId, PhysicsWorld] = _
 
-  def init(gameState: GameState, maps: Map[String, TiledMap]): Unit = {
+  def init(gameState: GameState, maps: Map[AreaId, TiledMap]): Unit = {
     this.physicsWorlds = maps.map { case (areaId, map) => areaId -> PhysicsWorld(map) }
 
     physicsWorlds.values.foreach(world => {

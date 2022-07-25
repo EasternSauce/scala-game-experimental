@@ -14,13 +14,14 @@ import com.easternsauce.model.GameState.{creature, handleCreaturePhysicsUpdate, 
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
 import com.easternsauce.model.creature.{CreatureState, Player, Skeleton}
+import com.easternsauce.model.ids.{AreaId, CreatureId}
 
 object PlayScreen extends Screen {
 
   var spriteBatch: SpriteBatch = _
   var hudBatch: SpriteBatch = _
 
-  var maps: Map[String, TiledMap] = _
+  var maps: Map[AreaId, TiledMap] = _
 
   var worldCamera: OrthographicCamera = _
   var hudCamera: OrthographicCamera = _
@@ -55,11 +56,15 @@ object PlayScreen extends Screen {
     gameState = AtomicSTRef(
       GameState(
         creatures = Map(
-          "player" -> Player(CreatureState(id = "player", pos = Vec2(22, 4), areaId = "area1")),
-          "skellie" -> Skeleton(CreatureState(id = "skellie", pos = Vec2(24, 4), areaId = "area1"))
+          CreatureId("player") -> Player(
+            CreatureState(id = CreatureId("player"), pos = Vec2(22, 4), areaId = AreaId("area1"))
+          ),
+          CreatureId("skellie") -> Skeleton(
+            CreatureState(id = CreatureId("skellie"), pos = Vec2(24, 4), areaId = AreaId("area1"))
+          )
         ),
-        currentPlayerId = "player",
-        currentAreaId = "area1"
+        currentPlayerId = CreatureId("player"),
+        currentAreaId = AreaId("area1")
       )
     )
 
@@ -74,7 +79,7 @@ object PlayScreen extends Screen {
   def setSpriteBatch(spriteBatch: SpriteBatch): Unit = this.spriteBatch = spriteBatch
   def setHudBatch(hudBatch: SpriteBatch): Unit = this.hudBatch = hudBatch
 
-  def setMaps(maps: Map[String, TiledMap]): Unit = this.maps = maps
+  def setMaps(maps: Map[AreaId, TiledMap]): Unit = this.maps = maps
 
   def updateCamera(): Unit = {
 
@@ -82,8 +87,8 @@ object PlayScreen extends Screen {
 
     implicit val gs: GameState = gameState.aref.get()
 
-    val playerPosX = creature("player").state.pos.x
-    val playerPosY = creature("player").state.pos.y
+    val playerPosX = creature(CreatureId("player")).state.pos.x
+    val playerPosY = creature(CreatureId("player")).state.pos.y
 
     camPosition.x = (math.floor(playerPosX * 100) / 100).toFloat
     camPosition.y = (math.floor(playerPosY * 100) / 100).toFloat
