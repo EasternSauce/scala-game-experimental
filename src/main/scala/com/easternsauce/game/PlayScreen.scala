@@ -10,10 +10,10 @@ import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.game.renderer.SpriteRendererController
-import com.easternsauce.model.GameState.{creature, handleCreaturePhysicsUpdate, handlePlayerMovementInput}
+import com.easternsauce.model.GameState.{creature, handleCreaturePhysicsUpdate, handlePlayerMovementInput, performAction}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
-import com.easternsauce.model.creature.{CreatureState, Player, Skeleton}
+import com.easternsauce.model.creature.{Player, Skeleton}
 import com.easternsauce.model.ids.{AreaId, CreatureId}
 
 object PlayScreen extends Screen {
@@ -56,16 +56,17 @@ object PlayScreen extends Screen {
     gameState = AtomicSTRef(
       GameState(
         creatures = Map(
-          CreatureId("player") -> Player(
-            CreatureState(id = CreatureId("player"), pos = Vec2(22, 4), areaId = AreaId("area1"))
-          ),
-          CreatureId("skellie") -> Skeleton(
-            CreatureState(id = CreatureId("skellie"), pos = Vec2(24, 4), areaId = AreaId("area1"))
-          )
+          CreatureId("player") -> Player(id = CreatureId("player"), areaId = AreaId("area1"), pos = Vec2(22, 4)),
+          CreatureId("skellie") -> Skeleton(id = CreatureId("skellie"), areaId = AreaId("area1"), pos = Vec2(24, 4))
         ),
         currentPlayerId = CreatureId("player"),
         currentAreaId = AreaId("area1")
       )
+    )
+
+    // init creatures
+    gameState.commit(
+      gameState.aref.get().creatures.keys.toList.foldMap(creatureId => performAction(CreatureInitAction(creatureId)))
     )
 
     tiledMapRenderer =
@@ -161,6 +162,7 @@ object PlayScreen extends Screen {
     gameState.commit(
       gs.creatures.keys.toList.foldMap(handleCreaturePhysicsUpdate) |+|
         gs.creatures.values.toList.foldMap(_.update(delta)) |+|
+        gs.abilities.keys.toList.foldMap(id => performAction(AbilityUpdateAction(id, delta))) |+|
         handlePlayerMovementInput(playerDirectionInput)
     )
   }

@@ -1,3 +1,7 @@
 package com.easternsauce.model.ability
 
-class Attack {}
+import com.easternsauce.model.GameState.GameStateTransition
+
+case class Attack() {
+  def onChannelStart(): GameStateTransition = ???
+}

@@ -3,6 +3,8 @@ package com.easternsauce.model.creature
 import cats.data.State
 import com.easternsauce.model.GameState.{GameStateTransition, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
+import com.easternsauce.model.ability.Ability
+import com.easternsauce.model.ids.CreatureId
 import com.easternsauce.model.{GameState, Vec2, WorldDirection}
 import com.softwaremill.quicklens.ModifyPimp
 
@@ -21,6 +23,10 @@ trait Creature {
 
   val speed: Float = 15f
 
+  val abilityNames: List[String] = List()
+
+  implicit val id: CreatureId = state.id
+
   def isMoving: Boolean = state.currentSpeed > 0f
 
   def facingDirection: WorldDirection = {
@@ -34,14 +40,14 @@ trait Creature {
 
   def moveInDir(dir: Vec2): GameStateTransition = {
     State { implicit gameState: GameState =>
-      (modifyCreature(state.id)(_.modify(_.state.movingDir).setTo(dir)), List())
+      (modifyCreature(_.modify(_.state.movingDir).setTo(dir)), List())
     }
   }
 
   def startMoving(): GameStateTransition = {
     State { implicit gameState =>
       (
-        modifyCreature(state.id)(
+        modifyCreature(
           _.modify(_.state.currentSpeed).setTo(this.speed).modify(_.state.animationTimer).using(_.restart())
         ),
         List()
@@ -51,7 +57,7 @@ trait Creature {
 
   def stopMoving(): GameStateTransition = {
     State { implicit gameState =>
-      (modifyCreature(state.id)(_.modify(_.state.currentSpeed).setTo(0f)), List())
+      (modifyCreature(_.modify(_.state.currentSpeed).setTo(0f)), List())
     }
   }
 
@@ -64,7 +70,7 @@ trait Creature {
   def updateTimers(delta: Float): GameStateTransition = {
     State { implicit gameState =>
       (
-        modifyCreature(state.id)(
+        modifyCreature(
           _.modifyAll(_.state.animationTimer)
             .using(_.update(delta))
         ),
@@ -73,6 +79,16 @@ trait Creature {
 
     }
 
+  }
+
+  def init()(implicit gameState: GameState): GameState = {
+
+    // init abilities
+    abilityNames.foldLeft(gameState) {
+      case (gameState, abilityName) =>
+        val ability = Ability.abilityByName(abilityName, id)
+        gameState.modify(_.abilities).using(_.updated(ability.id, ability))
+    }
   }
 
   def copy(state: CreatureState): Creature
