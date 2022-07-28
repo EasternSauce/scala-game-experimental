@@ -9,6 +9,5 @@ object ids {
     }
   }
   case class ProjectileId(value: String)
-  case class AttackId(value: String)
   case class AreaId(value: String)
 }

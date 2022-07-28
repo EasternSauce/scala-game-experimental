@@ -7,9 +7,9 @@ import com.badlogic.gdx.{Gdx, Input}
 import com.easternsauce.game.ExternalEvent
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.model.WorldDirection.WorldDirection
-import com.easternsauce.model.ability.{Ability, Attack}
+import com.easternsauce.model.ability.{Ability, Projectile}
 import com.easternsauce.model.creature.Creature
-import com.easternsauce.model.ids.{AbilityId, AreaId, AttackId, CreatureId}
+import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId, ProjectileId}
 import com.softwaremill.quicklens._
 
 import scala.util.chaining.scalaUtilChainingOps
@@ -17,7 +17,7 @@ import scala.util.chaining.scalaUtilChainingOps
 case class GameState(
   creatures: Map[CreatureId, Creature] = Map(),
   abilities: Map[AbilityId, Ability] = Map(),
-  attacks: Map[AttackId, Attack] = Map(),
+  projectiles: Map[ProjectileId, Projectile] = Map(),
   currentPlayerId: CreatureId,
   currentAreaId: AreaId
 ) {}
@@ -49,16 +49,24 @@ object GameState {
   def ability(abilityId: AbilityId)(implicit gameState: GameState): Ability =
     gameState.abilities(abilityId)
 
-//  def modifyAttack(action: Attack => Attack)(implicit attackId: AttackId, gameState: GameState): GameState =
+  def modifyProjectile(
+    action: Projectile => Projectile
+  )(implicit projectileId: ProjectileId, gameState: GameState): GameState =
+    modify(gameState)(_.projectiles.at(projectileId)).using(action)
+
+  def projectile(projectileId: ProjectileId)(implicit gameState: GameState): Projectile =
+    gameState.projectiles(projectileId)
+
+  //  def modifyAttack(action: Attack => Attack)(implicit attackId: AttackId, gameState: GameState): GameState =
 //    modify(gameState)(_.attacks.at(attackId)).using(action)
 
-  def modifyAttack(action: AttackId => GameStateTransition)(implicit attackId: AttackId): GameStateTransition = {
-    action(attackId)
-//    State { implicit gameState => (modify(gameState)(_.attacks.at(attackId)).using(action), List()) }
-  }
-
-  def attack(attackId: AttackId)(implicit gameState: GameState): Attack =
-    gameState.attacks(attackId)
+//  def modifyAttack(action: AttackId => GameStateTransition)(implicit attackId: AttackId): GameStateTransition = {
+//    action(attackId)
+////    State { implicit gameState => (modify(gameState)(_.attacks.at(attackId)).using(action), List()) }
+//  }
+//
+//  def attack(attackId: AttackId)(implicit gameState: GameState): Attack =
+//    gameState.attacks(attackId)
 
   def player(implicit gameState: GameState): Creature = gameState.creatures(gameState.currentPlayerId)
 

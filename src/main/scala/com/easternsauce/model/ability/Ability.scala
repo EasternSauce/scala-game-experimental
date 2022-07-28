@@ -44,52 +44,55 @@ trait Ability {
 
   def onInactiveStart()(implicit gameState: GameState): GameState
 
-  def update(delta: Float)(implicit gameState: GameState): GameState = {
-    def updateStages(implicit gameState: GameState) =
-      state.stage match {
-        case AbilityStage.Inactive => gameState
-        case AbilityStage.Channel =>
-          gameState
-            .pipe(
-              implicit gameState =>
-                if (state.stageTimer.time > channelTime)
-                  gameState
-                    .pipe(
-                      implicit gameState =>
-                        modifyAbility(
-                          _.modify(_.state.stage)
-                            .setTo(AbilityStage.Active)
-                            .modify(_.state.stageTimer)
-                            .using(_.restart())
-                        )
-                    )
-                    .pipe(implicit gameState => onActiveStart())
-                else gameState
-            )
-            .pipe(implicit gameState => onChannelUpdate())
-        case AbilityStage.Active =>
-          gameState
-            .pipe(
-              implicit gameState =>
-                if (state.stageTimer.time > activeTime)
-                  gameState
-                    .pipe(
-                      implicit gameState =>
-                        modifyAbility(
-                          _.modify(_.state.stage)
-                            .setTo(AbilityStage.Inactive)
-                            .modify(_.state.stageTimer)
-                            .using(_.restart())
-                        )
-                    )
-                    .pipe(implicit gameState => onInactiveStart())
-                else gameState
-            )
-            .pipe(implicit gameState => onActiveUpdate())
-      }
+  def runStageLogic()(implicit gameState: GameState): GameState =
+    state.stage match {
+      case AbilityStage.Inactive => gameState
+      case AbilityStage.Channel =>
+        gameState
+          .pipe(
+            implicit gameState =>
+              if (state.stageTimer.time > channelTime)
+                gameState
+                  .pipe(
+                    implicit gameState =>
+                      modifyAbility(
+                        _.modify(_.state.stage)
+                          .setTo(AbilityStage.Active)
+                          .modify(_.state.stageTimer)
+                          .using(_.restart())
+                      )
+                  )
+                  .pipe(implicit gameState => onActiveStart())
+                  .pipe(implicit gameState => state.attack.map(_.onActiveStart()).getOrElse(gameState))
+              else gameState
+          )
+          .pipe(implicit gameState => onChannelUpdate())
+          .pipe(implicit gameState => state.attack.map(_.onChannelUpdate()).getOrElse(gameState))
+      case AbilityStage.Active =>
+        gameState
+          .pipe(
+            implicit gameState =>
+              if (state.stageTimer.time > activeTime)
+                gameState
+                  .pipe(
+                    implicit gameState =>
+                      modifyAbility(
+                        _.modify(_.state.stage)
+                          .setTo(AbilityStage.Inactive)
+                          .modify(_.state.stageTimer)
+                          .using(_.restart())
+                      )
+                  )
+                  .pipe(implicit gameState => onInactiveStart())
+              else gameState
+          )
+          .pipe(implicit gameState => onActiveUpdate())
+          .pipe(implicit gameState => state.attack.map(_.onActiveUpdate()).getOrElse(gameState))
+    }
 
+  def update(delta: Float)(implicit gameState: GameState): GameState = {
     gameState
-      .pipe(implicit gameState => updateStages)
+      .pipe(implicit gameState => runStageLogic())
       .pipe(implicit gameState => updateTimers(delta))
   }
 
@@ -108,10 +111,11 @@ trait Ability {
             )
         )
         .pipe(implicit gameState => onChannelStart())
+        .pipe(implicit gameState => state.attack.map(_.onChannelStart()).getOrElse(gameState))
     else gameState
   }
 
-  def copy(state: AbilityState): Ability
+  def copy(state: AbilityState = state): Ability
 }
 
 object Ability {
