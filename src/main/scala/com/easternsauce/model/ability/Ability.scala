@@ -28,8 +28,6 @@ trait Ability {
 
   implicit val id: AbilityId = state.id
 
-//  def onStart(): GameState = Monoid[GameStateTransition].empty
-
   def ableToPerform: Boolean = state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime
 
   def updateTimers(delta: Float)(implicit gameState: GameState): GameState = {
@@ -40,16 +38,7 @@ trait Ability {
 
   def onActiveUpdate()(implicit gameState: GameState): GameState
 
-  def onChannelStart()(implicit gameState: GameState): GameState = ??? //State[GameState, List[ExternalEvent]]
-//    {
-//    implicit gameState: GameState => {
-//      val state: GameStateTransition = modifyAttack(_.onChannelStart())(state.attack.get, gameState)
-//      (state, List())
-//    }
-//      val attackId = AttackId("kek")
-//      val lul: State[GameStateTransition, List[ExternalEvent]] = State{ gameStateTr => (gameStateTr..attacks(attackId).onChannelStart(), List[ExternalEvent]())}
-//    val sdfasf= modifyAttack(attackId => State {lul })(state.attack.get)
-//  }
+  def onChannelStart()(implicit gameState: GameState): GameState
 
   def onChannelUpdate()(implicit gameState: GameState): GameState
 

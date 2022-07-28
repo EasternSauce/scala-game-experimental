@@ -1,7 +1,6 @@
 package com.easternsauce.model.creature
 
-import cats.data.State
-import com.easternsauce.model.GameState.{GameStateTransition, modifyCreature}
+import com.easternsauce.model.GameState.modifyCreature
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.CreatureId
@@ -38,46 +37,30 @@ trait Creature {
     }
   }
 
-  def moveInDir(dir: Vec2): GameStateTransition = {
-    State { implicit gameState: GameState =>
-      (modifyCreature(_.modify(_.state.movingDir).setTo(dir)), List())
-    }
+  def moveInDir(dir: Vec2)(implicit gameState: GameState): GameState = {
+    modifyCreature(_.modify(_.state.movingDir).setTo(dir))
   }
 
-  def startMoving(): GameStateTransition = {
-    State { implicit gameState =>
-      (
-        modifyCreature(
-          _.modify(_.state.currentSpeed).setTo(this.speed).modify(_.state.animationTimer).using(_.restart())
-        ),
-        List()
-      )
-    }
+  def startMoving()(implicit gameState: GameState): GameState = {
+
+    modifyCreature(_.modify(_.state.currentSpeed).setTo(this.speed).modify(_.state.animationTimer).using(_.restart()))
   }
 
-  def stopMoving(): GameStateTransition = {
-    State { implicit gameState =>
-      (modifyCreature(_.modify(_.state.currentSpeed).setTo(0f)), List())
-    }
+  def stopMoving()(implicit gameState: GameState): GameState = {
+    modifyCreature(_.modify(_.state.currentSpeed).setTo(0f))
   }
 
   def isAlive = true // TODO
 
-  def update(delta: Float): GameStateTransition = {
+  def update(delta: Float)(implicit gameState: GameState): GameState = {
     updateTimers(delta)
   }
 
-  def updateTimers(delta: Float): GameStateTransition = {
-    State { implicit gameState =>
-      (
-        modifyCreature(
-          _.modifyAll(_.state.animationTimer)
-            .using(_.update(delta))
-        ),
-        List()
-      )
-
-    }
+  def updateTimers(delta: Float)(implicit gameState: GameState): GameState = {
+    modifyCreature(
+      _.modifyAll(_.state.animationTimer)
+        .using(_.update(delta))
+    )
 
   }
 

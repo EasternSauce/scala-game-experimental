@@ -1,5 +1,6 @@
 package com.easternsauce.game
 
+import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.graphics.{Color, GL20, OrthographicCamera}
@@ -148,7 +149,7 @@ object PlayScreen extends Screen {
 
   def updateState(delta: Float): Unit = {
 
-    implicit val gs: GameState = gameState.aref.get()
+    val gs: GameState = gameState.aref.get()
 
     val playerDirectionInput: Map[WorldDirection, Boolean] = {
       Map(
@@ -161,9 +162,9 @@ object PlayScreen extends Screen {
 
     gameState.commit(
       gs.creatures.keys.toList.foldMap(handleCreaturePhysicsUpdate) |+|
-        gs.creatures.values.toList.foldMap(_.update(delta)) |+|
+        gs.creatures.keys.toList.foldMap(id => performAction(CreatureUpdateAction(id, delta))) |+|
         gs.abilities.keys.toList.foldMap(id => performAction(AbilityUpdateAction(id, delta))) |+|
-        handlePlayerMovementInput(playerDirectionInput)
+        State { implicit gameState => (handlePlayerMovementInput(playerDirectionInput), List()) }
     )
   }
 

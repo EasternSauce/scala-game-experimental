@@ -12,6 +12,8 @@ import com.easternsauce.model.creature.Creature
 import com.easternsauce.model.ids.{AbilityId, AreaId, AttackId, CreatureId}
 import com.softwaremill.quicklens._
 
+import scala.util.chaining.scalaUtilChainingOps
+
 case class GameState(
   creatures: Map[CreatureId, Creature] = Map(),
   abilities: Map[AbilityId, Ability] = Map(),
@@ -60,9 +62,7 @@ object GameState {
 
   def player(implicit gameState: GameState): Creature = gameState.creatures(gameState.currentPlayerId)
 
-  def handlePlayerMovementInput(
-    input: Map[WorldDirection, Boolean]
-  )(implicit gameState: GameState): GameStateTransition = {
+  def handlePlayerMovementInput(input: Map[WorldDirection, Boolean])(implicit gameState: GameState): GameState = {
     val movingDirX = (input(WorldDirection.Left), input(WorldDirection.Right)) match {
       case (true, false) => -1
       case (false, true) => 1
@@ -81,13 +81,12 @@ object GameState {
 
     val mouseClicked = Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) // TODO: this is temp
 
-    runMovingLogic(gameState, wasMoving, isMoving, movingDir) |+|
-      State { implicit gameState =>
-        (
-          if (mouseClicked) ability(AbilityId.derive(gameState.currentPlayerId, "slash")).perform() else gameState,
-          List()
-        )
-      }
+    gameState
+      .pipe(implicit gameState => runMovingLogic(wasMoving, isMoving, movingDir))
+      .pipe(
+        implicit gameState =>
+          if (mouseClicked) ability(AbilityId.derive(gameState.currentPlayerId, "slash")).perform() else gameState
+      )
 
   }
 
@@ -100,23 +99,26 @@ object GameState {
     }
   }
 
-  private def runMovingLogic(implicit
-    gameState: GameState,
-    wasMoving: Boolean,
-    isMoving: Boolean,
-    movingDir: Vec2
-  ): GameStateTransition = {
-    ((wasMoving, isMoving) match {
-      case (false, true) =>
-        creature(gameState.currentPlayerId).startMoving()
-      case (true, false) =>
-        creature(gameState.currentPlayerId).stopMoving()
-      case _ => Monoid[GameStateTransition].empty
+  private def runMovingLogic(wasMoving: Boolean, isMoving: Boolean, movingDir: Vec2)(implicit
+    gameState: GameState
+  ): GameState = {
+    gameState
+      .pipe(
+        implicit gameState =>
+          (wasMoving, isMoving) match {
+            case (false, true) =>
+              creature(gameState.currentPlayerId).startMoving()
+            case (true, false) =>
+              creature(gameState.currentPlayerId).stopMoving()
+            case _ => gameState
 
-    }) |+|
-      (if (isMoving) creature(gameState.currentPlayerId).moveInDir(movingDir)
-       else Monoid[GameStateTransition].empty)
-
+          }
+      )
+      .pipe(
+        implicit gameState =>
+          if (isMoving) creature(gameState.currentPlayerId).moveInDir(movingDir)
+          else gameState
+      )
   }
 
   def performAction(gameStateAction: GameStateAction): GameStateTransition = {
@@ -128,6 +130,8 @@ object GameState {
       case AbilityUpdateAction(abilityId, delta) =>
         State { implicit gameState => (ability(abilityId).update(delta), List()) }
       case CreatureInitAction(creatureId) => State { implicit gameState => (creature(creatureId).init(), List()) }
+      case CreatureUpdateAction(creatureId, delta) =>
+        State { implicit gameState => (creature(creatureId).update(delta), List()) }
 
     }
   }
@@ -141,3 +145,4 @@ sealed trait GameStateAction
 //case class OnActiveUpdateAction(abilityId: AbilityId) extends GameStateAction
 case class AbilityUpdateAction(abilityId: AbilityId, delta: Float) extends GameStateAction
 case class CreatureInitAction(creatureId: CreatureId) extends GameStateAction
+case class CreatureUpdateAction(creatureId: CreatureId, delta: Float) extends GameStateAction
