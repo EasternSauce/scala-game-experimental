@@ -1,9 +1,11 @@
 package com.easternsauce.model.ability
 
-import com.easternsauce.model.GameState
-import com.easternsauce.model.GameState.modifyAbility
+import com.badlogic.gdx.math.Vector2
+import com.easternsauce.game.Constants
+import com.easternsauce.model.GameState.{getCreature, modifyAbility}
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
-import com.softwaremill.quicklens.ModifyPimp
+import com.easternsauce.model.{GameState, Vec2}
+import com.softwaremill.quicklens._
 
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -26,7 +28,14 @@ trait Ability {
   val activeAnimationLooping: Boolean = false
   val channelAnimationLooping: Boolean = false
 
+  val attack: Option[Attack] = None
+
+  val attackRange: Float = 1.8f
+
   implicit val id: AbilityId = state.id
+
+  def width: Float = textureWidth.toFloat * scale / Constants.PPM
+  def height: Float = textureHeight.toFloat * scale / Constants.PPM
 
   def ableToPerform: Boolean = state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime
 
@@ -63,11 +72,11 @@ trait Ability {
                       )
                   )
                   .pipe(implicit gameState => onActiveStart())
-                  .pipe(implicit gameState => state.attack.map(_.onActiveStart()).getOrElse(gameState))
+//                  .pipe(implicit gameState => state.attack.map(_.onActiveStart()).getOrElse(gameState))
               else gameState
           )
           .pipe(implicit gameState => onChannelUpdate())
-          .pipe(implicit gameState => state.attack.map(_.onChannelUpdate()).getOrElse(gameState))
+//          .pipe(implicit gameState => state.attack.map(_.onChannelUpdate()).getOrElse(gameState))
       case AbilityStage.Active =>
         gameState
           .pipe(
@@ -87,7 +96,7 @@ trait Ability {
               else gameState
           )
           .pipe(implicit gameState => onActiveUpdate())
-          .pipe(implicit gameState => state.attack.map(_.onActiveUpdate()).getOrElse(gameState))
+//          .pipe(implicit gameState => state.attack.map(_.onActiveUpdate()).getOrElse(gameState))
     }
 
   def update(delta: Float)(implicit gameState: GameState): GameState = {
@@ -111,8 +120,34 @@ trait Ability {
             )
         )
         .pipe(implicit gameState => onChannelStart())
-        .pipe(implicit gameState => state.attack.map(_.onChannelStart()).getOrElse(gameState))
+//        .pipe(implicit gameState => state.attack.map(_.onChannelStart()).getOrElse(gameState))
     else gameState
+  }
+
+  def updateHitbox()(implicit gameState: GameState): GameState = {
+    if (attack.nonEmpty) {
+      val dirVector = state.attack.get.dirVector match {
+        case dirVector if dirVector.length <= 0 => Vec2(1, 0).normal
+        case dirVector                          => dirVector
+      }
+
+      val creature = getCreature(state.creatureId)
+
+      val theta = new Vector2(dirVector.x, dirVector.y).angleDeg()
+
+      val attackShiftX = dirVector.normal.x * attackRange
+      val attackShiftY = dirVector.normal.y * attackRange
+
+      val attackRectX = attackShiftX + creature.state.pos.x
+      val attackRectY = attackShiftY + creature.state.pos.y
+
+      modifyAbility(
+        _.modify(_.state.attack.each.hitbox).setTo(
+          Hitbox(pos = Vec2(attackRectX, attackRectY), width = width, height = height, rotation = theta, scale = scale)
+        )
+      )
+    } else gameState
+
   }
 
   def copy(state: AbilityState = state): Ability

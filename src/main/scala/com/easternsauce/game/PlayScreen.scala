@@ -11,7 +11,12 @@ import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.game.renderer.SpriteRendererController
-import com.easternsauce.model.GameState.{creature, handleCreaturePhysicsUpdate, handlePlayerMovementInput, performAction}
+import com.easternsauce.model.GameState.{
+  getCreature,
+  handleCreaturePhysicsUpdate,
+  handlePlayerMovementInput,
+  performAction
+}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
 import com.easternsauce.model.creature.{Player, Skeleton}
@@ -73,7 +78,7 @@ object PlayScreen extends Screen {
     tiledMapRenderer =
       new OrthogonalTiledMapRenderer(maps(gameState.aref.get().currentAreaId), Constants.MapScale / Constants.PPM)
 
-    SpriteRendererController.init(atlas, gameState.aref.get(), maps)
+    SpriteRendererController.init(atlas, maps)(gameState.aref.get())
     PhysicsEngineController.init(gameState = gameState.aref.get(), maps)
 
   }
@@ -89,8 +94,8 @@ object PlayScreen extends Screen {
 
     implicit val gs: GameState = gameState.aref.get()
 
-    val playerPosX = creature(CreatureId("player")).state.pos.x
-    val playerPosY = creature(CreatureId("player")).state.pos.y
+    val playerPosX = getCreature(CreatureId("player")).state.pos.x
+    val playerPosY = getCreature(CreatureId("player")).state.pos.y
 
     camPosition.x = (math.floor(playerPosX * 100) / 100).toFloat
     camPosition.y = (math.floor(playerPosY * 100) / 100).toFloat
@@ -116,7 +121,7 @@ object PlayScreen extends Screen {
 
     spriteBatch.begin()
 
-    SpriteRendererController.renderAliveEntities(gameState.aref.get(), spriteBatch, debugEnabled)
+    SpriteRendererController.renderAliveEntities(spriteBatch, debugEnabled)(gameState.aref.get())
 
     spriteBatch.end()
 
@@ -130,6 +135,12 @@ object PlayScreen extends Screen {
 
     tiledMapRenderer.render(Array(2, 3))
 
+    spriteBatch.begin()
+
+    SpriteRendererController.renderAbilities(spriteBatch)(gameState.aref.get())
+
+    spriteBatch.end()
+
     val currentTerrain = PhysicsEngineController.physicsWorlds(gameState.aref.get().currentAreaId)
 
     if (debugEnabled) b2DebugRenderer.render(currentTerrain.b2world, worldCamera.combined)
@@ -140,10 +151,11 @@ object PlayScreen extends Screen {
     tiledMapRenderer.setView(worldCamera)
     updateCamera()
 
-    SpriteRendererController.update(gameState.aref.get())
-    PhysicsEngineController.update(gameState.aref.get())
-
     updateState(delta)
+
+    SpriteRendererController.update()(gameState.aref.get())
+    PhysicsEngineController.update()(gameState.aref.get())
+
 
   }
 

@@ -2,7 +2,7 @@ package com.easternsauce.game.renderer
 
 import com.badlogic.gdx.graphics.g2d._
 import com.easternsauce.model.GameState
-import com.easternsauce.model.GameState.{creature, player}
+import com.easternsauce.model.GameState.{getCreature, player}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ids.CreatureId
 
@@ -15,7 +15,7 @@ case class CreatureRenderer(creatureId: CreatureId) {
 
   var textureRegion: TextureRegion = _
 
-  def init(gameState: GameState, atlas: TextureAtlas): Unit = {
+  def init(atlas: TextureAtlas)(implicit gameState: GameState): Unit = {
     sprite = new Sprite()
 
     facingTextures = new Array[TextureRegion](4)
@@ -53,7 +53,7 @@ case class CreatureRenderer(creatureId: CreatureId) {
 
   }
 
-  def runningAnimation(implicit gameState: GameState, currentDirection: WorldDirection): TextureRegion = {
+  def runningAnimation(currentDirection: WorldDirection)(implicit gameState: GameState): TextureRegion = {
     val creature = gameState.creatures(creatureId)
 
     runningAnimations(creature.dirMap(currentDirection))
@@ -66,14 +66,14 @@ case class CreatureRenderer(creatureId: CreatureId) {
     facingTextures(creature.dirMap(currentDirection))
   }
 
-  def update(implicit gameState: GameState): Unit = {
+  def update()(implicit gameState: GameState): Unit = {
 
     val texture =
-      if (!creature(creatureId).isMoving) facingTexture(gameState, creature(creatureId).facingDirection)
-      else runningAnimation(gameState, creature(creatureId).facingDirection)
+      if (!getCreature(creatureId).isMoving) facingTexture(gameState, getCreature(creatureId).facingDirection)
+      else runningAnimation(getCreature(creatureId).facingDirection)
     sprite.setRegion(texture)
-    sprite.setCenter(creature(creatureId).state.pos.x, creature(creatureId).state.pos.y)
-    sprite.setSize(creature(creatureId).width, creature(creatureId).height)
+    sprite.setCenter(getCreature(creatureId).state.pos.x, getCreature(creatureId).state.pos.y)
+    sprite.setSize(getCreature(creatureId).width, getCreature(creatureId).height)
 
 //    if (creature(creatureId).isAlive && creature(creatureId).isEffectActive("immunityFrames")) {
 //      val alpha = creature(creatureId).params.effects("immunityFrames").remainingTime * 35f

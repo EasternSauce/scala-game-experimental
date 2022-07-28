@@ -28,7 +28,7 @@ case object PhysicsEngineController {
 
   }
 
-  def update(gameState: GameState): Unit = {
+  def update()(implicit gameState: GameState): Unit = {
     physicsWorlds(gameState.currentAreaId).step()
     creatureBodies.values.foreach(_.update(gameState))
   }

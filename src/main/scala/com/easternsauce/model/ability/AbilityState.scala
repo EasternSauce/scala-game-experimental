@@ -7,8 +7,8 @@ import com.easternsauce.model.ids.{AbilityId, CreatureId, ProjectileId}
 case class AbilityState(
   id: AbilityId,
   creatureId: CreatureId,
-  attack: Option[Attack],
-  projectiles: Option[List[ProjectileId]],
-  stageTimer: SimpleTimer,
-  stage: AbilityStage
-) {}
+  projectiles: Option[List[ProjectileId]] = None,
+  stageTimer: SimpleTimer = SimpleTimer(time = Float.MaxValue),
+  stage: AbilityStage = AbilityStage.Inactive,
+  attack: Option[Attack] = None
+)

@@ -1,6 +1,8 @@
 package com.easternsauce.model.ability
+import com.easternsauce.model.{GameState, Vec2}
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
-import com.easternsauce.model.{GameState, SimpleTimer}
+
+import scala.util.chaining.scalaUtilChainingOps
 
 case class SlashAbility(state: AbilityState) extends Ability {
   val cooldownTime: Float = 1f
@@ -16,13 +18,21 @@ case class SlashAbility(state: AbilityState) extends Ability {
   val channelFrameDuration: Float = 0.05f
   val activeFrameDuration: Float = 0.05f
 
-  override def onActiveStart()(implicit gameState: GameState): GameState = gameState
+  override def onActiveStart()(implicit gameState: GameState): GameState =
+    gameState
+      .pipe(implicit gameState => updateHitbox())
 
-  override def onActiveUpdate()(implicit gameState: GameState): GameState = gameState
+  override def onActiveUpdate()(implicit gameState: GameState): GameState =
+    gameState
+      .pipe(implicit gameState => updateHitbox())
 
-  override def onChannelStart()(implicit gameState: GameState): GameState = gameState
+  override def onChannelStart()(implicit gameState: GameState): GameState =
+    gameState
+      .pipe(implicit gameState => updateHitbox())
 
-  override def onChannelUpdate()(implicit gameState: GameState): GameState = gameState
+  override def onChannelUpdate()(implicit gameState: GameState): GameState =
+    gameState
+      .pipe(implicit gameState => updateHitbox())
 
   override def onInactiveStart()(implicit gameState: GameState): GameState = gameState
 
@@ -32,14 +42,5 @@ case class SlashAbility(state: AbilityState) extends Ability {
 
 object SlashAbility {
   def apply(id: AbilityId, creatureId: CreatureId): Ability =
-    new SlashAbility(
-      AbilityState(
-        id = id,
-        creatureId = creatureId,
-        attack = None, // TODO
-        projectiles = None,
-        stageTimer = SimpleTimer(time = Float.MaxValue),
-        stage = AbilityStage.Inactive
-      )
-    )
+    new SlashAbility(AbilityState(id = id, creatureId = creatureId, attack = Some(Attack(Vec2(0,1), Hitbox(Vec2(0,0), 1, 1, 0, 1)))))
 }
