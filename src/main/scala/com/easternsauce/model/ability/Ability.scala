@@ -28,11 +28,10 @@ trait Ability {
   val activeAnimationLooping: Boolean = false
   val channelAnimationLooping: Boolean = false
 
-  val attack: Option[Attack] = None
-
   val attackRange: Float = 1.8f
 
-  implicit val id: AbilityId = state.id
+  implicit def id: AbilityId = state.id
+  implicit def creatureId: CreatureId = state.creatureId
 
   def width: Float = textureWidth.toFloat * scale / Constants.PPM
   def height: Float = textureHeight.toFloat * scale / Constants.PPM
@@ -55,7 +54,22 @@ trait Ability {
 
   def runStageLogic()(implicit gameState: GameState): GameState =
     state.stage match {
-      case AbilityStage.Inactive => gameState
+      case AbilityStage.Inactive =>
+        if (state.justPerformed)
+          onChannelStart()
+            .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(false)))
+            .pipe(
+              implicit gameState =>
+                modifyAbility(
+                  _.modify(_.state.stage)
+                    .setTo(AbilityStage.Channel)
+                    .modify(_.state.stageTimer)
+                    .using(_.restart())
+                    .modify(_.state.stageTimer)
+                    .using(_.restart())
+                )
+            )
+        else gameState
       case AbilityStage.Channel =>
         gameState
           .pipe(
@@ -108,30 +122,19 @@ trait Ability {
   def perform()(implicit gameState: GameState): GameState = {
     if (ableToPerform)
       gameState
-        .pipe(
-          implicit gameState =>
-            modifyAbility(
-              _.modify(_.state.stage)
-                .setTo(AbilityStage.Channel)
-                .modify(_.state.stageTimer)
-                .using(_.restart())
-                .modify(_.state.stageTimer)
-                .using(_.restart())
-            )
-        )
-        .pipe(implicit gameState => onChannelStart())
+        .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(true)))
 //        .pipe(implicit gameState => state.attack.map(_.onChannelStart()).getOrElse(gameState))
     else gameState
   }
 
   def updateHitbox()(implicit gameState: GameState): GameState = {
-    if (attack.nonEmpty) {
-      val dirVector = state.attack.get.dirVector match {
+    if (state.dirVector.nonEmpty) {
+      val dirVector = state.dirVector.get match {
         case dirVector if dirVector.length <= 0 => Vec2(1, 0).normal
         case dirVector                          => dirVector
       }
 
-      val creature = getCreature(state.creatureId)
+      val creature = getCreature
 
       val theta = new Vector2(dirVector.x, dirVector.y).angleDeg()
 
@@ -142,11 +145,19 @@ trait Ability {
       val attackRectY = attackShiftY + creature.state.pos.y
 
       modifyAbility(
-        _.modify(_.state.attack.each.hitbox).setTo(
-          Hitbox(pos = Vec2(attackRectX, attackRectY), width = width, height = height, rotation = theta, scale = scale)
+        _.modify(_.state.hitbox).setTo(
+          Some(
+            Hitbox(
+              pos = Vec2(attackRectX, attackRectY),
+              width = width,
+              height = height,
+              rotation = theta,
+              scale = scale
+            )
+          )
         )
       )
-    } else gameState
+    } else throw new RuntimeException("trying to update hitbox without setting dir vector!")
 
   }
 

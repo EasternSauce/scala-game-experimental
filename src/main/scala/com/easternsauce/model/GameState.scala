@@ -40,13 +40,13 @@ object GameState {
   def modifyCreature(action: Creature => Creature)(implicit creatureId: CreatureId, gameState: GameState): GameState =
     modify(gameState)(_.creatures.at(creatureId)).using(action)
 
-  def getCreature(creatureId: CreatureId)(implicit gameState: GameState): Creature =
+  def getCreature(implicit creatureId: CreatureId, gameState: GameState): Creature =
     gameState.creatures(creatureId)
 
   def modifyAbility(action: Ability => Ability)(implicit abilityId: AbilityId, gameState: GameState): GameState =
     modify(gameState)(_.abilities.at(abilityId)).using(action)
 
-  def getAbility(abilityId: AbilityId)(implicit gameState: GameState): Ability =
+  def getAbility(implicit abilityId: AbilityId, gameState: GameState): Ability =
     gameState.abilities(abilityId)
 
   def modifyProjectile(
@@ -54,7 +54,7 @@ object GameState {
   )(implicit projectileId: ProjectileId, gameState: GameState): GameState =
     modify(gameState)(_.projectiles.at(projectileId)).using(action)
 
-  def getProjectile(projectileId: ProjectileId)(implicit gameState: GameState): Projectile =
+  def getProjectile(implicit projectileId: ProjectileId, gameState: GameState): Projectile =
     gameState.projectiles(projectileId)
 
   //  def modifyAttack(action: Attack => Attack)(implicit attackId: AttackId, gameState: GameState): GameState =
@@ -84,17 +84,31 @@ object GameState {
 
     val movingDir = Vec2(movingDirX, movingDirY)
 
-    val wasMoving = getCreature(gameState.currentPlayerId).isMoving
+    implicit val playerId: CreatureId = gameState.currentPlayerId
+
+    val wasMoving = getCreature.isMoving
     val isMoving = movingDir != Vec2(0, 0)
 
     val mouseClicked = Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) // TODO: this is temp
 
+    val mouseX = Gdx.input.getX
+    val mouseY = Gdx.input.getY
+
+    val centerX = Gdx.graphics.getWidth / 2f
+    val centerY = Gdx.graphics.getHeight / 2f
+
+    val mouseDirVector = Vec2(mouseX - centerX, (Gdx.graphics.getHeight - mouseY) - centerY).normal
+
     gameState
       .pipe(implicit gameState => runMovingLogic(wasMoving, isMoving, movingDir))
-      .pipe(
-        implicit gameState =>
-          if (mouseClicked) getAbility(AbilityId.derive(gameState.currentPlayerId, "slash")).perform() else gameState
-      )
+      .pipe(implicit gameState => {
+        implicit val abilityId: AbilityId = AbilityId.derive(gameState.currentPlayerId, "slash")
+        if (mouseClicked) {
+          getAbility
+            .perform()
+            .pipe(implicit gameState => modifyAbility(_.modify(_.state.dirVector).setTo(Some(mouseDirVector))))
+        } else gameState
+      })
 
   }
 
@@ -110,21 +124,22 @@ object GameState {
   private def runMovingLogic(wasMoving: Boolean, isMoving: Boolean, movingDir: Vec2)(implicit
     gameState: GameState
   ): GameState = {
+    implicit val playerId: CreatureId = gameState.currentPlayerId
     gameState
       .pipe(
         implicit gameState =>
           (wasMoving, isMoving) match {
             case (false, true) =>
-              getCreature(gameState.currentPlayerId).startMoving()
+              getCreature.startMoving()
             case (true, false) =>
-              getCreature(gameState.currentPlayerId).stopMoving()
+              getCreature.stopMoving()
             case _ => gameState
 
           }
       )
       .pipe(
         implicit gameState =>
-          if (isMoving) getCreature(gameState.currentPlayerId).moveInDir(movingDir)
+          if (isMoving) getCreature.moveInDir(movingDir)
           else gameState
       )
   }
@@ -136,10 +151,14 @@ object GameState {
       //    case OnActiveStartAction(abilityId) =>State {implicit gameState => (ability(abilityId).onActiveStart(), List())}
       //    case OnActiveUpdateAction(abilityId) =>State {implicit gameState => (ability(abilityId).onActiveUpdate(), List())}
       case AbilityUpdateAction(abilityId, delta) =>
-        State { implicit gameState => (getAbility(abilityId).update(delta), List()) }
-      case CreatureInitAction(creatureId) => State { implicit gameState => (getCreature(creatureId).init(), List()) }
+        implicit val _abilityId: AbilityId = abilityId
+        State { implicit gameState => (getAbility.update(delta), List()) }
+      case CreatureInitAction(creatureId) =>
+        implicit val _creatureId: CreatureId = creatureId
+        State { implicit gameState => (getCreature.init(), List()) }
       case CreatureUpdateAction(creatureId, delta) =>
-        State { implicit gameState => (getCreature(creatureId).update(delta), List()) }
+        implicit val _creatureId: CreatureId = creatureId
+        State { implicit gameState => (getCreature.update(delta), List()) }
 
     }
   }

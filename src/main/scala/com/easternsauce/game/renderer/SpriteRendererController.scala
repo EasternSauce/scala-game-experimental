@@ -15,8 +15,7 @@ object SpriteRendererController {
       gameState.creatures.keys.map(creatureId => creatureId -> CreatureRenderer(creatureId)).toMap
     creatureSpriteRenderers.values.foreach(_.init(atlas))
 
-    abilitySpriteRenderers =
-      gameState.abilities.keys.map(abilityId => abilityId -> AbilityRenderer(abilityId)).toMap
+    abilitySpriteRenderers = gameState.abilities.keys.map(abilityId => abilityId -> AbilityRenderer(abilityId)).toMap
     abilitySpriteRenderers.values.foreach(_.init(atlas))
   }
 
@@ -30,10 +29,10 @@ object SpriteRendererController {
   }
 
   def renderAliveEntities(batch: SpriteBatch, debugEnabled: Boolean)(implicit gameState: GameState): Unit = {
-    gameState.creatures.filter { case (_, creature) => creature.isAlive }.keys.foreach { creatureId =>
+    gameState.creatures.filter { case (_, creature) => creature.isAlive }.keys.foreach { implicit creatureId =>
       if (
         creatureSpriteRenderers.contains(creatureId) &&
-        getCreature(creatureId).state.areaId == gameState.currentAreaId
+        getCreature.state.areaId == gameState.currentAreaId
       ) {
         creatureSpriteRenderers(creatureId).render(batch)
       }

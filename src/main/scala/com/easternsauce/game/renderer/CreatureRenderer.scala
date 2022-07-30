@@ -7,6 +7,7 @@ import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ids.CreatureId
 
 case class CreatureRenderer(creatureId: CreatureId) {
+  implicit val _creatureId: CreatureId = creatureId
   var sprite: Sprite = _
 
   var facingTextures: Array[TextureRegion] = _
@@ -69,11 +70,11 @@ case class CreatureRenderer(creatureId: CreatureId) {
   def update()(implicit gameState: GameState): Unit = {
 
     val texture =
-      if (!getCreature(creatureId).isMoving) facingTexture(gameState, getCreature(creatureId).facingDirection)
-      else runningAnimation(getCreature(creatureId).facingDirection)
+      if (!getCreature.isMoving) facingTexture(gameState, getCreature.facingDirection)
+      else runningAnimation(getCreature.facingDirection)
     sprite.setRegion(texture)
-    sprite.setCenter(getCreature(creatureId).state.pos.x, getCreature(creatureId).state.pos.y)
-    sprite.setSize(getCreature(creatureId).width, getCreature(creatureId).height)
+    sprite.setCenter(getCreature.state.pos.x, getCreature.state.pos.y)
+    sprite.setSize(getCreature.width, getCreature.height)
 
 //    if (creature(creatureId).isAlive && creature(creatureId).isEffectActive("immunityFrames")) {
 //      val alpha = creature(creatureId).params.effects("immunityFrames").remainingTime * 35f

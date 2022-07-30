@@ -11,12 +11,7 @@ import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.game.renderer.SpriteRendererController
-import com.easternsauce.model.GameState.{
-  getCreature,
-  handleCreaturePhysicsUpdate,
-  handlePlayerMovementInput,
-  performAction
-}
+import com.easternsauce.model.GameState.{getCreature, handleCreaturePhysicsUpdate, handlePlayerMovementInput, performAction}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
 import com.easternsauce.model.creature.{Player, Skeleton}
@@ -39,7 +34,7 @@ object PlayScreen extends Screen {
 
   var tiledMapRenderer: OrthogonalTiledMapRenderer = _
 
-  val debugEnabled = true
+  val debugEnabled = false
 
   val b2DebugRenderer: Box2DDebugRenderer = new Box2DDebugRenderer()
 
@@ -94,8 +89,10 @@ object PlayScreen extends Screen {
 
     implicit val gs: GameState = gameState.aref.get()
 
-    val playerPosX = getCreature(CreatureId("player")).state.pos.x
-    val playerPosY = getCreature(CreatureId("player")).state.pos.y
+    implicit val playerId: CreatureId = CreatureId("player")
+
+    val playerPosX = getCreature.state.pos.x
+    val playerPosY = getCreature.state.pos.y
 
     camPosition.x = (math.floor(playerPosX * 100) / 100).toFloat
     camPosition.y = (math.floor(playerPosY * 100) / 100).toFloat
@@ -156,11 +153,9 @@ object PlayScreen extends Screen {
     SpriteRendererController.update()(gameState.aref.get())
     PhysicsEngineController.update()(gameState.aref.get())
 
-
   }
 
   def updateState(delta: Float): Unit = {
-
     val gs: GameState = gameState.aref.get()
 
     val playerDirectionInput: Map[WorldDirection, Boolean] = {

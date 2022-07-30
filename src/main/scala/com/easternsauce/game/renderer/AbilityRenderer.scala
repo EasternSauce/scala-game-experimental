@@ -1,12 +1,14 @@
 package com.easternsauce.game.renderer
 
-import com.badlogic.gdx.graphics.g2d.{Animation, Sprite, SpriteBatch, TextureAtlas, TextureRegion}
+import com.badlogic.gdx.graphics.g2d._
 import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.getAbility
-import com.easternsauce.model.ability.{AbilityStage, AbilityState}
+import com.easternsauce.model.ability.AbilityStage
 import com.easternsauce.model.ids.AbilityId
 
 case class AbilityRenderer(abilityId: AbilityId) {
+  implicit val _abilityId: AbilityId = abilityId
+
   var sprite: Sprite = _
 
   var channelAnimation: Animation[TextureRegion] = _
@@ -18,60 +20,71 @@ case class AbilityRenderer(abilityId: AbilityId) {
   def init(atlas: TextureAtlas)(implicit gameState: GameState): Unit = {
     sprite = new Sprite()
 
-    val ability = getAbility(abilityId)(gameState)
+    channelTextureRegion = atlas.findRegion(getAbility.channelSpriteType)
+    activeTextureRegion = atlas.findRegion(getAbility.activeSpriteType)
 
-    channelTextureRegion = atlas.findRegion(ability.channelSpriteType)
-    activeTextureRegion = atlas.findRegion(ability.activeSpriteType)
-
-    val channelFrames = for { i <- (0 until ability.channelFrameCount).toArray } yield {
-      new TextureRegion(channelTextureRegion, i * ability.textureWidth, 0, ability.textureWidth, ability.textureHeight)
+    val channelFrames = for { i <- (0 until getAbility.channelFrameCount).toArray } yield {
+      new TextureRegion(
+        channelTextureRegion,
+        i * getAbility.textureWidth,
+        0,
+        getAbility.textureWidth,
+        getAbility.textureHeight
+      )
     }
-    channelAnimation = new Animation[TextureRegion](ability.channelFrameDuration, channelFrames: _*)
+    channelAnimation = new Animation[TextureRegion](getAbility.channelFrameDuration, channelFrames: _*)
 
-    val activeFrames = for { i <- (0 until ability.activeFrameCount).toArray } yield {
-      new TextureRegion(activeTextureRegion, i * ability.textureWidth, 0, ability.textureWidth, ability.textureHeight)
+    val activeFrames = for { i <- (0 until getAbility.activeFrameCount).toArray } yield {
+      new TextureRegion(
+        activeTextureRegion,
+        i * getAbility.textureWidth,
+        0,
+        getAbility.textureWidth,
+        getAbility.textureHeight
+      )
     }
-    activeAnimation = new Animation[TextureRegion](ability.activeFrameDuration, activeFrames: _*)
+    activeAnimation = new Animation[TextureRegion](getAbility.activeFrameDuration, activeFrames: _*)
   }
 
   def update()(implicit gameState: GameState): Unit = {
-    val ability = getAbility(abilityId)(gameState)
 
     def updateSprite(texture: TextureRegion): Unit = {
-      val ability = getAbility(abilityId)(gameState)
+      if (getAbility.state.hitbox.nonEmpty) {
+        val hitbox = getAbility.state.hitbox.get
 
-      if (ability.state.attack.nonEmpty) {
         sprite.setRegion(texture)
-        sprite.setSize(ability.state.attack.get.hitbox.width, ability.state.attack.get.hitbox.height)
-        sprite.setCenter(ability.state.attack.get.hitbox.pos.x, ability.state.attack.get.hitbox.pos.y)
+        sprite.setSize(hitbox.width, hitbox.height)
+        sprite.setCenter(hitbox.pos.x, hitbox.pos.y)
         sprite.setOriginCenter()
-        sprite.setRotation(ability.state.attack.get.hitbox.rotation)
-        sprite.setScale(ability.state.attack.get.hitbox.scale)
+        sprite.setRotation(hitbox.rotation)
+        sprite.setScale(hitbox.scale)
+      } else {
+        throw new RuntimeException(
+          "cannot update sprite without filling in hitbox information! dir vector for ability probably not set"
+        )
       }
 
     }
 
-    if (ability.state.stage == AbilityStage.Channel) {
+    if (getAbility.state.stage == AbilityStage.Channel) {
 
       val texture =
-        channelAnimation.getKeyFrame(ability.state.stageTimer.time, ability.channelAnimationLooping)
+        channelAnimation.getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
       updateSprite(texture)
 
     }
 
-    if (ability.state.stage == AbilityStage.Active) {
+    if (getAbility.state.stage == AbilityStage.Active) {
 
       val texture =
-        activeAnimation.getKeyFrame(ability.state.stageTimer.time, ability.channelAnimationLooping)
+        activeAnimation.getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
       updateSprite(texture)
     }
 
   }
 
   def render(batch: SpriteBatch)(implicit gameState: GameState): Unit = {
-    val ability = getAbility(abilityId)(gameState)
-
-    if (ability.state.stage == AbilityStage.Channel || ability.state.stage == AbilityStage.Active) {
+    if (getAbility.state.stage == AbilityStage.Channel || getAbility.state.stage == AbilityStage.Active) {
       sprite.draw(batch)
     }
   }

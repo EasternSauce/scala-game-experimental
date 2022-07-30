@@ -1,5 +1,5 @@
 package com.easternsauce.model.ability
-import com.easternsauce.model.{GameState, Vec2}
+import com.easternsauce.model.GameState
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 
 import scala.util.chaining.scalaUtilChainingOps
@@ -18,13 +18,16 @@ case class SlashAbility(state: AbilityState) extends Ability {
   val channelFrameDuration: Float = 0.05f
   val activeFrameDuration: Float = 0.05f
 
+  override val scale: Float = 1.4f
+
   override def onActiveStart()(implicit gameState: GameState): GameState =
     gameState
       .pipe(implicit gameState => updateHitbox())
 
-  override def onActiveUpdate()(implicit gameState: GameState): GameState =
+  override def onActiveUpdate()(implicit gameState: GameState): GameState = {
     gameState
       .pipe(implicit gameState => updateHitbox())
+  }
 
   override def onChannelStart()(implicit gameState: GameState): GameState =
     gameState
@@ -42,5 +45,5 @@ case class SlashAbility(state: AbilityState) extends Ability {
 
 object SlashAbility {
   def apply(id: AbilityId, creatureId: CreatureId): Ability =
-    new SlashAbility(AbilityState(id = id, creatureId = creatureId, attack = Some(Attack(Vec2(0,1), Hitbox(Vec2(0,0), 1, 1, 0, 1)))))
+    new SlashAbility(AbilityState(id = id, creatureId = creatureId))
 }
