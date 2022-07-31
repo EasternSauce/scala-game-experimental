@@ -8,26 +8,26 @@ import scala.annotation.tailrec
 import scala.collection.immutable.Map
 
 object Astar {
-  def generatePathingGraph(terrain: PhysicsWorld): Map[Vec2, PathingNode] = {
+  def generatePathingGraph(terrain: PhysicsWorld): Map[TilePos, PathingNode] = {
     val elems =
       for (x <- 0 until terrain.widthInTiles; y <- 0 until terrain.heightInTiles)
-        yield Vec2(x, y) -> PathingNode(Vec2(x, y), terrain.clearances.getOrElse(Vec2(x, y), Int.MaxValue))
+        yield TilePos(x, y) -> PathingNode(TilePos(x, y), terrain.clearances.getOrElse(TilePos(x, y), Int.MaxValue))
 
-    val pathingNodes: Map[Vec2, PathingNode] = elems.toMap
+    val pathingNodes: Map[TilePos, PathingNode] = elems.toMap
 
     def tryAddingEdge(
-      pathingNodes: Map[Vec2, PathingNode],
+      pathingNodes: Map[TilePos, PathingNode],
       terrain: PhysicsWorld,
       fromX: Int,
       fromY: Int,
       toX: Int,
       toY: Int,
       weight: Float
-    ): Map[Vec2, PathingNode] = {
+    ): Map[TilePos, PathingNode] = {
       if (0 <= toY && toY < terrain.heightInTiles && 0 <= toX && toX < terrain.widthInTiles) {
-        if (terrain.traversables(Vec2(fromX, fromY)) && terrain.traversables(Vec2(toX, toY))) {
-          val targetNode = pathingNodes(Vec2(toX, toY))
-          pathingNodes.updated(Vec2(fromX, fromY), pathingNodes(Vec2(fromX, fromY)).addEdge(weight, targetNode))
+        if (terrain.traversables(TilePos(fromX, fromY)) && terrain.traversables(TilePos(toX, toY))) {
+          val targetNode = pathingNodes(TilePos(toX, toY))
+          pathingNodes.updated(TilePos(fromX, fromY), pathingNodes(TilePos(fromX, fromY)).addEdge(weight, targetNode))
         } else pathingNodes
       } else pathingNodes
     }
@@ -47,26 +47,26 @@ object Astar {
           .pipe(tryAddingEdge(_, terrain, x, y, x, y + 1, straightWeight))
           .pipeIf(
             x - 1 >= 0 && y - 1 >= 0
-              && terrain.traversables(Vec2(x - 1, y)) && terrain.traversables(Vec2(x, y - 1))
+              && terrain.traversables(TilePos(x - 1, y)) && terrain.traversables(TilePos(x, y - 1))
           )(tryAddingEdge(_, terrain, x, y, x - 1, y - 1, diagonalWeight))
           .pipeIf(
             x + 1 < terrain.widthInTiles && y - 1 >= 0
-              && terrain.traversables(Vec2(x + 1, y)) && terrain.traversables(Vec2(x, y - 1))
+              && terrain.traversables(TilePos(x + 1, y)) && terrain.traversables(TilePos(x, y - 1))
           )(tryAddingEdge(_, terrain, x, y, x + 1, y - 1, diagonalWeight))
           .pipeIf(
             x - 1 >= 0 && y + 1 < terrain.heightInTiles
-              && terrain.traversables(Vec2(x - 1, y)) && terrain.traversables(Vec2(x, y + 1))
+              && terrain.traversables(TilePos(x - 1, y)) && terrain.traversables(TilePos(x, y + 1))
           )(tryAddingEdge(_, terrain, x, y, x - 1, y + 1, diagonalWeight))
           .pipeIf(
             x + 1 < terrain.widthInTiles && y + 1 < terrain.heightInTiles
-              && terrain.traversables(Vec2(x + 1, y)) && terrain.traversables(Vec2(x, y + 1))
+              && terrain.traversables(TilePos(x + 1, y)) && terrain.traversables(TilePos(x, y + 1))
           )(tryAddingEdge(_, terrain, x, y, x + 1, y + 1, diagonalWeight))
     }
 
   }
 
   // caution: heavy computational load!
-  def findPath(terrain: PhysicsWorld, startPos: Vec2, finishPos: Vec2, capability: Int): List[Vec2] = {
+  def findPath(terrain: PhysicsWorld, startPos: TilePos, finishPos: TilePos, capability: Int): List[Vec2] = {
     val startTilePos = terrain.getClosestTile(startPos)
     val finishTilePos = terrain.getClosestTile(finishPos)
 
@@ -88,7 +88,7 @@ object Astar {
     def traverse(astarState: AstarState): AstarState = {
       if (astarState.openSet.nonEmpty && !astarState.foundPath) {
         val currentNode = astarState.astarGraph(astarState.openSet.minBy {
-          case Vec2(x, y) => astarState.astarGraph(Vec2(x, y)).f
+          case TilePos(x, y) => astarState.astarGraph(TilePos(x, y)).f
         })
         val resultingAstarState = if (currentNode.pos == finishTilePos) {
           astarState.modify(_.foundPath).setTo(true)
@@ -113,8 +113,8 @@ object Astar {
 
     def processNeighbor(
       astarState: AstarState,
-      originNodePos: Vec2,
-      neighborPos: Vec2,
+      originNodePos: TilePos,
+      neighborPos: TilePos,
       distanceBetweenNodes: Float
     ): AstarState = {
       if (
@@ -162,7 +162,7 @@ object Astar {
 
     val lastNode = result.astarGraph(result.finishPos)
 
-    def reconstructPath(lastNode: AstarNode): List[Vec2] = {
+    def reconstructPath(lastNode: AstarNode): List[TilePos] = {
       if (lastNode.parent.nonEmpty) {
         lastNode.pos :: reconstructPath(result.astarGraph(lastNode.parent.get))
       } else List()
@@ -171,17 +171,17 @@ object Astar {
     reconstructPath(lastNode).reverse.map(terrain.getTileCenter)
   }
 
-  def getAstarGraph(pathingGraph: Map[Vec2, PathingNode]): Map[Vec2, AstarNode] = {
+  def getAstarGraph(pathingGraph: Map[TilePos, PathingNode]): Map[TilePos, AstarNode] = {
     pathingGraph.view.mapValues(AstarNode(_)).toMap
   }
 
-  def calculateHeuristic(startPos: Vec2, finishPos: Vec2): Double = {
+  def calculateHeuristic(startPos: TilePos, finishPos: TilePos): Double = {
     (Math.abs(finishPos.x - startPos.x) + Math.abs(finishPos.y - startPos.y)) * 10
   }
 
 }
 
-case class PathingNode(pos: Vec2, clearance: Int, outgoingEdges: List[PathingEdge] = List()) {
+case class PathingNode(pos: TilePos, clearance: Int, outgoingEdges: List[PathingEdge] = List()) {
   def addEdge(weight: Float, node: PathingNode): PathingNode = {
     val newEdge = PathingEdge(weight, node.pos)
     PathingNode(pos, clearance, newEdge :: outgoingEdges)
@@ -190,22 +190,22 @@ case class PathingNode(pos: Vec2, clearance: Int, outgoingEdges: List[PathingEdg
   override def toString: String = "(" + pos.x + ", " + pos.y + ":" + outgoingEdges.size + ")"
 }
 
-case class PathingEdge(weight: Float, neighborPos: Vec2)
+case class PathingEdge(weight: Float, neighborPos: TilePos)
 
 case class AstarNode(
   pathingNode: PathingNode,
-  parent: Option[Vec2] = None,
+  parent: Option[TilePos] = None,
   f: Double = Double.MaxValue,
   g: Double = Double.MaxValue,
   h: Double = Double.MaxValue
 ) {
-  def pos: Vec2 = pathingNode.pos
+  def pos: TilePos = pathingNode.pos
 }
 
 case class AstarState(
-  astarGraph: Map[Vec2, AstarNode],
-  openSet: Set[Vec2],
-  closedSet: Set[Vec2],
-  finishPos: Vec2,
+  astarGraph: Map[TilePos, AstarNode],
+  openSet: Set[TilePos],
+  closedSet: Set[TilePos],
+  finishPos: TilePos,
   foundPath: Boolean
 )

@@ -1,6 +1,6 @@
 package com.easternsauce.model.creature
 
-import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
+import com.easternsauce.model.ids.{AreaId, CreatureId}
 import com.easternsauce.model.{SimpleTimer, Vec2}
 
 case class CreatureState(
@@ -10,6 +10,5 @@ case class CreatureState(
   animationTimer: SimpleTimer,
   areaId: AreaId,
   currentSpeed: Float,
-  actionDirVector: Vec2,
-  abilities: List[AbilityId]
+  actionDirVector: Vec2
 )

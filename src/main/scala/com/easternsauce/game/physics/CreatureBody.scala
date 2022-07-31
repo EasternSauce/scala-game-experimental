@@ -3,20 +3,23 @@ package com.easternsauce.game.physics
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.physics.box2d.Body
 import com.easternsauce.model.GameState
+import com.easternsauce.model.GameState.getCreature
 import com.easternsauce.model.ids.CreatureId
 
 case class CreatureBody(creatureId: CreatureId) {
   var b2Body: Body = _
 
-  def init(gameState: GameState, physicsWorld: PhysicsWorld): Unit = {
-    val creature = gameState.creatures(creatureId)
+  def init()(implicit gameState: GameState): Unit = {
+    implicit val _creatureId: CreatureId = creatureId
+    val physicsWorld = PhysicsEngineController.physicsWorlds(getCreature.state.areaId)
 
-    b2Body = B2BodyFactory.createCreatureB2body(world = physicsWorld.b2world, creatureBody = this, creature = creature)
+    b2Body =
+      B2BodyFactory.createCreatureB2body(world = physicsWorld.b2world, creatureBody = this, creature = getCreature)
 
-    if (!creature.isAlive) b2Body.getFixtureList.get(0).setSensor(true)
+    if (!getCreature.isAlive) b2Body.getFixtureList.get(0).setSensor(true)
   }
 
-  def update(gameState: GameState): Unit = {
+  def update()(implicit gameState: GameState): Unit = {
 
     val creature = gameState.creatures(creatureId)
 

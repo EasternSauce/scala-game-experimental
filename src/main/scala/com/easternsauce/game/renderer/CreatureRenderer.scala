@@ -75,22 +75,6 @@ case class CreatureRenderer(creatureId: CreatureId) {
     sprite.setRegion(texture)
     sprite.setCenter(getCreature.state.pos.x, getCreature.state.pos.y)
     sprite.setSize(getCreature.width, getCreature.height)
-
-//    if (creature(creatureId).isAlive && creature(creatureId).isEffectActive("immunityFrames")) {
-//      val alpha = creature(creatureId).params.effects("immunityFrames").remainingTime * 35f
-//      val colorComponent = 0.3f + 0.7f * (Math.sin(alpha).toFloat + 1f) / 2f
-//      sprite.setColor(1f, colorComponent, colorComponent, 1f)
-//    } else {
-//      sprite.setColor(1, 1, 1, 1)
-//    }
-//
-//    if (!creature(creatureId).isAlive) {
-//      sprite.setOriginCenter()
-//      sprite.setRotation(90f)
-//    }
-//
-//    abilityComponentRenderers.foreach(_.update(gameState))
-
   }
 
   def render(batch: SpriteBatch): Unit = {

@@ -86,11 +86,9 @@ trait Ability {
                       )
                   )
                   .pipe(implicit gameState => onActiveStart())
-//                  .pipe(implicit gameState => state.attack.map(_.onActiveStart()).getOrElse(gameState))
               else gameState
           )
           .pipe(implicit gameState => onChannelUpdate())
-//          .pipe(implicit gameState => state.attack.map(_.onChannelUpdate()).getOrElse(gameState))
       case AbilityStage.Active =>
         gameState
           .pipe(
@@ -110,7 +108,6 @@ trait Ability {
               else gameState
           )
           .pipe(implicit gameState => onActiveUpdate())
-//          .pipe(implicit gameState => state.attack.map(_.onActiveUpdate()).getOrElse(gameState))
     }
 
   def update(delta: Float)(implicit gameState: GameState): GameState = {
@@ -123,7 +120,6 @@ trait Ability {
     if (ableToPerform)
       gameState
         .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(true)))
-//        .pipe(implicit gameState => state.attack.map(_.onChannelStart()).getOrElse(gameState))
     else gameState
   }
 

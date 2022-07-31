@@ -1,5 +1,6 @@
 package com.easternsauce.game
 
+import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
@@ -11,7 +12,7 @@ import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.game.renderer.SpriteRendererController
-import com.easternsauce.model.GameState.{getCreature, handleCreaturePhysicsUpdate, handlePlayerMovementInput, performAction}
+import com.easternsauce.model.GameState.{GameStateTransition, getCreature, handleCreaturePhysicsUpdate, handlePlayerMovementInput, performAction}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
 import com.easternsauce.model.creature.{Player, Skeleton}
@@ -34,7 +35,7 @@ object PlayScreen extends Screen {
 
   var tiledMapRenderer: OrthogonalTiledMapRenderer = _
 
-  val debugEnabled = false
+  val debugEnabled = true
 
   val b2DebugRenderer: Box2DDebugRenderer = new Box2DDebugRenderer()
 
@@ -61,20 +62,18 @@ object PlayScreen extends Screen {
           CreatureId("skellie") -> Skeleton(id = CreatureId("skellie"), areaId = AreaId("area1"), pos = Vec2(24, 4))
         ),
         currentPlayerId = CreatureId("player"),
-        currentAreaId = AreaId("area1")
+        currentAreaId = AreaId("area1"),
+        currentAreaInitialized = false
       )
-    )
-
-    // init creatures
-    gameState.commit(
-      gameState.aref.get().creatures.keys.toList.foldMap(creatureId => performAction(CreatureInitAction(creatureId)))
     )
 
     tiledMapRenderer =
       new OrthogonalTiledMapRenderer(maps(gameState.aref.get().currentAreaId), Constants.MapScale / Constants.PPM)
 
-    SpriteRendererController.init(atlas, maps)(gameState.aref.get())
-    PhysicsEngineController.init(gameState = gameState.aref.get(), maps)
+    implicit val gs: GameState = gameState.aref.get()
+
+    SpriteRendererController.init(atlas, maps)
+    PhysicsEngineController.init(maps)
 
   }
 
@@ -144,19 +143,29 @@ object PlayScreen extends Screen {
 
   }
 
+  def processExternalEvents()(implicit gameState: GameState, events: List[ExternalEvent]): Unit = {
+    events.foreach {
+      case AbilityBodyCreateEvent(abilityId)           => PhysicsEngineController.addAbilityBody(abilityId)
+      case AbilityBodyActivateEvent(abilityId)         => PhysicsEngineController.activateAbilityBody(abilityId)
+      case AbilitySpriteRendererCreateEvent(abilityId) => SpriteRendererController.addRenderer(abilityId)
+
+    }
+  }
+
   def update(delta: Float): Unit = {
     tiledMapRenderer.setView(worldCamera)
     updateCamera()
 
-    updateState(delta)
+    implicit val (gameState, events) = commitUpdatedState(delta)
 
-    SpriteRendererController.update()(gameState.aref.get())
-    PhysicsEngineController.update()(gameState.aref.get())
+    processExternalEvents()
+
+    SpriteRendererController.update()
+    PhysicsEngineController.update()
 
   }
 
-  def updateState(delta: Float): Unit = {
-    val gs: GameState = gameState.aref.get()
+  def commitUpdatedState(delta: Float): (GameState, List[ExternalEvent]) = {
 
     val playerDirectionInput: Map[WorldDirection, Boolean] = {
       Map(
@@ -166,13 +175,41 @@ object PlayScreen extends Screen {
         WorldDirection.Up -> Gdx.input.isKeyPressed(Input.Keys.W)
       )
     }
+    implicit val gs: GameState = gameState.aref.get()
 
     gameState.commit(
-      gs.creatures.keys.toList.foldMap(handleCreaturePhysicsUpdate) |+|
-        gs.creatures.keys.toList.foldMap(id => performAction(CreatureUpdateAction(id, delta))) |+|
-        gs.abilities.keys.toList.foldMap(id => performAction(AbilityUpdateAction(id, delta))) |+|
-        State { implicit gameState => (handlePlayerMovementInput(playerDirectionInput), List()) }
+      updateCreaturePhysics() |+| // TODO: change to action
+        updateCreatures(delta) |+|
+        updateAbilities(delta) |+|
+        updateAreas() |+|
+        updateBasedOnPlayerInput(playerDirectionInput) // TODO: change to action
     )
+  }
+
+  private def updateBasedOnPlayerInput(playerDirectionInput: Map[WorldDirection, Boolean]): GameStateTransition = {
+    State { implicit gameState =>
+      (handlePlayerMovementInput(playerDirectionInput), List())
+    }
+  }
+
+  private def updateAreas()(implicit gameState: GameState): GameStateTransition = {
+    if (!gameState.currentAreaInitialized) {
+      performAction(AreaInitializeAction(gameState.currentAreaId))
+    } else {
+      Monoid[GameStateTransition].empty
+    }
+  }
+
+  private def updateAbilities(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+    gameState.abilities.keys.toList.foldMap(id => performAction(AbilityUpdateAction(id, delta)))
+  }
+
+  private def updateCreaturePhysics()(implicit gameState: GameState): GameStateTransition = {
+    gameState.creatures.keys.toList.foldMap(handleCreaturePhysicsUpdate)
+  }
+
+  private def updateCreatures(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+    gameState.creatures.keys.toList.foldMap(id => performAction(CreatureUpdateAction(id, delta)))
   }
 
   override def resize(width: Int, height: Int): Unit = {

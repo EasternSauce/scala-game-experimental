@@ -4,10 +4,10 @@ import cats._
 import cats.data.State
 import cats.implicits._
 import com.badlogic.gdx.{Gdx, Input}
-import com.easternsauce.game.ExternalEvent
 import com.easternsauce.game.physics.PhysicsEngineController
+import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyCreateEvent, AbilitySpriteRendererCreateEvent, ExternalEvent}
 import com.easternsauce.model.WorldDirection.WorldDirection
-import com.easternsauce.model.ability.{Ability, Projectile}
+import com.easternsauce.model.ability.{Ability, AbilityStage, Projectile}
 import com.easternsauce.model.creature.Creature
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId, ProjectileId}
 import com.softwaremill.quicklens._
@@ -19,8 +19,9 @@ case class GameState(
   abilities: Map[AbilityId, Ability] = Map(),
   projectiles: Map[ProjectileId, Projectile] = Map(),
   currentPlayerId: CreatureId,
-  currentAreaId: AreaId
-) {}
+  currentAreaId: AreaId,
+  currentAreaInitialized: Boolean
+)
 
 object GameState {
   type GameStateTransition = State[GameState, List[ExternalEvent]]
@@ -57,17 +58,6 @@ object GameState {
   def getProjectile(implicit projectileId: ProjectileId, gameState: GameState): Projectile =
     gameState.projectiles(projectileId)
 
-  //  def modifyAttack(action: Attack => Attack)(implicit attackId: AttackId, gameState: GameState): GameState =
-//    modify(gameState)(_.attacks.at(attackId)).using(action)
-
-//  def modifyAttack(action: AttackId => GameStateTransition)(implicit attackId: AttackId): GameStateTransition = {
-//    action(attackId)
-////    State { implicit gameState => (modify(gameState)(_.attacks.at(attackId)).using(action), List()) }
-//  }
-//
-//  def attack(attackId: AttackId)(implicit gameState: GameState): Attack =
-//    gameState.attacks(attackId)
-
   def player(implicit gameState: GameState): Creature = gameState.creatures(gameState.currentPlayerId)
 
   def handlePlayerMovementInput(input: Map[WorldDirection, Boolean])(implicit gameState: GameState): GameState = {
@@ -82,7 +72,7 @@ object GameState {
       case _             => 0
     }
 
-    val movingDir = Vec2(movingDirX, movingDirY)
+    val movingDir = Vec2(movingDirX.toFloat, movingDirY.toFloat)
 
     implicit val playerId: CreatureId = gameState.currentPlayerId
 
@@ -121,7 +111,7 @@ object GameState {
     }
   }
 
-  private def runMovingLogic(wasMoving: Boolean, isMoving: Boolean, movingDir: Vec2)(implicit
+  def runMovingLogic(wasMoving: Boolean, isMoving: Boolean, movingDir: Vec2)(implicit
     gameState: GameState
   ): GameState = {
     implicit val playerId: CreatureId = gameState.currentPlayerId
@@ -146,19 +136,46 @@ object GameState {
 
   def performAction(gameStateAction: GameStateAction): GameStateTransition = {
     gameStateAction match {
-      //    case OnChannelStartAction(abilityId) => State {implicit gameState => (ability(abilityId).onChannelStart(), List())}
-      //    case OnChannelUpdateAction(abilityId) =>State {implicit gameState => (ability(abilityId).onChannelUpdate(), List())}
-      //    case OnActiveStartAction(abilityId) =>State {implicit gameState => (ability(abilityId).onActiveStart(), List())}
-      //    case OnActiveUpdateAction(abilityId) =>State {implicit gameState => (ability(abilityId).onActiveUpdate(), List())}
       case AbilityUpdateAction(abilityId, delta) =>
         implicit val _abilityId: AbilityId = abilityId
-        State { implicit gameState => (getAbility.update(delta), List()) }
-      case CreatureInitAction(creatureId) =>
-        implicit val _creatureId: CreatureId = creatureId
-        State { implicit gameState => (getCreature.init(), List()) }
+        State { implicit gameState =>
+          val events = if (
+            getAbility.state.stage == AbilityStage.Channel && getAbility.state.stageTimer.time > getAbility.channelTime
+          ) List(AbilityBodyActivateEvent(abilityId))
+          else List()
+          (getAbility.update(delta), events)
+        }
+      case CreatureInitAction(_) => Monoid[GameStateTransition].empty
+//        implicit val _creatureId: CreatureId = creatureId
+//        State { implicit gameState =>
+//          (
+//            getCreature.init(),
+//            getCreature.abilityNames
+//              .map(AbilityId.derive(creatureId, _))
+//              .flatMap(
+//                abilityId => List(AbilityBodyCreateEvent(abilityId), AbilitySpriteRendererCreateEvent(abilityId))
+//              )
+//          )
+//        }
       case CreatureUpdateAction(creatureId, delta) =>
         implicit val _creatureId: CreatureId = creatureId
         State { implicit gameState => (getCreature.update(delta), List()) }
+      case AreaInitializeAction(areaId) =>
+        State { implicit gameState =>
+          {
+            val creatureInits = gameState.creatures.values.filter(_.state.areaId == areaId).foldLeft(gameState) {
+              case (gameState, creature) => creature.init()(gameState)
+            }
+            val events: List[ExternalEvent] = gameState.creatures.values
+              .filter(_.state.areaId == areaId)
+              .flatMap(creature => creature.abilityNames.map(AbilityId.derive(creature.state.id, _)))
+              .toList
+              .flatMap(
+                abilityId => List(AbilityBodyCreateEvent(abilityId), AbilitySpriteRendererCreateEvent(abilityId))
+              )
+            (creatureInits.modify(_.currentAreaInitialized).setTo(true), events)
+          }
+        }
 
     }
   }
@@ -166,10 +183,7 @@ object GameState {
 
 sealed trait GameStateAction
 
-//case class OnChannelStartAction(abilityId: AbilityId) extends GameStateAction
-//case class OnChannelUpdateAction(abilityId: AbilityId) extends GameStateAction
-//case class OnActiveStartAction(abilityId: AbilityId) extends GameStateAction
-//case class OnActiveUpdateAction(abilityId: AbilityId) extends GameStateAction
 case class AbilityUpdateAction(abilityId: AbilityId, delta: Float) extends GameStateAction
 case class CreatureInitAction(creatureId: CreatureId) extends GameStateAction
 case class CreatureUpdateAction(creatureId: CreatureId, delta: Float) extends GameStateAction
+case class AreaInitializeAction(areaId: AreaId) extends GameStateAction

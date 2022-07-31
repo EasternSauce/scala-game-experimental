@@ -74,6 +74,24 @@ object B2BodyFactory {
     )
   }
 
+  def createAbilityB2body(
+    world: World,
+    abilityBody: AbilityBody,
+    posX: Float,
+    posY: Float,
+    vertices: Array[Float]
+  ): Body = {
+    createB2body(
+      world = world,
+      posX = posX,
+      posY = posY,
+      bodyType = BodyType.KinematicBody,
+      userData = abilityBody,
+      shape = Polygon(vertices),
+      isSensor = true
+    )
+  }
+
 }
 
 sealed abstract class BodyShape { def b2Shape(): Shape }

@@ -14,12 +14,11 @@ case class PhysicsWorld(map: TiledMap) {
 
   private val layer = map.getLayers.get(0).asInstanceOf[TiledMapTileLayer]
 
-  var traversables: Map[Vec2, Boolean] = Map()
-  var traversableWithMargins: Map[Vec2, Boolean] = Map()
-//  var traversableWithMargins: Array[Array[Boolean]] = _
-  var flyover: Map[Vec2, Boolean] = Map()
+  var traversables: Map[TilePos, Boolean] = Map()
+  var traversableWithMargins: Map[TilePos, Boolean] = Map()
+  var flyover: Map[TilePos, Boolean] = Map()
 
-  var clearances: Map[Vec2, Int] = Map()
+  var clearances: Map[TilePos, Int] = Map()
 
   val tileWidth: Float = layer.getTileWidth * Constants.MapScale / Constants.PPM
   val tileHeight: Float = layer.getTileHeight * Constants.MapScale / Constants.PPM
@@ -30,23 +29,23 @@ case class PhysicsWorld(map: TiledMap) {
   def widthInTiles: Int = layer.getWidth
   def heightInTiles: Int = layer.getHeight
 
-  var pathingGraph: Map[Vec2, PathingNode] = _
+  var pathingGraph: Map[TilePos, PathingNode] = _
 
   def init(): Unit = {
     for {
       x <- 0 until widthInTiles
       y <- 0 until heightInTiles
-    } traversables = traversables + (Vec2(x, y) -> true)
+    } traversables = traversables + (TilePos(x, y) -> true)
 
     for {
       x <- 0 until widthInTiles
       y <- 0 until heightInTiles
-    } traversableWithMargins = traversableWithMargins + (Vec2(x, y) -> true)
+    } traversableWithMargins = traversableWithMargins + (TilePos(x, y) -> true)
 
     for {
       x <- 0 until widthInTiles
       y <- 0 until heightInTiles
-    } flyover = flyover + (Vec2(x, y) -> true)
+    } flyover = flyover + (TilePos(x, y) -> true)
 
     createTerrainTiles(widthInTiles, heightInTiles)
     createBorders(widthInTiles, heightInTiles)
@@ -74,18 +73,18 @@ case class PhysicsWorld(map: TiledMap) {
             cell.getTile.getProperties.get("flyover").asInstanceOf[Boolean]
 
           if (!isTileTraversable) {
-            traversables = traversables + (Vec2(x, y) -> false)
+            traversables = traversables + (TilePos(x, y) -> false)
 
-            traversableWithMargins = traversableWithMargins + (Vec2(x, y) -> false)
+            traversableWithMargins = traversableWithMargins + (TilePos(x, y) -> false)
 
             List((0, 1), (1, 0), (-1, 0), (0, -1), (1, 1), (-1, 1), (-1, -1), (1, -1))
               .filter(pair => tileExists(x + pair._1, y + pair._2))
               .foreach(
-                pair => traversableWithMargins = traversableWithMargins + (Vec2(y + pair._1, x + pair._2) -> false)
+                pair => traversableWithMargins = traversableWithMargins + (TilePos(y + pair._1, x + pair._2) -> false)
               )
           }
 
-          if (!isTileFlyover) flyover = flyover + (Vec2(x, y) -> false)
+          if (!isTileFlyover) flyover = flyover + (TilePos(x, y) -> false)
         }
 
       }
@@ -95,9 +94,9 @@ case class PhysicsWorld(map: TiledMap) {
         y <- 0 until heightInTiles
       } {
 
-        if (!traversables(Vec2(x, y))) {
+        if (!traversables(TilePos(x, y))) {
           val tile: TerrainTileBody =
-            TerrainTileBody(x, y, tileWidth, tileHeight, layerNum, flyover(Vec2(x, y)))
+            TerrainTileBody(x, y, tileWidth, tileHeight, layerNum, flyover(TilePos(x, y)))
 
           tile.init(b2world)
 
@@ -125,12 +124,12 @@ case class PhysicsWorld(map: TiledMap) {
     terrainBorders.foreach(_.init(b2world))
   }
 
-  def getTileCenter(pos: Vec2): Vec2 = {
+  def getTileCenter(pos: TilePos): Vec2 = {
     Vec2(pos.x * tileWidth + tileWidth / 2, pos.y * tileHeight + tileHeight / 2)
   }
 
-  def getClosestTile(pos: Vec2): Vec2 = {
-    Vec2((pos.x / tileWidth).toInt, (pos.y / tileHeight).toInt)
+  def getClosestTile(pos: TilePos): TilePos = {
+    TilePos((pos.x / tileWidth).toInt, (pos.y / tileHeight).toInt)
   }
 
   def isLineOfSight(fromPos: Vec2, toPos: Vec2): Boolean = {
@@ -155,10 +154,14 @@ case class PhysicsWorld(map: TiledMap) {
       .forall(!Intersector.overlapConvexPolygons(_, lineOfSightRect))
   }
 
-  def calculateClearances(traversables: Map[Vec2, Boolean], widthInTiles: Int, heightInTiles: Int): Map[Vec2, Int] = {
-    var clearances: Map[Vec2, Int] = Map()
+  def calculateClearances(
+    traversables: Map[TilePos, Boolean],
+    widthInTiles: Int,
+    heightInTiles: Int
+  ): Map[TilePos, Int] = {
+    var clearances: Map[TilePos, Int] = Map()
 
-    def tryAddClearance(pos: Vec2, level: Int): Unit = {
+    def tryAddClearance(pos: TilePos, level: Int): Unit = {
       if (
         !clearances.contains(
           pos
@@ -171,15 +174,15 @@ case class PhysicsWorld(map: TiledMap) {
       x <- 0 until widthInTiles
       y <- 0 until heightInTiles
     } {
-      if (!traversables(Vec2(x, y))) {
-        tryAddClearance(Vec2(x - 1, y - 1), 1)
-        tryAddClearance(Vec2(x, y - 1), 1)
-        tryAddClearance(Vec2(x + 1, y - 1), 1)
-        tryAddClearance(Vec2(x - 1, y + 1), 1)
-        tryAddClearance(Vec2(x, y + 1), 1)
-        tryAddClearance(Vec2(x + 1, y + 1), 1)
-        tryAddClearance(Vec2(x - 1, y), 1)
-        tryAddClearance(Vec2(x + 1, y), 1)
+      if (!traversables(TilePos(x, y))) {
+        tryAddClearance(TilePos(x - 1, y - 1), 1)
+        tryAddClearance(TilePos(x, y - 1), 1)
+        tryAddClearance(TilePos(x + 1, y - 1), 1)
+        tryAddClearance(TilePos(x - 1, y + 1), 1)
+        tryAddClearance(TilePos(x, y + 1), 1)
+        tryAddClearance(TilePos(x + 1, y + 1), 1)
+        tryAddClearance(TilePos(x - 1, y), 1)
+        tryAddClearance(TilePos(x + 1, y), 1)
       }
     }
 
@@ -192,15 +195,15 @@ case class PhysicsWorld(map: TiledMap) {
         }
 
       lowerLevelClearances.foreach {
-        case Vec2(x, y) =>
-          tryAddClearance(Vec2(x - 1, y - 1), currentLevel)
-          tryAddClearance(Vec2(x, y - 1), currentLevel)
-          tryAddClearance(Vec2(x + 1, y - 1), currentLevel)
-          tryAddClearance(Vec2(x - 1, y + 1), currentLevel)
-          tryAddClearance(Vec2(x, y + 1), currentLevel)
-          tryAddClearance(Vec2(x + 1, y + 1), currentLevel)
-          tryAddClearance(Vec2(x - 1, y), currentLevel)
-          tryAddClearance(Vec2(x + 1, y), currentLevel)
+        case TilePos(x, y) =>
+          tryAddClearance(TilePos(x - 1, y - 1), currentLevel)
+          tryAddClearance(TilePos(x, y - 1), currentLevel)
+          tryAddClearance(TilePos(x + 1, y - 1), currentLevel)
+          tryAddClearance(TilePos(x - 1, y + 1), currentLevel)
+          tryAddClearance(TilePos(x, y + 1), currentLevel)
+          tryAddClearance(TilePos(x + 1, y + 1), currentLevel)
+          tryAddClearance(TilePos(x - 1, y), currentLevel)
+          tryAddClearance(TilePos(x + 1, y), currentLevel)
       }
 
       currentLevel = currentLevel + 1

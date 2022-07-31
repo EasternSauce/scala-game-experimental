@@ -32,8 +32,7 @@ object Player {
         animationTimer = SimpleTimer(),
         areaId = areaId,
         currentSpeed = 0f,
-        actionDirVector = Vec2(0, 0),
-        abilities = List()
+        actionDirVector = Vec2(0, 0)
       )
     )
   }
