@@ -55,8 +55,9 @@ trait Ability {
   def runStageLogic()(implicit gameState: GameState): GameState =
     state.stage match {
       case AbilityStage.Inactive =>
-        if (state.justPerformed)
-          onChannelStart()
+        if (state.justPerformed) {
+          gameState
+            .pipe(implicit gameState => onChannelStart())
             .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(false)))
             .pipe(
               implicit gameState =>
@@ -69,7 +70,7 @@ trait Ability {
                     .using(_.restart())
                 )
             )
-        else gameState
+        } else gameState
       case AbilityStage.Channel =>
         gameState
           .pipe(
