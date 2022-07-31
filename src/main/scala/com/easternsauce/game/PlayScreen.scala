@@ -148,7 +148,7 @@ object PlayScreen extends Screen {
       case AbilityBodyCreateEvent(abilityId)           => PhysicsEngineController.addAbilityBody(abilityId)
       case AbilityBodyActivateEvent(abilityId)         => PhysicsEngineController.activateAbilityBody(abilityId)
       case AbilitySpriteRendererCreateEvent(abilityId) => SpriteRendererController.addRenderer(abilityId)
-
+      case AbilityBodyDestroyEvent(abilityId)          => PhysicsEngineController.destroyAbilityBody(abilityId)
     }
   }
 

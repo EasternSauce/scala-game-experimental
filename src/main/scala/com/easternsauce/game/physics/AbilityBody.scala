@@ -36,11 +36,9 @@ case class AbilityBody(abilityId: AbilityId) {
   }
 
   def init()(implicit gameState: GameState): Unit = {
-
     val ability = gameState.abilities(abilityId)
 
     val vertices = hitboxVertices()
-
     b2Body = B2BodyFactory.createAbilityB2body(
       world =
         PhysicsEngineController.physicsWorlds(gameState.currentAreaId).b2world, // should we always take current area?
@@ -49,6 +47,7 @@ case class AbilityBody(abilityId: AbilityId) {
       posY = ability.state.hitbox.get.pos.y,
       vertices = vertices
     )
+
   }
 
   def update()(implicit gameState: GameState): Unit = {

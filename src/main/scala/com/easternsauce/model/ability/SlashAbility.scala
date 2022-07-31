@@ -24,10 +24,9 @@ case class SlashAbility(state: AbilityState) extends Ability {
     gameState
       .pipe(implicit gameState => updateHitbox())
 
-  override def onActiveUpdate()(implicit gameState: GameState): GameState = {
+  override def onActiveUpdate()(implicit gameState: GameState): GameState =
     gameState
       .pipe(implicit gameState => updateHitbox())
-  }
 
   override def onChannelStart()(implicit gameState: GameState): GameState =
     gameState

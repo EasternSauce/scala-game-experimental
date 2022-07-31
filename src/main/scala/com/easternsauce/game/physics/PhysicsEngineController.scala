@@ -39,6 +39,10 @@ case object PhysicsEngineController {
     abilityBodies(abilityId).init()
     abilityBodies(abilityId).isActive = true
   }
+  def destroyAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
+    abilityBodies(abilityId).destroy()
+    abilityBodies(abilityId).isActive = false
+  }
 
   def update()(implicit gameState: GameState): Unit = {
     physicsWorlds(gameState.currentAreaId).step()

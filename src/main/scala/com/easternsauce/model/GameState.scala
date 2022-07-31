@@ -4,8 +4,8 @@ import cats._
 import cats.data.State
 import cats.implicits._
 import com.badlogic.gdx.{Gdx, Input}
+import com.easternsauce.game._
 import com.easternsauce.game.physics.PhysicsEngineController
-import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyCreateEvent, AbilitySpriteRendererCreateEvent, ExternalEvent}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.{Ability, AbilityStage, Projectile}
 import com.easternsauce.model.creature.Creature
@@ -139,10 +139,15 @@ object GameState {
       case AbilityUpdateAction(abilityId, delta) =>
         implicit val _abilityId: AbilityId = abilityId
         State { implicit gameState =>
-          val events = if (
-            getAbility.state.stage == AbilityStage.Channel && getAbility.state.stageTimer.time > getAbility.channelTime
-          ) List(AbilityBodyActivateEvent(abilityId))
-          else List()
+          val events =
+            (if (
+               getAbility.state.stage == AbilityStage.Channel && getAbility.state.stageTimer.time > getAbility.channelTime
+             ) List(AbilityBodyActivateEvent(abilityId))
+             else List()) ++
+              (if (
+                 getAbility.state.stage == AbilityStage.Active && getAbility.state.stageTimer.time > getAbility.activeTime
+               ) List(AbilityBodyDestroyEvent(abilityId))
+               else List())
           (getAbility.update(delta), events)
         }
       case CreatureInitAction(_) => Monoid[GameStateTransition].empty
