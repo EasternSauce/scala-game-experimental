@@ -7,7 +7,7 @@ import com.badlogic.gdx.{Gdx, Input}
 import com.easternsauce.game._
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.model.WorldDirection.WorldDirection
-import com.easternsauce.model.ability.{Ability, AbilityStage, Projectile}
+import com.easternsauce.model.ability.{Ability, Projectile}
 import com.easternsauce.model.creature.Creature
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId, ProjectileId}
 import com.softwaremill.quicklens._
@@ -137,58 +137,36 @@ object GameState {
   def performAction(gameStateAction: GameStateAction): GameStateTransition = {
     gameStateAction match {
       case AbilityUpdateAction(abilityId, delta) =>
-        implicit val _abilityId: AbilityId = abilityId
-        State { implicit gameState =>
-          val events =
-            (if (
-               getAbility.state.stage == AbilityStage.Channel && getAbility.state.stageTimer.time > getAbility.channelTime
-             ) List(AbilityBodyActivateEvent(abilityId))
-             else List()) ++
-              (if (
-                 getAbility.state.stage == AbilityStage.Active && getAbility.state.stageTimer.time > getAbility.activeTime
-               ) List(AbilityBodyDestroyEvent(abilityId))
-               else List())
-          (getAbility.update(delta), events)
-        }
-      case CreatureInitAction(_) => Monoid[GameStateTransition].empty
-//        implicit val _creatureId: CreatureId = creatureId
-//        State { implicit gameState =>
-//          (
-//            getCreature.init(),
-//            getCreature.abilityNames
-//              .map(AbilityId.derive(creatureId, _))
-//              .flatMap(
-//                abilityId => List(AbilityBodyCreateEvent(abilityId), AbilitySpriteRendererCreateEvent(abilityId))
-//              )
-//          )
-//        }
+        Ability.updateAbility(abilityId, delta)
       case CreatureUpdateAction(creatureId, delta) =>
         implicit val _creatureId: CreatureId = creatureId
         State { implicit gameState => (getCreature.update(delta), List()) }
       case AreaInitializeAction(areaId) =>
-        State { implicit gameState =>
-          {
-            val creatureInits = gameState.creatures.values.filter(_.state.areaId == areaId).foldLeft(gameState) {
-              case (gameState, creature) => creature.init()(gameState)
-            }
-            val events: List[ExternalEvent] = gameState.creatures.values
-              .filter(_.state.areaId == areaId)
-              .flatMap(creature => creature.abilityNames.map(AbilityId.derive(creature.state.id, _)))
-              .toList
-              .flatMap(
-                abilityId => List(AbilityBodyCreateEvent(abilityId), AbilitySpriteRendererCreateEvent(abilityId))
-              )
-            (creatureInits.modify(_.currentAreaInitialized).setTo(true), events)
-          }
-        }
+        initializeArea(areaId)
 
     }
   }
+
+  private def initializeArea(areaId: AreaId): GameStateTransition = {
+    State { implicit gameState =>
+      {
+        val creatureInits = gameState.creatures.values.filter(_.state.areaId == areaId).foldLeft(gameState) {
+          case (gameState, creature) => creature.init()(gameState)
+        }
+        val events: List[ExternalEvent] = gameState.creatures.values
+          .filter(_.state.areaId == areaId)
+          .flatMap(creature => creature.abilityNames.map(AbilityId.derive(creature.state.id, _)))
+          .toList
+          .flatMap(abilityId => List(AbilityBodyCreateEvent(abilityId), AbilitySpriteRendererCreateEvent(abilityId)))
+        (creatureInits.modify(_.currentAreaInitialized).setTo(true), events)
+      }
+    }
+  }
+
 }
 
 sealed trait GameStateAction
 
 case class AbilityUpdateAction(abilityId: AbilityId, delta: Float) extends GameStateAction
-case class CreatureInitAction(creatureId: CreatureId) extends GameStateAction
 case class CreatureUpdateAction(creatureId: CreatureId, delta: Float) extends GameStateAction
 case class AreaInitializeAction(areaId: AreaId) extends GameStateAction

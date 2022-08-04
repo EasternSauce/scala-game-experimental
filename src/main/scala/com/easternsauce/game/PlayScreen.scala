@@ -12,7 +12,7 @@ import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.game.renderer.SpriteRendererController
-import com.easternsauce.model.GameState.{GameStateTransition, getCreature, handleCreaturePhysicsUpdate, handlePlayerMovementInput, performAction}
+import com.easternsauce.model.GameState._
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
 import com.easternsauce.model.creature.{Player, Skeleton}
@@ -156,6 +156,7 @@ object PlayScreen extends Screen {
     tiledMapRenderer.setView(worldCamera)
     updateCamera()
 
+    // single frame calculation + side effects
     implicit val (gameState, events) = commitUpdatedState(delta)
 
     processExternalEvents()
@@ -204,6 +205,7 @@ object PlayScreen extends Screen {
     gameState.abilities.keys.toList.foldMap(id => performAction(AbilityUpdateAction(id, delta)))
   }
 
+  // forcefully set creature positions to physics engine values
   private def updateCreaturePhysics()(implicit gameState: GameState): GameStateTransition = {
     gameState.creatures.keys.toList.foldMap(handleCreaturePhysicsUpdate)
   }
