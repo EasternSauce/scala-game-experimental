@@ -134,10 +134,11 @@ object GameState {
       )
   }
 
-  def performAction(gameStateAction: GameStateAction): GameStateTransition = {
+  def performAction(gameStateAction: GameStateAction)(implicit gameState: GameState): GameStateTransition = {
     gameStateAction match {
       case AbilityUpdateAction(abilityId, delta) =>
-        Ability.updateAbility(abilityId, delta)
+        implicit val id: AbilityId = abilityId
+        getAbility.update(delta)
       case CreatureUpdateAction(creatureId, delta) =>
         implicit val _creatureId: CreatureId = creatureId
         State { implicit gameState => (getCreature.update(delta), List()) }

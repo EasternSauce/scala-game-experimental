@@ -1,8 +1,10 @@
 package com.easternsauce.model.ability
 
 import cats.data.State
+import cats.implicits.catsSyntaxSemigroup
+import cats.kernel.Monoid
 import com.badlogic.gdx.math.Vector2
-import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, Constants}
+import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, Constants, ExternalEvent}
 import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyAbility}
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
@@ -94,6 +96,104 @@ trait Ability {
 
   }
 
+  //------------------
+  def update(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+    (getAbility.state.stage match {
+      case AbilityStage.Inactive =>
+        if (getAbility.state.justPerformed) updateStateToChannel()
+        else Monoid[GameStateTransition].empty
+      case AbilityStage.Channel =>
+        (
+          if (getAbility.state.stageTimer.time > getAbility.channelTime)
+            updateStateToActive()
+          else
+            Monoid[GameStateTransition].empty
+        ) |+| State { gameState =>
+          (gameState.pipe(implicit gameState => getAbility.onChannelUpdate()), List())
+        }
+      case AbilityStage.Active =>
+        (
+          if (getAbility.state.stageTimer.time > getAbility.activeTime)
+            updateStateToInactive()
+          else
+            Monoid[GameStateTransition].empty
+        ) |+| State { gameState =>
+          (gameState.pipe(implicit gameState => getAbility.onActiveUpdate()), List())
+        }
+
+    }) |+| updateTimers(delta)
+  }
+
+  private def updateStateToInactive(): GameStateTransition = {
+    State[GameState, List[ExternalEvent]] { gameState =>
+      (
+        gameState
+          .pipe(
+            implicit gameState =>
+              gameState
+                .pipe(
+                  implicit gameState =>
+                    modifyAbility(
+                      _.modify(_.state.stage)
+                        .setTo(AbilityStage.Inactive)
+                        .modify(_.state.stageTimer)
+                        .using(_.restart())
+                    )
+                )
+                .pipe(implicit gameState => getAbility.onInactiveStart())
+          ),
+        List(AbilityBodyDestroyEvent(id))
+      )
+    }
+  }
+
+  private def updateStateToActive(): GameStateTransition = {
+    State[GameState, List[ExternalEvent]] { gameState =>
+      (
+        gameState
+          .pipe(
+            implicit gameState =>
+              modifyAbility(
+                _.modify(_.state.stage)
+                  .setTo(AbilityStage.Active)
+                  .modify(_.state.stageTimer)
+                  .using(_.restart())
+              )
+          )
+          .pipe(implicit gameState => getAbility.onActiveStart()),
+        List(AbilityBodyActivateEvent(id))
+      )
+    }
+  }
+
+  private def updateStateToChannel(): GameStateTransition = {
+    State[GameState, List[ExternalEvent]] { gameState =>
+      (
+        gameState
+          .pipe(implicit gameState => getAbility.onChannelStart())
+          .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(false)))
+          .pipe(
+            implicit gameState =>
+              modifyAbility(
+                _.modify(_.state.stage)
+                  .setTo(AbilityStage.Channel)
+                  .modify(_.state.stageTimer)
+                  .using(_.restart())
+                  .modify(_.state.stageTimer)
+                  .using(_.restart())
+              )
+          ),
+        List()
+      )
+    }
+  }
+
+  private def updateTimers(delta: Float): GameStateTransition = {
+    State[GameState, List[ExternalEvent]] { gameState =>
+      (gameState.pipe(implicit gameState => getAbility.updateTimers(delta)), List())
+    }
+  }
+
   def copy(state: AbilityState = state): Ability
 }
 
@@ -103,83 +203,4 @@ object Ability {
       case "slash" => SlashAbility(AbilityId.derive(creatureId, name), creatureId)
     }
 
-  def updateAbility(abilityId: AbilityId, delta: Float): GameStateTransition = {
-    implicit val _abilityId: AbilityId = abilityId
-    State { implicit gameState =>
-      val events =
-        (if (
-          getAbility.state.stage == AbilityStage.Channel && getAbility.state.stageTimer.time > getAbility.channelTime
-        ) List(AbilityBodyActivateEvent(abilityId))
-        else List()) ++
-          (if (
-            getAbility.state.stage == AbilityStage.Active && getAbility.state.stageTimer.time > getAbility.activeTime
-          ) List(AbilityBodyDestroyEvent(abilityId))
-          else List())
-      (
-        gameState
-          .pipe(
-            implicit gameState =>
-              getAbility.state.stage match {
-                case AbilityStage.Inactive =>
-                  if (getAbility.state.justPerformed) {
-                    gameState
-                      .pipe(implicit gameState => getAbility.onChannelStart())
-                      .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(false)))
-                      .pipe(
-                        implicit gameState =>
-                          modifyAbility(
-                            _.modify(_.state.stage)
-                              .setTo(AbilityStage.Channel)
-                              .modify(_.state.stageTimer)
-                              .using(_.restart())
-                              .modify(_.state.stageTimer)
-                              .using(_.restart())
-                          )
-                      )
-                  } else gameState
-                case AbilityStage.Channel =>
-                  gameState
-                    .pipe(
-                      implicit gameState =>
-                        if (getAbility.state.stageTimer.time > getAbility.channelTime)
-                          gameState
-                            .pipe(
-                              implicit gameState =>
-                                modifyAbility(
-                                  _.modify(_.state.stage)
-                                    .setTo(AbilityStage.Active)
-                                    .modify(_.state.stageTimer)
-                                    .using(_.restart())
-                                )
-                            )
-                            .pipe(implicit gameState => getAbility.onActiveStart())
-                        else gameState
-                    )
-                    .pipe(implicit gameState => getAbility.onChannelUpdate())
-                case AbilityStage.Active =>
-                  gameState
-                    .pipe(
-                      implicit gameState =>
-                        if (getAbility.state.stageTimer.time > getAbility.activeTime)
-                          gameState
-                            .pipe(
-                              implicit gameState =>
-                                modifyAbility(
-                                  _.modify(_.state.stage)
-                                    .setTo(AbilityStage.Inactive)
-                                    .modify(_.state.stageTimer)
-                                    .using(_.restart())
-                                )
-                            )
-                            .pipe(implicit gameState => getAbility.onInactiveStart())
-                        else gameState
-                    )
-                    .pipe(implicit gameState => getAbility.onActiveUpdate())
-              }
-          )
-          .pipe(implicit gameState => getAbility.updateTimers(delta)),
-        events
-      )
-    }
-  }
 }
