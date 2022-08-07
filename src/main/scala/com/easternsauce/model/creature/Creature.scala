@@ -1,7 +1,10 @@
 package com.easternsauce.model.creature
 
+import cats.Monoid
 import cats.data.State
-import com.easternsauce.model.GameState.{GameStateTransition, modifyCreature}
+import cats.implicits.catsSyntaxSemigroup
+import com.easternsauce.game.ExternalEvent
+import com.easternsauce.model.GameState.{GameStateTransition, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.CreatureId
@@ -25,9 +28,15 @@ trait Creature {
 
   val abilityNames: List[String] = List()
 
+  val defaultAbilityName = "slash"
+
   implicit val id: CreatureId = state.id
 
   def isMoving: Boolean = state.currentSpeed > 0f
+
+  def isPlayer: Boolean = false
+  def isEnemy: Boolean = false
+  def isControlledAutomatically: Boolean = false
 
   def facingDirection: WorldDirection = {
     state.movingDir.angleDeg() match {
@@ -75,6 +84,17 @@ trait Creature {
       )
     }
 
+  }
+
+  def updateAutomaticControls()(implicit gameState: GameState): GameStateTransition = Monoid[GameStateTransition].empty
+
+  def attack(dir: Vec2)(implicit gameState: GameState): GameStateTransition = {
+    State[GameState, List[ExternalEvent]] { implicit gameState =>
+      (modifyCreature(_.modify(_.state.actionDirVector).setTo(dir)), List())
+    } |+|
+      (if (getCreature.abilityNames.contains(defaultAbilityName))
+         Ability.abilityByName(defaultAbilityName, id).perform()
+       else Monoid[GameStateTransition].empty)
   }
 
   def init()(implicit gameState: GameState): GameStateTransition = {

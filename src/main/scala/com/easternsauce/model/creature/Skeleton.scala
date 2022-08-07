@@ -4,7 +4,7 @@ import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ids.{AreaId, CreatureId}
 import com.easternsauce.model.{Vec2, WorldDirection}
 
-case class Skeleton(state: CreatureState) extends Creature {
+case class Skeleton(state: CreatureState) extends Enemy {
   override val textureName: String = "skeleton"
   override val textureWidth: Int = 64
   override val textureHeight: Int = 64

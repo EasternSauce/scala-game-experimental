@@ -16,6 +16,8 @@ case class Player(state: CreatureState) extends Creature {
   override val dirMap: Map[WorldDirection, Int] =
     Map(WorldDirection.Up -> 3, WorldDirection.Down -> 0, WorldDirection.Left -> 1, WorldDirection.Right -> 2)
 
+  override val isPlayer = true
+
   override val abilityNames: List[String] = List("slash")
 
   override def copy(state: CreatureState = state): Creature = Player(state)

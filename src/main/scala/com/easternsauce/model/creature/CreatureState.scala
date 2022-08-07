@@ -10,5 +10,8 @@ case class CreatureState(
   animationTimer: SimpleTimer = SimpleTimer(),
   areaId: AreaId,
   currentSpeed: Float = 0f,
-  actionDirVector: Vec2 = Vec2(0, 0)
+  actionDirVector: Vec2 = Vec2(0, 0),
+  targetCreatureId: Option[CreatureId] = None,
+  forcePathCalculation: Boolean = false,
+  pathTowardsTarget: Option[List[Vec2]] = None
 )
