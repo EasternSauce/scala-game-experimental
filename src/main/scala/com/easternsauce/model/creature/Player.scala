@@ -2,7 +2,7 @@ package com.easternsauce.model.creature
 
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ids.{AreaId, CreatureId}
-import com.easternsauce.model.{SimpleTimer, Vec2, WorldDirection}
+import com.easternsauce.model.{Vec2, WorldDirection}
 
 case class Player(state: CreatureState) extends Creature {
   override val textureName: String = "male1"
@@ -23,12 +23,6 @@ case class Player(state: CreatureState) extends Creature {
 
 object Player {
   def apply(id: CreatureId, areaId: AreaId, pos: Vec2): Creature = {
-    new Player(
-      CreatureState(
-        id = id,
-        pos = pos,
-        areaId = areaId
-      )
-    )
+    new Player(CreatureState(id = id, pos = pos, areaId = areaId))
   }
 }

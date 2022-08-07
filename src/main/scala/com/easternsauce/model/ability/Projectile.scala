@@ -1,6 +1,10 @@
 package com.easternsauce.model.ability
 
-import com.easternsauce.model.GameState.modifyProjectile
+import cats.data.State
+import cats.implicits.catsSyntaxSemigroup
+import cats.kernel.Monoid
+import com.easternsauce.game.ExternalEvent
+import com.easternsauce.model.GameState.{GameStateTransition, modifyProjectile}
 import com.easternsauce.model.ability.ProjectileStage.ProjectileStage
 import com.easternsauce.model.ids.ProjectileId
 import com.easternsauce.model.{GameState, SimpleTimer}
@@ -17,58 +21,55 @@ trait Projectile {
 
   implicit val _id: ProjectileId = id
 
-  def onChannelStart()(implicit gameState: GameState): GameState
-  def onChannelUpdate()(implicit gameState: GameState): GameState
-  def onActiveStart()(implicit gameState: GameState): GameState
-  def onActiveUpdate()(implicit gameState: GameState): GameState
+  def onChannelStart()(implicit gameState: GameState): GameStateTransition
+  def onChannelUpdate()(implicit gameState: GameState): GameStateTransition
+  def onActiveStart()(implicit gameState: GameState): GameStateTransition
+  def onActiveUpdate()(implicit gameState: GameState): GameStateTransition
 
-  def updateTimers(delta: Float)(implicit gameState: GameState): GameState = {
-    modifyProjectile(_.modify(_.timer).using(_.update(delta)))
+  private def updateTimers(delta: Float): GameStateTransition = {
+    State { implicit gameState =>
+      (modifyProjectile(_.modify(_.timer).using(_.update(delta))), List())
+    }
   }
 
-  def runStageLogic()(implicit gameState: GameState): GameState =
+  def runStageLogic()(implicit gameState: GameState): GameStateTransition =
     stage match {
       case ProjectileStage.Channel =>
-        gameState
-          .pipe(
-            implicit gameState =>
-              if (timer.time > channelTime)
-                gameState
-                  .pipe(
-                    implicit gameState =>
-                      modifyProjectile(
-                        _.modify(_.stage)
-                          .setTo(ProjectileStage.Active)
-                          .modify(_.timer)
-                          .using(_.restart())
-                      )
-                  )
-                  .pipe(implicit gameState => onActiveStart())
-              else gameState
-          )
-          .pipe(implicit gameState => onChannelUpdate())
+        onChannelUpdate() |+|
+          (if (timer.time > channelTime)
+             State[GameState, List[ExternalEvent]] { implicit gameState =>
+               (
+                 gameState
+                   .pipe(
+                     implicit gameState =>
+                       modifyProjectile(
+                         _.modify(_.stage)
+                           .setTo(ProjectileStage.Active)
+                           .modify(_.timer)
+                           .using(_.restart())
+                       )
+                   ),
+                 List()
+               )
+             } |+| onActiveStart()
+           else Monoid[GameStateTransition].empty)
       case ProjectileStage.Active =>
-        gameState
-          .pipe(
-            implicit gameState =>
-              if (timer.time > activeTime)
-                gameState
-                  .pipe(
-                    implicit gameState =>
-                      modifyProjectile(
-                        _.modify(_.timer)
-                          .using(_.restart())
-                      )
-                  )
-              else gameState
-          )
-          .pipe(implicit gameState => onActiveUpdate())
+        onActiveUpdate() |+|
+          (if (timer.time > activeTime) State[GameState, List[ExternalEvent]] { implicit gameState =>
+             (
+               modifyProjectile(
+                 _.modify(_.timer)
+                   .using(_.restart())
+               ),
+               List()
+             )
+           }
+           else Monoid[GameStateTransition].empty)
     }
 
-  def update(delta: Float)(implicit gameState: GameState): GameState = {
-    gameState
-      .pipe(implicit gameState => runStageLogic())
-      .pipe(implicit gameState => updateTimers(delta))
+  def update(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+    runStageLogic() |+|
+      updateTimers(delta)
   }
 
   def copy(id: ProjectileId = id, timer: SimpleTimer = timer, stage: ProjectileStage = stage): Projectile

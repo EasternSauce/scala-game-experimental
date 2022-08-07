@@ -188,14 +188,14 @@ object PlayScreen extends Screen {
 
   private def updateAreas()(implicit gameState: GameState): GameStateTransition = {
     if (!gameState.currentAreaInitialized) {
-      performAction(AreaInitializeAction(gameState.currentAreaId))
+      initializeArea(gameState.currentAreaId)
     } else {
       Monoid[GameStateTransition].empty
     }
   }
 
   private def updateAbilities(delta: Float)(implicit gameState: GameState): GameStateTransition = {
-    gameState.abilities.keys.toList.foldMap(id => performAction(AbilityUpdateAction(id, delta)))
+    gameState.abilities.keys.toList.foldMap(implicit id => getAbility.update(delta))
   }
 
   // forcefully set creature positions to physics engine values
@@ -204,7 +204,7 @@ object PlayScreen extends Screen {
   }
 
   private def updateCreatures(delta: Float)(implicit gameState: GameState): GameStateTransition = {
-    gameState.creatures.keys.toList.foldMap(id => performAction(CreatureUpdateAction(id, delta)))
+    gameState.creatures.keys.toList.foldMap(implicit id => getCreature.update(delta))
   }
 
   override def resize(width: Int, height: Int): Unit = {

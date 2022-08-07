@@ -79,20 +79,19 @@ trait Ability {
 
     State { implicit gameState =>
       (
-          modifyAbility(
-            _.modify(_.state.hitbox).setTo(
-              Some(
-                Hitbox(
-                  pos = Vec2(attackRectX, attackRectY),
-                  width = width,
-                  height = height,
-                  rotation = theta,
-                  scale = scale
-                )
+        modifyAbility(
+          _.modify(_.state.hitbox).setTo(
+            Some(
+              Hitbox(
+                pos = Vec2(attackRectX, attackRectY),
+                width = width,
+                height = height,
+                rotation = theta,
+                scale = scale
               )
             )
           )
-        ,
+        ),
         List()
       )
     }

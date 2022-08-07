@@ -136,40 +136,22 @@ object GameState {
             else Monoid[GameStateTransition].empty)
   }
 
-  def performAction(gameStateAction: GameStateAction)(implicit gameState: GameState): GameStateTransition = {
-    gameStateAction match {
-      case AbilityUpdateAction(abilityId, delta) =>
-        implicit val id: AbilityId = abilityId
-        getAbility.update(delta)
-      case CreatureUpdateAction(creatureId, delta) =>
-        implicit val _creatureId: CreatureId = creatureId
-        State { implicit gameState => (getCreature.update(delta), List()) }
-      case AreaInitializeAction(areaId) =>
-        initializeArea(areaId)
-
-    }
-  }
-
-  private def initializeArea(areaId: AreaId): GameStateTransition = {
-    State { implicit gameState =>
-      {
-        val creatureInits = gameState.creatures.values.filter(_.state.areaId == areaId).foldLeft(gameState) {
-          case (gameState, creature) => creature.init()(gameState)
+  def initializeArea(areaId: AreaId)(implicit gameState: GameState): GameStateTransition = {
+    gameState.creatures.keys.toList.foldMap(implicit id => getCreature.init()) |+|
+      State { implicit gameState =>
+        {
+          (
+            gameState.modify(_.currentAreaInitialized).setTo(true),
+            gameState.creatures.values
+              .filter(_.state.areaId == areaId)
+              .flatMap(creature => creature.abilityNames.map(AbilityId.derive(creature.state.id, _)))
+              .toList
+              .flatMap(
+                abilityId => List(AbilityBodyCreateEvent(abilityId), AbilitySpriteRendererCreateEvent(abilityId))
+              )
+          )
         }
-        val events: List[ExternalEvent] = gameState.creatures.values
-          .filter(_.state.areaId == areaId)
-          .flatMap(creature => creature.abilityNames.map(AbilityId.derive(creature.state.id, _)))
-          .toList
-          .flatMap(abilityId => List(AbilityBodyCreateEvent(abilityId), AbilitySpriteRendererCreateEvent(abilityId)))
-        (creatureInits.modify(_.currentAreaInitialized).setTo(true), events)
       }
-    }
   }
 
 }
-
-sealed trait GameStateAction
-
-case class AbilityUpdateAction(abilityId: AbilityId, delta: Float) extends GameStateAction
-case class CreatureUpdateAction(creatureId: CreatureId, delta: Float) extends GameStateAction
-case class AreaInitializeAction(areaId: AreaId) extends GameStateAction

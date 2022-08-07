@@ -60,26 +60,36 @@ trait Creature {
 
   def isAlive = true // TODO
 
-  def update(delta: Float)(implicit gameState: GameState): GameState = {
+  def update(delta: Float)(implicit gameState: GameState): GameStateTransition = {
     updateTimers(delta)
   }
 
-  def updateTimers(delta: Float)(implicit gameState: GameState): GameState = {
-    modifyCreature(
-      _.modifyAll(_.state.animationTimer)
-        .using(_.update(delta))
-    )
+  def updateTimers(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+    State { implicit gameState =>
+      (
+        modifyCreature(
+          _.modifyAll(_.state.animationTimer)
+            .using(_.update(delta))
+        ),
+        List()
+      )
+    }
 
   }
 
-  def init()(implicit gameState: GameState): GameState = {
-
-    // init abilities
-    abilityNames.foldLeft(gameState) {
-      case (gameState, abilityName) =>
-        val ability = Ability.abilityByName(abilityName, id)
-        gameState.modify(_.abilities).using(_.updated(ability.id, ability))
+  def init()(implicit gameState: GameState): GameStateTransition = {
+    State { gameState =>
+      (
+        // init abilities
+        abilityNames.foldLeft(gameState) {
+          case (gameState, abilityName) =>
+            val ability = Ability.abilityByName(abilityName, id)
+            gameState.modify(_.abilities).using(_.updated(ability.id, ability))
+        },
+        List()
+      )
     }
+
   }
 
   def copy(state: CreatureState): Creature
