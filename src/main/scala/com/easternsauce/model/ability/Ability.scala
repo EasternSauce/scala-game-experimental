@@ -60,24 +60,25 @@ trait Ability {
   def onInactiveStart()(implicit gameState: GameState): GameStateTransition
 
   def updateHitbox()(implicit gameState: GameState): GameStateTransition = {
+    if (state.dirVector.isEmpty) throw new RuntimeException("trying to update hitbox without setting dir vector!")
+
+    val dirVector = state.dirVector.get match {
+      case dirVector if dirVector.length <= 0 => Vec2(1, 0).normal
+      case dirVector                          => dirVector
+    }
+
+    val creature = getCreature
+
+    val theta = new Vector2(dirVector.x, dirVector.y).angleDeg()
+
+    val attackShiftX = dirVector.normal.x * attackRange
+    val attackShiftY = dirVector.normal.y * attackRange
+
+    val attackRectX = attackShiftX + creature.state.pos.x
+    val attackRectY = attackShiftY + creature.state.pos.y
+
     State { implicit gameState =>
       (
-        if (state.dirVector.nonEmpty) {
-          val dirVector = state.dirVector.get match {
-            case dirVector if dirVector.length <= 0 => Vec2(1, 0).normal
-            case dirVector                          => dirVector
-          }
-
-          val creature = getCreature
-
-          val theta = new Vector2(dirVector.x, dirVector.y).angleDeg()
-
-          val attackShiftX = dirVector.normal.x * attackRange
-          val attackShiftY = dirVector.normal.y * attackRange
-
-          val attackRectX = attackShiftX + creature.state.pos.x
-          val attackRectY = attackShiftY + creature.state.pos.y
-
           modifyAbility(
             _.modify(_.state.hitbox).setTo(
               Some(
@@ -91,7 +92,7 @@ trait Ability {
               )
             )
           )
-        } else throw new RuntimeException("trying to update hitbox without setting dir vector!"),
+        ,
         List()
       )
     }

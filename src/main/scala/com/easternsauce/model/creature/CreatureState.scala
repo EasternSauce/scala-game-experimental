@@ -6,9 +6,9 @@ import com.easternsauce.model.{SimpleTimer, Vec2}
 case class CreatureState(
   id: CreatureId,
   pos: Vec2,
-  movingDir: Vec2,
-  animationTimer: SimpleTimer,
+  movingDir: Vec2 = Vec2(0, 0),
+  animationTimer: SimpleTimer = SimpleTimer(),
   areaId: AreaId,
-  currentSpeed: Float,
-  actionDirVector: Vec2
+  currentSpeed: Float = 0f,
+  actionDirVector: Vec2 = Vec2(0, 0)
 )

@@ -25,11 +25,7 @@ object Skeleton {
       CreatureState(
         id = id,
         pos = pos,
-        movingDir = Vec2(0, 0),
-        animationTimer = SimpleTimer(),
-        areaId = areaId,
-        currentSpeed = 0f,
-        actionDirVector = Vec2(0, 0)
+        areaId = areaId
       )
     )
 }

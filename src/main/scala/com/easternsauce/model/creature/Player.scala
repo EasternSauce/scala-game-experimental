@@ -23,16 +23,11 @@ case class Player(state: CreatureState) extends Creature {
 
 object Player {
   def apply(id: CreatureId, areaId: AreaId, pos: Vec2): Creature = {
-
     new Player(
       CreatureState(
         id = id,
         pos = pos,
-        movingDir = Vec2(0, 0),
-        animationTimer = SimpleTimer(),
-        areaId = areaId,
-        currentSpeed = 0f,
-        actionDirVector = Vec2(0, 0)
+        areaId = areaId
       )
     )
   }
