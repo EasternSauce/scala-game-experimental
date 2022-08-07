@@ -1,7 +1,6 @@
 package com.easternsauce.game
 
 import cats.Monoid
-import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.graphics.{Color, GL20, OrthographicCamera}
@@ -179,7 +178,7 @@ object PlayScreen extends Screen {
     implicit val gs: GameState = gameState.aref.get()
 
     gameState.commit(
-      updateCreaturePhysics() |+| // TODO: change to action
+      updateCreaturePhysics() |+|
         updateCreatures(delta) |+|
         updateAbilities(delta) |+|
         updateAreas() |+|

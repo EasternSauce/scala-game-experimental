@@ -60,7 +60,9 @@ object GameState {
 
   def player(implicit gameState: GameState): Creature = gameState.creatures(gameState.currentPlayerId)
 
-  def handlePlayerMovementInput(input: Map[WorldDirection, Boolean])(implicit gameState: GameState): GameStateTransition = {
+  def handlePlayerMovementInput(
+    input: Map[WorldDirection, Boolean]
+  )(implicit gameState: GameState): GameStateTransition = {
     val movingDirX = (input(WorldDirection.Left), input(WorldDirection.Right)) match {
       case (true, false) => -1
       case (false, true) => 1

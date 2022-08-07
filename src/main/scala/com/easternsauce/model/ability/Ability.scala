@@ -4,7 +4,7 @@ import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import cats.kernel.Monoid
 import com.badlogic.gdx.math.Vector2
-import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, Constants, ExternalEvent}
+import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, Constants}
 import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyAbility}
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
@@ -123,22 +123,14 @@ trait Ability {
 
   private def updateStateToInactive()(implicit gameState: GameState): GameStateTransition = {
     onInactiveStart() |+|
-      State[GameState, List[ExternalEvent]] { gameState =>
+      State { implicit gameState =>
         (
-          gameState
-            .pipe(
-              implicit gameState =>
-                gameState
-                  .pipe(
-                    implicit gameState =>
-                      modifyAbility(
-                        _.modify(_.state.stage)
-                          .setTo(AbilityStage.Inactive)
-                          .modify(_.state.stageTimer)
-                          .using(_.restart())
-                      )
-                  )
-            ),
+          modifyAbility(
+            _.modify(_.state.stage)
+              .setTo(AbilityStage.Inactive)
+              .modify(_.state.stageTimer)
+              .using(_.restart())
+          ),
           List(AbilityBodyDestroyEvent(id))
         )
       }
@@ -146,18 +138,14 @@ trait Ability {
 
   private def updateStateToActive()(implicit gameState: GameState): GameStateTransition = {
     onActiveStart() |+|
-      State[GameState, List[ExternalEvent]] { gameState =>
+      State { implicit gameState =>
         (
-          gameState
-            .pipe(
-              implicit gameState =>
-                modifyAbility(
-                  _.modify(_.state.stage)
-                    .setTo(AbilityStage.Active)
-                    .modify(_.state.stageTimer)
-                    .using(_.restart())
-                )
-            ),
+          modifyAbility(
+            _.modify(_.state.stage)
+              .setTo(AbilityStage.Active)
+              .modify(_.state.stageTimer)
+              .using(_.restart())
+          ),
           List(AbilityBodyActivateEvent(id))
         )
       }
@@ -165,21 +153,18 @@ trait Ability {
 
   private def updateStateToChannel()(implicit gameState: GameState): GameStateTransition = {
     onChannelStart() |+|
-      State[GameState, List[ExternalEvent]] { gameState =>
+      State { implicit gameState =>
         (
-          gameState
-            .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(false)))
-            .pipe(
-              implicit gameState =>
-                modifyAbility(
-                  _.modify(_.state.stage)
-                    .setTo(AbilityStage.Channel)
-                    .modify(_.state.stageTimer)
-                    .using(_.restart())
-                    .modify(_.state.stageTimer)
-                    .using(_.restart())
-                )
-            ),
+          modifyAbility(
+            _.modify(_.state.stage)
+              .setTo(AbilityStage.Channel)
+              .modify(_.state.stageTimer)
+              .using(_.restart())
+              .modify(_.state.stageTimer)
+              .using(_.restart())
+              .modify(_.state.justPerformed)
+              .setTo(false)
+          ),
           List()
         )
       }
