@@ -1,6 +1,7 @@
 package com.easternsauce.model.creature
 
-import com.easternsauce.model.GameState.modifyCreature
+import cats.data.State
+import com.easternsauce.model.GameState.{GameStateTransition, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.CreatureId
@@ -37,17 +38,24 @@ trait Creature {
     }
   }
 
-  def moveInDir(dir: Vec2)(implicit gameState: GameState): GameState = {
-    modifyCreature(_.modify(_.state.movingDir).setTo(dir))
+  def moveInDir(dir: Vec2)(implicit gameState: GameState): GameStateTransition = {
+    State { implicit gameState => (modifyCreature(_.modify(_.state.movingDir).setTo(dir)), List()) }
   }
 
-  def startMoving()(implicit gameState: GameState): GameState = {
+  def startMoving()(implicit gameState: GameState): GameStateTransition = {
 
-    modifyCreature(_.modify(_.state.currentSpeed).setTo(this.speed).modify(_.state.animationTimer).using(_.restart()))
+    State { implicit gameState =>
+      (
+        modifyCreature(
+          _.modify(_.state.currentSpeed).setTo(this.speed).modify(_.state.animationTimer).using(_.restart())
+        ),
+        List()
+      )
+    }
   }
 
-  def stopMoving()(implicit gameState: GameState): GameState = {
-    modifyCreature(_.modify(_.state.currentSpeed).setTo(0f))
+  def stopMoving()(implicit gameState: GameState): GameStateTransition = {
+    State { implicit gameState => (modifyCreature(_.modify(_.state.currentSpeed).setTo(0f)), List()) }
   }
 
   def isAlive = true // TODO

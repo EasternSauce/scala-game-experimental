@@ -60,7 +60,7 @@ object GameState {
 
   def player(implicit gameState: GameState): Creature = gameState.creatures(gameState.currentPlayerId)
 
-  def handlePlayerMovementInput(input: Map[WorldDirection, Boolean])(implicit gameState: GameState): GameState = {
+  def handlePlayerMovementInput(input: Map[WorldDirection, Boolean])(implicit gameState: GameState): GameStateTransition = {
     val movingDirX = (input(WorldDirection.Left), input(WorldDirection.Right)) match {
       case (true, false) => -1
       case (false, true) => 1
@@ -89,17 +89,24 @@ object GameState {
 
     val mouseDirVector = Vec2(mouseX - centerX, (Gdx.graphics.getHeight - mouseY) - centerY).normal
 
-    gameState
-      .pipe(implicit gameState => runMovingLogic(wasMoving, isMoving, movingDir))
-      .pipe(implicit gameState => {
-        implicit val abilityId: AbilityId = AbilityId.derive(gameState.currentPlayerId, "slash")
-        if (mouseClicked) {
-          getAbility
-            .perform()
-            .pipe(implicit gameState => modifyAbility(_.modify(_.state.dirVector).setTo(Some(mouseDirVector))))
-        } else gameState
-      })
+    implicit val abilityId: AbilityId = AbilityId.derive(gameState.currentPlayerId, "slash")
 
+    runMovingLogic(wasMoving, isMoving, movingDir) |+|
+      (if (mouseClicked) {
+         getAbility
+           .perform() |+| State { implicit gameState =>
+           (
+             gameState.pipe(
+               implicit gameState =>
+                 modifyAbility(
+                   _.modify(_.state.dirVector)
+                     .setTo(Some(mouseDirVector))
+                 )
+             ),
+             List()
+           )
+         }
+       } else Monoid[GameStateTransition].empty)
   }
 
   def handleCreaturePhysicsUpdate(creatureId: CreatureId): GameStateTransition = {
@@ -113,25 +120,18 @@ object GameState {
 
   def runMovingLogic(wasMoving: Boolean, isMoving: Boolean, movingDir: Vec2)(implicit
     gameState: GameState
-  ): GameState = {
+  ): GameStateTransition = {
     implicit val playerId: CreatureId = gameState.currentPlayerId
-    gameState
-      .pipe(
-        implicit gameState =>
-          (wasMoving, isMoving) match {
-            case (false, true) =>
-              getCreature.startMoving()
-            case (true, false) =>
-              getCreature.stopMoving()
-            case _ => gameState
 
-          }
-      )
-      .pipe(
-        implicit gameState =>
-          if (isMoving) getCreature.moveInDir(movingDir)
-          else gameState
-      )
+    ((wasMoving, isMoving) match {
+      case (false, true) =>
+        getCreature.startMoving()
+      case (true, false) =>
+        getCreature.stopMoving()
+      case _ =>
+        Monoid[GameStateTransition].empty
+    }) |+| (if (isMoving) getCreature.moveInDir(movingDir)
+            else Monoid[GameStateTransition].empty)
   }
 
   def performAction(gameStateAction: GameStateAction)(implicit gameState: GameState): GameStateTransition = {

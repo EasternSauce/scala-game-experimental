@@ -1,8 +1,8 @@
 package com.easternsauce.model.ability
+import cats.data.State
 import com.easternsauce.model.GameState
+import com.easternsauce.model.GameState.GameStateTransition
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
-
-import scala.util.chaining.scalaUtilChainingOps
 
 case class SlashAbility(state: AbilityState) extends Ability {
   val cooldownTime: Float = 1f
@@ -20,23 +20,24 @@ case class SlashAbility(state: AbilityState) extends Ability {
 
   override val scale: Float = 1.4f
 
-  override def onActiveStart()(implicit gameState: GameState): GameState =
-    gameState
-      .pipe(implicit gameState => updateHitbox())
+  override def onActiveStart()(implicit gameState: GameState): GameStateTransition = {
+    updateHitbox()
+  }
 
-  override def onActiveUpdate()(implicit gameState: GameState): GameState =
-    gameState
-      .pipe(implicit gameState => updateHitbox())
+  override def onActiveUpdate()(implicit gameState: GameState): GameStateTransition = {
+    updateHitbox()
+  }
 
-  override def onChannelStart()(implicit gameState: GameState): GameState =
-    gameState
-      .pipe(implicit gameState => updateHitbox())
+  override def onChannelStart()(implicit gameState: GameState): GameStateTransition = {
+    updateHitbox()
+  }
 
-  override def onChannelUpdate()(implicit gameState: GameState): GameState =
-    gameState
-      .pipe(implicit gameState => updateHitbox())
+  override def onChannelUpdate()(implicit gameState: GameState): GameStateTransition = {
+    updateHitbox()
+  }
 
-  override def onInactiveStart()(implicit gameState: GameState): GameState = gameState
+  override def onInactiveStart()(implicit gameState: GameState): GameStateTransition =
+    State { implicit gameState => (gameState, List()) }
 
   override def copy(state: AbilityState = state): Ability = SlashAbility(state)
 

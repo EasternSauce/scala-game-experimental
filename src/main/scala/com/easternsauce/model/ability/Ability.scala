@@ -41,156 +41,153 @@ trait Ability {
 
   def ableToPerform: Boolean = state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime
 
-  def updateTimers(delta: Float)(implicit gameState: GameState): GameState = {
-    modifyAbility(_.modify(_.state.stageTimer).using(_.update(delta)))
-  }
-
-  def onActiveStart()(implicit gameState: GameState): GameState
-
-  def onActiveUpdate()(implicit gameState: GameState): GameState
-
-  def onChannelStart()(implicit gameState: GameState): GameState
-
-  def onChannelUpdate()(implicit gameState: GameState): GameState
-
-  def onInactiveStart()(implicit gameState: GameState): GameState
-
-  def perform()(implicit gameState: GameState): GameState = {
+  def perform()(implicit gameState: GameState): GameStateTransition = {
     if (ableToPerform)
-      gameState
-        .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(true)))
-    else gameState
+      State { implicit gameState =>
+        (gameState.pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(true))), List())
+      }
+    else Monoid[GameStateTransition].empty
   }
 
-  def updateHitbox()(implicit gameState: GameState): GameState = {
-    if (state.dirVector.nonEmpty) {
-      val dirVector = state.dirVector.get match {
-        case dirVector if dirVector.length <= 0 => Vec2(1, 0).normal
-        case dirVector                          => dirVector
-      }
+  def onActiveStart()(implicit gameState: GameState): GameStateTransition
 
-      val creature = getCreature
+  def onActiveUpdate()(implicit gameState: GameState): GameStateTransition
 
-      val theta = new Vector2(dirVector.x, dirVector.y).angleDeg()
+  def onChannelStart()(implicit gameState: GameState): GameStateTransition
 
-      val attackShiftX = dirVector.normal.x * attackRange
-      val attackShiftY = dirVector.normal.y * attackRange
+  def onChannelUpdate()(implicit gameState: GameState): GameStateTransition
 
-      val attackRectX = attackShiftX + creature.state.pos.x
-      val attackRectY = attackShiftY + creature.state.pos.y
+  def onInactiveStart()(implicit gameState: GameState): GameStateTransition
 
-      modifyAbility(
-        _.modify(_.state.hitbox).setTo(
-          Some(
-            Hitbox(
-              pos = Vec2(attackRectX, attackRectY),
-              width = width,
-              height = height,
-              rotation = theta,
-              scale = scale
+  def updateHitbox()(implicit gameState: GameState): GameStateTransition = {
+    State { implicit gameState =>
+      (
+        if (state.dirVector.nonEmpty) {
+          val dirVector = state.dirVector.get match {
+            case dirVector if dirVector.length <= 0 => Vec2(1, 0).normal
+            case dirVector                          => dirVector
+          }
+
+          val creature = getCreature
+
+          val theta = new Vector2(dirVector.x, dirVector.y).angleDeg()
+
+          val attackShiftX = dirVector.normal.x * attackRange
+          val attackShiftY = dirVector.normal.y * attackRange
+
+          val attackRectX = attackShiftX + creature.state.pos.x
+          val attackRectY = attackShiftY + creature.state.pos.y
+
+          modifyAbility(
+            _.modify(_.state.hitbox).setTo(
+              Some(
+                Hitbox(
+                  pos = Vec2(attackRectX, attackRectY),
+                  width = width,
+                  height = height,
+                  rotation = theta,
+                  scale = scale
+                )
+              )
             )
           )
-        )
-      )
-    } else throw new RuntimeException("trying to update hitbox without setting dir vector!")
-
-  }
-
-  //------------------
-  def update(delta: Float)(implicit gameState: GameState): GameStateTransition = {
-    (getAbility.state.stage match {
-      case AbilityStage.Inactive =>
-        if (getAbility.state.justPerformed) updateStateToChannel()
-        else Monoid[GameStateTransition].empty
-      case AbilityStage.Channel =>
-        (
-          if (getAbility.state.stageTimer.time > getAbility.channelTime)
-            updateStateToActive()
-          else
-            Monoid[GameStateTransition].empty
-        ) |+| State { gameState =>
-          (gameState.pipe(implicit gameState => getAbility.onChannelUpdate()), List())
-        }
-      case AbilityStage.Active =>
-        (
-          if (getAbility.state.stageTimer.time > getAbility.activeTime)
-            updateStateToInactive()
-          else
-            Monoid[GameStateTransition].empty
-        ) |+| State { gameState =>
-          (gameState.pipe(implicit gameState => getAbility.onActiveUpdate()), List())
-        }
-
-    }) |+| updateTimers(delta)
-  }
-
-  private def updateStateToInactive(): GameStateTransition = {
-    State[GameState, List[ExternalEvent]] { gameState =>
-      (
-        gameState
-          .pipe(
-            implicit gameState =>
-              gameState
-                .pipe(
-                  implicit gameState =>
-                    modifyAbility(
-                      _.modify(_.state.stage)
-                        .setTo(AbilityStage.Inactive)
-                        .modify(_.state.stageTimer)
-                        .using(_.restart())
-                    )
-                )
-                .pipe(implicit gameState => getAbility.onInactiveStart())
-          ),
-        List(AbilityBodyDestroyEvent(id))
-      )
-    }
-  }
-
-  private def updateStateToActive(): GameStateTransition = {
-    State[GameState, List[ExternalEvent]] { gameState =>
-      (
-        gameState
-          .pipe(
-            implicit gameState =>
-              modifyAbility(
-                _.modify(_.state.stage)
-                  .setTo(AbilityStage.Active)
-                  .modify(_.state.stageTimer)
-                  .using(_.restart())
-              )
-          )
-          .pipe(implicit gameState => getAbility.onActiveStart()),
-        List(AbilityBodyActivateEvent(id))
-      )
-    }
-  }
-
-  private def updateStateToChannel(): GameStateTransition = {
-    State[GameState, List[ExternalEvent]] { gameState =>
-      (
-        gameState
-          .pipe(implicit gameState => getAbility.onChannelStart())
-          .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(false)))
-          .pipe(
-            implicit gameState =>
-              modifyAbility(
-                _.modify(_.state.stage)
-                  .setTo(AbilityStage.Channel)
-                  .modify(_.state.stageTimer)
-                  .using(_.restart())
-                  .modify(_.state.stageTimer)
-                  .using(_.restart())
-              )
-          ),
+        } else throw new RuntimeException("trying to update hitbox without setting dir vector!"),
         List()
       )
     }
   }
 
+  def update(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+    (state.stage match {
+      case AbilityStage.Inactive =>
+        if (state.justPerformed) updateStateToChannel()
+        else Monoid[GameStateTransition].empty
+      case AbilityStage.Channel =>
+        onChannelUpdate() |+|
+          (
+            if (state.stageTimer.time > getAbility.channelTime)
+              updateStateToActive()
+            else
+              Monoid[GameStateTransition].empty
+          )
+      case AbilityStage.Active =>
+        onActiveUpdate() |+| (
+          if (state.stageTimer.time > getAbility.activeTime)
+            updateStateToInactive()
+          else
+            Monoid[GameStateTransition].empty
+        )
+
+    }) |+| updateTimers(delta)
+  }
+
+  private def updateStateToInactive()(implicit gameState: GameState): GameStateTransition = {
+    onInactiveStart() |+|
+      State[GameState, List[ExternalEvent]] { gameState =>
+        (
+          gameState
+            .pipe(
+              implicit gameState =>
+                gameState
+                  .pipe(
+                    implicit gameState =>
+                      modifyAbility(
+                        _.modify(_.state.stage)
+                          .setTo(AbilityStage.Inactive)
+                          .modify(_.state.stageTimer)
+                          .using(_.restart())
+                      )
+                  )
+            ),
+          List(AbilityBodyDestroyEvent(id))
+        )
+      }
+  }
+
+  private def updateStateToActive()(implicit gameState: GameState): GameStateTransition = {
+    onActiveStart() |+|
+      State[GameState, List[ExternalEvent]] { gameState =>
+        (
+          gameState
+            .pipe(
+              implicit gameState =>
+                modifyAbility(
+                  _.modify(_.state.stage)
+                    .setTo(AbilityStage.Active)
+                    .modify(_.state.stageTimer)
+                    .using(_.restart())
+                )
+            ),
+          List(AbilityBodyActivateEvent(id))
+        )
+      }
+  }
+
+  private def updateStateToChannel()(implicit gameState: GameState): GameStateTransition = {
+    onChannelStart() |+|
+      State[GameState, List[ExternalEvent]] { gameState =>
+        (
+          gameState
+            .pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(false)))
+            .pipe(
+              implicit gameState =>
+                modifyAbility(
+                  _.modify(_.state.stage)
+                    .setTo(AbilityStage.Channel)
+                    .modify(_.state.stageTimer)
+                    .using(_.restart())
+                    .modify(_.state.stageTimer)
+                    .using(_.restart())
+                )
+            ),
+          List()
+        )
+      }
+  }
+
   private def updateTimers(delta: Float): GameStateTransition = {
-    State[GameState, List[ExternalEvent]] { gameState =>
-      (gameState.pipe(implicit gameState => getAbility.updateTimers(delta)), List())
+    State { implicit gameState =>
+      (gameState.pipe(implicit gameState => modifyAbility(_.modify(_.state.stageTimer).using(_.update(delta)))), List())
     }
   }
 

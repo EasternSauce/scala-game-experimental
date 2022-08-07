@@ -183,14 +183,8 @@ object PlayScreen extends Screen {
         updateCreatures(delta) |+|
         updateAbilities(delta) |+|
         updateAreas() |+|
-        updateBasedOnPlayerInput(playerDirectionInput) // TODO: change to action
+        handlePlayerMovementInput(playerDirectionInput)
     )
-  }
-
-  private def updateBasedOnPlayerInput(playerDirectionInput: Map[WorldDirection, Boolean]): GameStateTransition = {
-    State { implicit gameState =>
-      (handlePlayerMovementInput(playerDirectionInput), List())
-    }
   }
 
   private def updateAreas()(implicit gameState: GameState): GameStateTransition = {
