@@ -13,5 +13,9 @@ case class CreatureState(
   actionDirVector: Vec2 = Vec2(0, 0),
   targetCreatureId: Option[CreatureId] = None,
   forcePathCalculation: Boolean = false,
-  pathTowardsTarget: Option[List[Vec2]] = None
+  pathTowardsTarget: Option[List[Vec2]] = None,
+  life: Float = 100f,
+  maxLife: Float = 100f,
+  useAbilityTimer: SimpleTimer = SimpleTimer(time = 4f, isRunning = true),
+  inbetweenAbilitiesTime: Float = 0f
 )

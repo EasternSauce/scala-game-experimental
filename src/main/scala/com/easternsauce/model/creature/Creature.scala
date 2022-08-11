@@ -30,6 +30,10 @@ trait Creature {
 
   val defaultAbilityName = "slash"
 
+  val abilityUsages: Map[String, AbilityUsage] = Map()
+
+  var useAbilityTimeout: Float = 4
+
   implicit val id: CreatureId = state.id
 
   def isMoving: Boolean = state.currentSpeed > 0f
@@ -114,3 +118,10 @@ trait Creature {
 
   def copy(state: CreatureState): Creature
 }
+
+case class AbilityUsage(
+  weight: Float,
+  minimumDistance: Float = 0f,
+  maximumDistance: Float = Float.MaxValue,
+  lifeThreshold: Float = 1.0f
+)

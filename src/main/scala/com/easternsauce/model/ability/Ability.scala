@@ -41,6 +41,8 @@ trait Ability {
 
   def ableToPerform: Boolean = state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime
 
+  def onCooldown: Boolean = false // TODO
+
   def perform()(implicit gameState: GameState): GameStateTransition = {
     if (ableToPerform)
       State { implicit gameState =>
