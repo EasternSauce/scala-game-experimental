@@ -13,6 +13,7 @@ case class CreatureState(
   actionDirVector: Vec2 = Vec2(0, 0),
   targetCreatureId: Option[CreatureId] = None,
   forcePathCalculation: Boolean = false,
+  pathCalculationCooldownTimer: SimpleTimer = SimpleTimer(),
   pathTowardsTarget: Option[List[Vec2]] = None,
   life: Float = 100f,
   maxLife: Float = 100f,

@@ -20,6 +20,8 @@ case class Player(state: CreatureState) extends Creature {
 
   override val abilityNames: List[String] = List("slash")
 
+  override val speed: Float = 15f
+
   override def copy(state: CreatureState = state): Creature = Player(state)
 }
 

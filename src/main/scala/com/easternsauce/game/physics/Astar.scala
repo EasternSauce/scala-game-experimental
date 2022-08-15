@@ -66,7 +66,7 @@ object Astar {
   }
 
   // caution: heavy computational load!
-  def findPath(terrain: PhysicsWorld, startPos: TilePos, finishPos: TilePos, capability: Int): List[Vec2] = {
+  def findPath(terrain: PhysicsWorld, startPos: Vec2, finishPos: Vec2, capability: Int): List[Vec2] = {
     val startTilePos = terrain.getClosestTile(startPos)
     val finishTilePos = terrain.getClosestTile(finishPos)
 

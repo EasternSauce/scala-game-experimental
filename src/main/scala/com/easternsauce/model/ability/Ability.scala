@@ -4,8 +4,8 @@ import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import cats.kernel.Monoid
 import com.badlogic.gdx.math.Vector2
-import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, Constants}
-import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyAbility}
+import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, Constants, ExternalEvent}
+import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyAbility, modifyCreature}
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
 import com.softwaremill.quicklens._
@@ -39,16 +39,23 @@ trait Ability {
   def width: Float = textureWidth.toFloat * scale / Constants.PPM
   def height: Float = textureHeight.toFloat * scale / Constants.PPM
 
-  def ableToPerform: Boolean = state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime
+  def ableToPerform: Boolean =
+    !state.justPerformed && state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime
 
   def onCooldown: Boolean = false // TODO
 
-  def perform()(implicit gameState: GameState): GameStateTransition = {
-    if (ableToPerform)
-      State { implicit gameState =>
-        (gameState.pipe(implicit gameState => modifyAbility(_.modify(_.state.justPerformed).setTo(true))), List())
-      }
-    else Monoid[GameStateTransition].empty
+  def perform(dir: Vec2)(implicit gameState: GameState): GameStateTransition = {
+    if (ableToPerform) {
+      State[GameState, List[ExternalEvent]] { implicit gameState =>
+        (modifyCreature(_.modify(_.state.actionDirVector).setTo(dir)), List())
+      } |+|
+        State { implicit gameState =>
+          (
+            modifyAbility(_.modify(_.state.justPerformed).setTo(true).modify(_.state.dirVector).setTo(Some(dir))),
+            List()
+          )
+        }
+    } else Monoid[GameStateTransition].empty
   }
 
   def onActiveStart()(implicit gameState: GameState): GameStateTransition
@@ -182,7 +189,7 @@ trait Ability {
 }
 
 object Ability {
-  def abilityByName(name: String, creatureId: CreatureId): Ability =
+  def abilityByName(creatureId: CreatureId, name: String): Ability =
     name match {
       case "slash" => SlashAbility(AbilityId.derive(creatureId, name), creatureId)
     }

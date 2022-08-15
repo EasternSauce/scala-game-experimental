@@ -32,20 +32,17 @@ trait Enemy extends Creature {
   }
 
   override def updateAutomaticControls()(implicit gameState: GameState): GameStateTransition = {
-
     val potentialTarget = findTarget()
     val potentialTargetId = potentialTarget.map(_.state.id)
 
-    val vectorTowardsTarget = getCreature.state.pos.vectorTowards(potentialTarget.get.state.pos)
+    if (potentialTarget.nonEmpty && this.isAlive && potentialTarget.get.isAlive) {
+      val vectorTowardsTarget = getCreature.state.pos.vectorTowards(potentialTarget.get.state.pos)
 
-    val handleTargetLost = handleTargetLost()
-
-    if (potentialTarget.nonEmpty && this.isAlive && potentialTarget.get.isAlive)
       handleNewTarget(potentialTargetId) |+|
-        handleFollowPath(potentialTarget, vectorTowardsTarget) |+|
+        handleMovement(potentialTarget, vectorTowardsTarget) |+|
         handleAttackTarget(potentialTarget, vectorTowardsTarget) |+|
         handleAbilityUsage(potentialTarget)
-    else
+    } else
       handleTargetLost()
 
   }
@@ -61,6 +58,7 @@ trait Enemy extends Creature {
   )(implicit gameState: GameState): GameStateTransition = {
 
     val pickedAbilityName = pickAbilityToUse()
+    val dirVector = getCreature.state.pos.vectorTowards(potentialTarget.get.state.pos)
     if (
       getCreature.state.useAbilityTimer.time > useAbilityTimeout + getCreature.state.inbetweenAbilitiesTime && abilityUsages.nonEmpty && pickedAbilityName.nonEmpty
     ) {
@@ -68,7 +66,7 @@ trait Enemy extends Creature {
         (
           modifyCreature(
             _.modify(_.state.actionDirVector)
-              .setTo(getCreature.state.pos.vectorTowards(potentialTarget.get.state.pos))
+              .setTo(dirVector)
               .modify(_.state.useAbilityTimer)
               .using(_.restart())
               .modify(_.state.inbetweenAbilitiesTime)
@@ -76,7 +74,7 @@ trait Enemy extends Creature {
           ),
           List()
         )
-      } |+| getAbility(AbilityId.derive(getCreature.id, pickedAbilityName.get), gameState).perform()
+      } |+| getAbility(AbilityId.derive(getCreature.id, pickedAbilityName.get), gameState).perform(dirVector)
     } else Monoid[GameStateTransition].empty
 
   }
@@ -88,7 +86,7 @@ trait Enemy extends Creature {
     else Monoid[GameStateTransition].empty
   }
 
-  private def handleFollowPath(potentialTarget: Option[Creature], vectorTowardsTarget: Vec2)(implicit
+  private def handleMovement(potentialTarget: Option[Creature], vectorTowardsTarget: Vec2)(implicit
     gameState: GameState
   ): GameStateTransition = {
     if (
@@ -102,11 +100,13 @@ trait Enemy extends Creature {
           State[GameState, List[ExternalEvent]] { implicit gameState =>
             (modifyCreature(creature => creature.modify(_.state.pathTowardsTarget).setTo(Some(path.drop(1)))), List())
           }
-        } else getCreature.moveInDir(getCreature.state.pos.vectorTowards(nextNodeOnPath))
+        } else {
+          getCreature.moveInDir(getCreature.state.pos.vectorTowards(nextNodeOnPath)) |+| getCreature.startMoving()
+        }
       } else {
-        getCreature.moveInDir(vectorTowardsTarget)
+        getCreature.moveInDir(vectorTowardsTarget) |+| getCreature.startMoving()
       }
-    } else Monoid[GameStateTransition].empty
+    } else getCreature.stopMoving()
   }
 
   private def handleNewTarget(
@@ -160,7 +160,7 @@ trait Enemy extends Creature {
 
   }
 
-  override def copy(params: CreatureState): Enemy = {
+  override def copy(params: CreatureState): Creature = {
     // unreachable, always overriden; needed for quicklens to work in abstract class
     this
   }

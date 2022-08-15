@@ -95,19 +95,19 @@ object GameState {
 
     runMovingLogic(wasMoving, isMoving, movingDir) |+|
       (if (mouseClicked) {
-         getAbility
-           .perform() |+| State { implicit gameState =>
-           (
-             gameState.pipe(
-               implicit gameState =>
-                 modifyAbility(
-                   _.modify(_.state.dirVector)
-                     .setTo(Some(mouseDirVector))
-                 )
-             ),
-             List()
-           )
-         }
+         getAbility.perform(mouseDirVector) |+|
+           State { implicit gameState =>
+             (
+               gameState.pipe(
+                 implicit gameState =>
+                   modifyAbility(
+                     _.modify(_.state.dirVector)
+                       .setTo(Some(mouseDirVector))
+                   )
+               ),
+               List()
+             )
+           }
        } else Monoid[GameStateTransition].empty)
   }
 

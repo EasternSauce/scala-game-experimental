@@ -4,12 +4,14 @@ import cats.Monoid
 import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import com.easternsauce.game.ExternalEvent
-import com.easternsauce.model.GameState.{GameStateTransition, getCreature, modifyCreature}
+import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
-import com.easternsauce.model.ids.CreatureId
+import com.easternsauce.model.ids.{AbilityId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2, WorldDirection}
 import com.softwaremill.quicklens.ModifyPimp
+
+import scala.language.postfixOps
 
 trait Creature {
   val state: CreatureState
@@ -24,7 +26,7 @@ trait Creature {
   val neutralStanceFrame: Int
   val dirMap: Map[WorldDirection, Int]
 
-  val speed: Float = 15f
+  val speed: Float = 10f
 
   val abilityNames: List[String] = List()
 
@@ -52,7 +54,9 @@ trait Creature {
   }
 
   def moveInDir(dir: Vec2)(implicit gameState: GameState): GameStateTransition = {
-    State { implicit gameState => (modifyCreature(_.modify(_.state.movingDir).setTo(dir)), List()) }
+    State[GameState, List[ExternalEvent]] { implicit gameState =>
+      (modifyCreature(_.modify(_.state.movingDir).setTo(dir)), List())
+    }
   }
 
   def startMoving()(implicit gameState: GameState): GameStateTransition = {
@@ -74,14 +78,15 @@ trait Creature {
   def isAlive = true // TODO
 
   def update(delta: Float)(implicit gameState: GameState): GameStateTransition = {
-    updateTimers(delta)
+    updateTimers(delta) |+|
+      (if (isControlledAutomatically) updateAutomaticControls() else Monoid[GameStateTransition].empty)
   }
 
   def updateTimers(delta: Float)(implicit gameState: GameState): GameStateTransition = {
     State { implicit gameState =>
       (
         modifyCreature(
-          _.modifyAll(_.state.animationTimer)
+          _.modifyAll(_.state.animationTimer, _.state.pathCalculationCooldownTimer, _.state.useAbilityTimer)
             .using(_.update(delta))
         ),
         List()
@@ -93,12 +98,10 @@ trait Creature {
   def updateAutomaticControls()(implicit gameState: GameState): GameStateTransition = Monoid[GameStateTransition].empty
 
   def attack(dir: Vec2)(implicit gameState: GameState): GameStateTransition = {
-    State[GameState, List[ExternalEvent]] { implicit gameState =>
-      (modifyCreature(_.modify(_.state.actionDirVector).setTo(dir)), List())
-    } |+|
-      (if (getCreature.abilityNames.contains(defaultAbilityName))
-         Ability.abilityByName(defaultAbilityName, id).perform()
-       else Monoid[GameStateTransition].empty)
+    implicit val abilityId: AbilityId = AbilityId.derive(id, defaultAbilityName)
+    if (getCreature.abilityNames.contains(defaultAbilityName))
+      getAbility.perform(dir)
+    else Monoid[GameStateTransition].empty
   }
 
   def init()(implicit gameState: GameState): GameStateTransition = {
@@ -107,13 +110,20 @@ trait Creature {
         // init abilities
         abilityNames.foldLeft(gameState) {
           case (gameState, abilityName) =>
-            val ability = Ability.abilityByName(abilityName, id)
+            val ability = Ability.abilityByName(id, abilityName)
             gameState.modify(_.abilities).using(_.updated(ability.id, ability))
         },
         List()
       )
     }
 
+  }
+
+  def capability: Int = {
+    if (width >= 0 && width < 2) 1
+    else if (width >= 2 && width <= 4) 2
+    else if (width >= 4 && width <= 6) 3
+    else 4
   }
 
   def copy(state: CreatureState): Creature

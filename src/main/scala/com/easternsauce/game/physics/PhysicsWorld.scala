@@ -128,7 +128,7 @@ case class PhysicsWorld(map: TiledMap) {
     Vec2(pos.x * tileWidth + tileWidth / 2, pos.y * tileHeight + tileHeight / 2)
   }
 
-  def getClosestTile(pos: TilePos): TilePos = {
+  def getClosestTile(pos: Vec2): TilePos = {
     TilePos((pos.x / tileWidth).toInt, (pos.y / tileHeight).toInt)
   }
 

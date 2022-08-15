@@ -1,6 +1,7 @@
 package com.easternsauce.game
 
 import cats.Monoid
+import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
 import com.badlogic.gdx.graphics.{Color, GL20, OrthographicCamera}
@@ -9,13 +10,14 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
-import com.easternsauce.game.physics.PhysicsEngineController
+import com.easternsauce.game.physics.{Astar, PhysicsEngineController}
 import com.easternsauce.game.renderer.SpriteRendererController
 import com.easternsauce.model.GameState._
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
 import com.easternsauce.model.creature.{Player, Skeleton}
 import com.easternsauce.model.ids.{AreaId, CreatureId}
+import com.softwaremill.quicklens.ModifyPimp
 
 object PlayScreen extends Screen {
 
@@ -177,21 +179,21 @@ object PlayScreen extends Screen {
     }
     implicit val gs: GameState = gameState.aref.get()
 
-    gameState.commit(
+    val singularGameFrame = if (!gs.currentAreaInitialized) {
+      initializeArea(gs.currentAreaId)
+    } else {
       updateCreaturePhysics() |+|
         updateCreatures(delta) |+|
         updateAbilities(delta) |+|
         updateAreas() |+|
         handlePlayerMovementInput(playerDirectionInput)
-    )
+    }
+
+    gameState.commit(singularGameFrame)
   }
 
   private def updateAreas()(implicit gameState: GameState): GameStateTransition = {
-    if (!gameState.currentAreaInitialized) {
-      initializeArea(gameState.currentAreaId)
-    } else {
-      Monoid[GameStateTransition].empty
-    }
+    Monoid[GameStateTransition].empty
   }
 
   private def updateAbilities(delta: Float)(implicit gameState: GameState): GameStateTransition = {
@@ -204,7 +206,49 @@ object PlayScreen extends Screen {
   }
 
   private def updateCreatures(delta: Float)(implicit gameState: GameState): GameStateTransition = {
-    gameState.creatures.keys.toList.foldMap(implicit id => getCreature.update(delta))
+    gameState.creatures.keys.toList.foldMap(implicit id => getCreature.update(delta) |+| processCreaturePathfinding())
+  }
+
+  private def processCreaturePathfinding()(implicit
+    creatureId: CreatureId,
+    gameState: GameState
+  ): GameStateTransition = {
+    if (
+      getCreature.state.areaId == gameState.currentAreaId &&
+      getCreature.isEnemy &&
+      getCreature.state.targetCreatureId.nonEmpty &&
+      (getCreature.state.forcePathCalculation || getCreature.state.pathCalculationCooldownTimer.time > 1f)
+    ) {
+      val target = gameState.creatures(getCreature.state.targetCreatureId.get)
+      val terrain = PhysicsEngineController.physicsWorlds(getCreature.state.areaId)
+
+      val isLineOfSight = terrain.isLineOfSight(getCreature.state.pos, target.state.pos)
+
+      if (!isLineOfSight) {
+        val path = Astar.findPath(terrain, getCreature.state.pos, target.state.pos, getCreature.capability)
+
+        State[GameState, List[ExternalEvent]] { implicit gameState =>
+          (
+            modifyCreature(
+              _.modify(_.state.pathTowardsTarget)
+                .setTo(Some(path))
+                .modify(_.state.pathCalculationCooldownTimer)
+                .using(_.restart())
+                .modify(_.state.forcePathCalculation)
+                .setTo(false)
+            ),
+            List()
+          )
+        }
+
+      } else {
+        State[GameState, List[ExternalEvent]] { implicit gameState =>
+          (modifyCreature(_.modify(_.state.pathTowardsTarget).setTo(None)), List())
+        }
+      }
+    } else {
+      Monoid[GameStateTransition].empty
+    }
   }
 
   override def resize(width: Int, height: Int): Unit = {

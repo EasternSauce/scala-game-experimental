@@ -16,6 +16,8 @@ case class Skeleton(state: CreatureState) extends Enemy {
   override val dirMap: Map[WorldDirection, Int] =
     Map(WorldDirection.Up -> 0, WorldDirection.Down -> 2, WorldDirection.Left -> 1, WorldDirection.Right -> 3)
 
+  override val abilityNames: List[String] = List("slash")
+
   override def copy(state: CreatureState = state): Creature = Skeleton(state)
 }
 
