@@ -9,8 +9,7 @@ case class TerrainTileBody(
   tileWidth: Float,
   tileHeight: Float,
   layer: Int = 0,
-  flyover: Boolean = false
-) {
+  flyover: Boolean = false) {
   var b2Body: Body = _
   val polygon: Polygon = new Polygon(
     Array(
@@ -25,8 +24,7 @@ case class TerrainTileBody(
     )
   )
 
-  def init(world: World): Unit = {
+  def init(world: World): Unit =
     b2Body = B2BodyFactory.createTerrainTileB2body(world = world, terrainTileBody = this)
-  }
 
 }

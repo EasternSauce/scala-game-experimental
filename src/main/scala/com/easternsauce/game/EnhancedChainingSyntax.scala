@@ -3,7 +3,7 @@ package com.easternsauce.game
 import scala.language.implicitConversions
 
 object EnhancedChainingSyntax {
-  @`inline` implicit final def enhancedScalaUtilChainingOps[A](a: A): EnhancedChainingOps[A] =
+  @inline implicit final def enhancedScalaUtilChainingOps[A](a: A): EnhancedChainingOps[A] =
     new EnhancedChainingOps(a)
 }
 

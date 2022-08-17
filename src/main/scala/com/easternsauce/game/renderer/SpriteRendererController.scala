@@ -8,10 +8,15 @@ import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 
 object SpriteRendererController {
   var creatureSpriteRenderers: Map[CreatureId, CreatureRenderer] = _
-  var abilitySpriteRenderers: Map[AbilityId, AbilityRenderer] = _
-  var atlas: TextureAtlas = _
+  var abilitySpriteRenderers: Map[AbilityId, AbilityRenderer]    = _
+  var atlas: TextureAtlas                                        = _
 
-  def init(atlas: TextureAtlas, maps: Map[AreaId, TiledMap])(implicit gameState: GameState): Unit = {
+  def init(
+    atlas: TextureAtlas,
+    maps: Map[AreaId, TiledMap]
+  )(
+    implicit gameState: GameState
+  ): Unit = {
     this.atlas = atlas
 
     creatureSpriteRenderers =
@@ -35,22 +40,23 @@ object SpriteRendererController {
     abilitySpriteRenderers(abilityId).init(atlas)
   }
 
-  def renderAliveEntities(batch: SpriteBatch, debugEnabled: Boolean)(implicit gameState: GameState): Unit = {
+  def renderAliveEntities(
+    batch: SpriteBatch,
+    debugEnabled: Boolean
+  )(
+    implicit gameState: GameState
+  ): Unit =
     gameState.creatures.filter { case (_, creature) => creature.isAlive }.keys.foreach { implicit creatureId =>
       if (
         creatureSpriteRenderers.contains(creatureId) &&
         getCreature.state.areaId == gameState.currentAreaId
-      ) {
+      )
         creatureSpriteRenderers(creatureId).render(batch)
-      }
     }
-  }
 
-  def renderAbilities(batch: SpriteBatch)(implicit gameState: GameState): Unit = {
+  def renderAbilities(batch: SpriteBatch)(implicit gameState: GameState): Unit =
     gameState.abilities.keys.foreach { abilityId =>
-      if (abilitySpriteRenderers.contains(abilityId)) {
+      if (abilitySpriteRenderers.contains(abilityId))
         abilitySpriteRenderers(abilityId).render(batch)
-      }
     }
-  }
 }

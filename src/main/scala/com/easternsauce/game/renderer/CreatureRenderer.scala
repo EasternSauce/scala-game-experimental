@@ -8,7 +8,7 @@ import com.easternsauce.model.ids.CreatureId
 
 case class CreatureRenderer(creatureId: CreatureId) {
   implicit val _creatureId: CreatureId = creatureId
-  var sprite: Sprite = _
+  var sprite: Sprite                   = _
 
   var facingTextures: Array[TextureRegion] = _
 
@@ -27,7 +27,7 @@ case class CreatureRenderer(creatureId: CreatureId) {
 
     textureRegion = atlas.findRegion(creature.textureName)
 
-    for (i <- 0 until 4) {
+    for (i <- 0 until 4)
       facingTextures(i) = new TextureRegion(
         textureRegion,
         creature.neutralStanceFrame * creature.textureWidth,
@@ -36,18 +36,15 @@ case class CreatureRenderer(creatureId: CreatureId) {
         creature.textureHeight
       )
 
-    }
-
     for (i <- 0 until 4) {
-      val frames = for { j <- (0 until creature.frameCount).toArray } yield {
-        new TextureRegion(
+      val frames =
+        for { j <- (0 until creature.frameCount).toArray } yield new TextureRegion(
           textureRegion,
           j * creature.textureWidth,
           i * creature.textureHeight,
           creature.textureWidth,
           creature.textureHeight
         )
-      }
       runningAnimations(i) = new Animation[TextureRegion](creature.frameDuration, frames: _*)
 
     }
@@ -61,7 +58,10 @@ case class CreatureRenderer(creatureId: CreatureId) {
       .getKeyFrame(player.state.animationTimer.time, true)
   }
 
-  def facingTexture(gameState: GameState, currentDirection: WorldDirection): TextureRegion = {
+  def facingTexture(
+    gameState: GameState,
+    currentDirection: WorldDirection
+  ): TextureRegion = {
     val creature = gameState.creatures(creatureId)
 
     facingTextures(creature.dirMap(currentDirection))
@@ -77,7 +77,6 @@ case class CreatureRenderer(creatureId: CreatureId) {
     sprite.setSize(getCreature.width, getCreature.height)
   }
 
-  def render(batch: SpriteBatch): Unit = {
+  def render(batch: SpriteBatch): Unit =
     sprite.draw(batch)
-  }
 }

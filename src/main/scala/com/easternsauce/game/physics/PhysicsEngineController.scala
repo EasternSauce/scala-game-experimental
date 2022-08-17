@@ -7,23 +7,22 @@ import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 
 case object PhysicsEngineController {
   var creatureBodies: Map[CreatureId, CreatureBody] = _
-  var abilityBodies: Map[AbilityId, AbilityBody] = _
-  var physicsWorlds: Map[AreaId, PhysicsWorld] = _
+  var abilityBodies: Map[AbilityId, AbilityBody]    = _
+  var physicsWorlds: Map[AreaId, PhysicsWorld]      = _
 
   def init(maps: Map[AreaId, TiledMap])(implicit gameState: GameState): Unit = {
     this.physicsWorlds = maps.map { case (areaId, map) => areaId -> PhysicsWorld(map) }
 
-    physicsWorlds.values.foreach(world => {
+    physicsWorlds.values.foreach { world =>
       world.init()
       createContactListener(world.b2world)
-    })
+    }
 
     creatureBodies = gameState.creatures.keys.map(creatureId => creatureId -> CreatureBody(creatureId)).toMap
 
-    creatureBodies.values.foreach(creatureBody => {
-
+    creatureBodies.values.foreach { creatureBody =>
       creatureBody.init()
-    })
+    }
 
     abilityBodies = Map()
 
@@ -39,7 +38,7 @@ case object PhysicsEngineController {
     abilityBodies(abilityId).init()
     abilityBodies(abilityId).isActive = true
   }
-  def destroyAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
+  def removeAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
     abilityBodies(abilityId).destroy()
     abilityBodies(abilityId).isActive = false
   }

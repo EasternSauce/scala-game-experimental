@@ -26,17 +26,17 @@ trait Ability {
   val activeFrameCount: Int
   val channelFrameDuration: Float
   val activeFrameDuration: Float
-  val scale: Float = 1.0f
-  val initSpeed: Float = 0f
-  val activeAnimationLooping: Boolean = false
+  val scale: Float                     = 1.0f
+  val initSpeed: Float                 = 0f
+  val activeAnimationLooping: Boolean  = false
   val channelAnimationLooping: Boolean = false
 
   val attackRange: Float = 1.8f
 
-  implicit def id: AbilityId = state.id
+  implicit def id: AbilityId          = state.id
   implicit def creatureId: CreatureId = state.creatureId
 
-  def width: Float = textureWidth.toFloat * scale / Constants.PPM
+  def width: Float  = textureWidth.toFloat * scale / Constants.PPM
   def height: Float = textureHeight.toFloat * scale / Constants.PPM
 
   def ableToPerform: Boolean =
@@ -44,19 +44,23 @@ trait Ability {
 
   def onCooldown: Boolean = false // TODO
 
-  def perform(dir: Vec2)(implicit gameState: GameState): GameStateTransition = {
-    if (ableToPerform) {
+  def perform(dir: Vec2)(implicit gameState: GameState): GameStateTransition =
+    if (ableToPerform)
       State[GameState, List[ExternalEvent]] { implicit gameState =>
         (modifyCreature(_.modify(_.state.actionDirVector).setTo(dir)), List())
       } |+|
         State { implicit gameState =>
           (
-            modifyAbility(_.modify(_.state.justPerformed).setTo(true).modify(_.state.dirVector).setTo(Some(dir))),
+            modifyAbility(
+              _.modify(_.state.justPerformed)
+                .setTo(true)
+                .modify(_.state.dirVector)
+                .setTo(Some(dir))
+            ),
             List()
           )
         }
-    } else Monoid[GameStateTransition].empty
-  }
+    else Monoid[GameStateTransition].empty
 
   def onActiveStart()(implicit gameState: GameState): GameStateTransition
 
@@ -69,7 +73,8 @@ trait Ability {
   def onInactiveStart()(implicit gameState: GameState): GameStateTransition
 
   def updateHitbox()(implicit gameState: GameState): GameStateTransition = {
-    if (state.dirVector.isEmpty) throw new RuntimeException("trying to update hitbox without setting dir vector!")
+    if (state.dirVector.isEmpty)
+      throw new RuntimeException("trying to update hitbox without setting dir vector!")
 
     val dirVector = state.dirVector.get match {
       case dirVector if dirVector.length <= 0 => Vec2(1, 0).normal
@@ -106,7 +111,7 @@ trait Ability {
     }
   }
 
-  def update(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+  def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
     (state.stage match {
       case AbilityStage.Inactive =>
         if (state.justPerformed) updateStateToChannel()
@@ -128,9 +133,8 @@ trait Ability {
         )
 
     }) |+| updateTimers(delta)
-  }
 
-  private def updateStateToInactive()(implicit gameState: GameState): GameStateTransition = {
+  private def updateStateToInactive()(implicit gameState: GameState): GameStateTransition =
     onInactiveStart() |+|
       State { implicit gameState =>
         (
@@ -143,9 +147,8 @@ trait Ability {
           List(AbilityBodyDestroyEvent(id))
         )
       }
-  }
 
-  private def updateStateToActive()(implicit gameState: GameState): GameStateTransition = {
+  private def updateStateToActive()(implicit gameState: GameState): GameStateTransition =
     onActiveStart() |+|
       State { implicit gameState =>
         (
@@ -158,9 +161,8 @@ trait Ability {
           List(AbilityBodyActivateEvent(id))
         )
       }
-  }
 
-  private def updateStateToChannel()(implicit gameState: GameState): GameStateTransition = {
+  private def updateStateToChannel()(implicit gameState: GameState): GameStateTransition =
     onChannelStart() |+|
       State { implicit gameState =>
         (
@@ -177,19 +179,20 @@ trait Ability {
           List()
         )
       }
-  }
 
-  private def updateTimers(delta: Float): GameStateTransition = {
+  private def updateTimers(delta: Float): GameStateTransition =
     State { implicit gameState =>
       (gameState.pipe(implicit gameState => modifyAbility(_.modify(_.state.stageTimer).using(_.update(delta)))), List())
     }
-  }
 
   def copy(state: AbilityState = state): Ability
 }
 
 object Ability {
-  def abilityByName(creatureId: CreatureId, name: String): Ability =
+  def abilityByName(
+    creatureId: CreatureId,
+    name: String
+  ): Ability =
     name match {
       case "slash" => SlashAbility(AbilityId.derive(creatureId, name), creatureId)
     }

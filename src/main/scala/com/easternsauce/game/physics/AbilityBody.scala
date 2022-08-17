@@ -9,7 +9,7 @@ case class AbilityBody(abilityId: AbilityId) {
   var b2Body: Body = _
 
   private val sprite = new Sprite()
-  var isActive = false
+  var isActive       = false
 
   def hitboxVertices()(implicit gameState: GameState): Array[Float] = {
     val ability = gameState.abilities(abilityId)
@@ -69,18 +69,16 @@ case class AbilityBody(abilityId: AbilityId) {
 //      isActive = false
 //    }
 
-    if (isActive) {
-      if (ability.state.hitbox.nonEmpty) {
+    if (isActive)
+      if (ability.state.hitbox.nonEmpty)
         b2Body.setTransform(ability.state.hitbox.get.pos.x, ability.state.hitbox.get.pos.y, 0f)
-      }
-//      else if (component.specification.componentType == ComponentType.RangedProjectile) {
+    //      else if (component.specification.componentType == ComponentType.RangedProjectile) {
 //        b2Body.setLinearVelocity(
 //          component.params.dirVector.x * component.speed,
 //          component.params.dirVector.y * component.speed
 //        )
 //      }
 
-    }
   }
 
   def destroy()(implicit gameState: GameState): Unit = {

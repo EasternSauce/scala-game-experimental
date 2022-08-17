@@ -8,7 +8,7 @@ import com.easternsauce.model.ids.AreaId
 object MyGdxGame extends Game {
 
   var spriteBatch: SpriteBatch = _
-  var hudBatch: SpriteBatch = _
+  var hudBatch: SpriteBatch    = _
 
   var atlas: TextureAtlas = _
 

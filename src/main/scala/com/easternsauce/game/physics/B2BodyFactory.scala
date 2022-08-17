@@ -49,7 +49,10 @@ object B2BodyFactory {
 
   }
 
-  def createTerrainTileB2body(world: World, terrainTileBody: TerrainTileBody): Body = {
+  def createTerrainTileB2body(
+    world: World,
+    terrainTileBody: TerrainTileBody
+  ): Body =
     createB2body(
       world = world,
       posX = terrainTileBody.x * terrainTileBody.tileWidth + terrainTileBody.tileWidth / 2,
@@ -58,9 +61,12 @@ object B2BodyFactory {
       userData = terrainTileBody,
       shape = Rectangle(terrainTileBody.tileWidth, terrainTileBody.tileHeight)
     )
-  }
 
-  def createCreatureB2body(world: World, creatureBody: CreatureBody, creature: Creature): Body = {
+  def createCreatureB2body(
+    world: World,
+    creatureBody: CreatureBody,
+    creature: Creature
+  ): Body =
     createB2body(
       world = world,
       posX = creature.state.pos.x,
@@ -72,7 +78,6 @@ object B2BodyFactory {
       linearDamping = Some(10f),
       mass = Some(1000f)
     )
-  }
 
   def createAbilityB2body(
     world: World,
@@ -80,7 +85,7 @@ object B2BodyFactory {
     posX: Float,
     posY: Float,
     vertices: Array[Float]
-  ): Body = {
+  ): Body =
     createB2body(
       world = world,
       posX = posX,
@@ -90,7 +95,6 @@ object B2BodyFactory {
       shape = Polygon(vertices),
       isSensor = true
     )
-  }
 
 }
 
@@ -99,8 +103,13 @@ sealed abstract class BodyShape { def b2Shape(): Shape }
 case class Circle(radius: Float) extends BodyShape {
   def b2Shape(): Shape = { val shape = new CircleShape(); shape.setRadius(radius); shape }
 }
-case class Rectangle(width: Float, height: Float) extends BodyShape {
-  def b2Shape(): Shape = { val shape = new PolygonShape(); shape.setAsBox(width / 2, height / 2); shape }
+case class Rectangle(
+  width: Float,
+  height: Float)
+    extends BodyShape {
+  def b2Shape(): Shape = {
+    val shape = new PolygonShape(); shape.setAsBox(width / 2, height / 2); shape
+  }
 }
 case class Polygon(vertices: Array[Float]) extends BodyShape {
   def b2Shape(): Shape = { val shape = new PolygonShape(); shape.set(vertices); shape }

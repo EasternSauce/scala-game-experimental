@@ -40,49 +40,49 @@ trait Creature {
 
   def isMoving: Boolean = state.currentSpeed > 0f
 
-  def isPlayer: Boolean = false
-  def isEnemy: Boolean = false
+  def isPlayer: Boolean                  = false
+  def isEnemy: Boolean                   = false
   def isControlledAutomatically: Boolean = false
 
-  def facingDirection: WorldDirection = {
+  def facingDirection: WorldDirection =
     state.movingDir.angleDeg() match {
       case angle if angle >= 45 && angle < 135  => WorldDirection.Up
       case angle if angle >= 135 && angle < 225 => WorldDirection.Left
       case angle if angle >= 225 && angle < 315 => WorldDirection.Down
       case _                                    => WorldDirection.Right
     }
-  }
 
-  def moveInDir(dir: Vec2)(implicit gameState: GameState): GameStateTransition = {
+  def moveInDir(dir: Vec2)(implicit gameState: GameState): GameStateTransition =
     State[GameState, List[ExternalEvent]] { implicit gameState =>
       (modifyCreature(_.modify(_.state.movingDir).setTo(dir)), List())
     }
-  }
 
-  def startMoving()(implicit gameState: GameState): GameStateTransition = {
-
+  def startMoving()(implicit gameState: GameState): GameStateTransition =
     State { implicit gameState =>
       (
         modifyCreature(
-          _.modify(_.state.currentSpeed).setTo(this.speed).modify(_.state.animationTimer).using(_.restart())
+          _.modify(_.state.currentSpeed)
+            .setTo(this.speed)
+            .modify(_.state.animationTimer)
+            .using(_.restart())
         ),
         List()
       )
     }
-  }
 
-  def stopMoving()(implicit gameState: GameState): GameStateTransition = {
-    State { implicit gameState => (modifyCreature(_.modify(_.state.currentSpeed).setTo(0f)), List()) }
-  }
+  def stopMoving()(implicit gameState: GameState): GameStateTransition =
+    State { implicit gameState =>
+      (modifyCreature(_.modify(_.state.currentSpeed).setTo(0f)), List())
+    }
 
   def isAlive = true // TODO
 
-  def update(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+  def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
     updateTimers(delta) |+|
-      (if (isControlledAutomatically) updateAutomaticControls() else Monoid[GameStateTransition].empty)
-  }
+      (if (isControlledAutomatically) updateAutomaticControls()
+       else Monoid[GameStateTransition].empty)
 
-  def updateTimers(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+  def updateTimers(delta: Float)(implicit gameState: GameState): GameStateTransition =
     State { implicit gameState =>
       (
         modifyCreature(
@@ -93,9 +93,8 @@ trait Creature {
       )
     }
 
-  }
-
-  def updateAutomaticControls()(implicit gameState: GameState): GameStateTransition = Monoid[GameStateTransition].empty
+  def updateAutomaticControls()(implicit gameState: GameState): GameStateTransition =
+    Monoid[GameStateTransition].empty
 
   def attack(dir: Vec2)(implicit gameState: GameState): GameStateTransition = {
     implicit val abilityId: AbilityId = AbilityId.derive(id, defaultAbilityName)
@@ -104,7 +103,7 @@ trait Creature {
     else Monoid[GameStateTransition].empty
   }
 
-  def init()(implicit gameState: GameState): GameStateTransition = {
+  def init()(implicit gameState: GameState): GameStateTransition =
     State { gameState =>
       (
         // init abilities
@@ -117,14 +116,11 @@ trait Creature {
       )
     }
 
-  }
-
-  def capability: Int = {
+  def capability: Int =
     if (width >= 0 && width < 2) 1
     else if (width >= 2 && width <= 4) 2
     else if (width >= 4 && width <= 6) 3
     else 4
-  }
 
   def copy(state: CreatureState): Creature
 }
@@ -133,5 +129,4 @@ case class AbilityUsage(
   weight: Float,
   minimumDistance: Float = 0f,
   maximumDistance: Float = Float.MaxValue,
-  lifeThreshold: Float = 1.0f
-)
+  lifeThreshold: Float = 1.0f)

@@ -12,10 +12,10 @@ case class AbilityRenderer(abilityId: AbilityId) {
   var sprite: Sprite = _
 
   var channelAnimation: Animation[TextureRegion] = _
-  var activeAnimation: Animation[TextureRegion] = _
+  var activeAnimation: Animation[TextureRegion]  = _
 
   var channelTextureRegion: TextureRegion = _
-  var activeTextureRegion: TextureRegion = _
+  var activeTextureRegion: TextureRegion  = _
 
   def init(atlas: TextureAtlas)(implicit gameState: GameState): Unit = {
     sprite = new Sprite()
@@ -23,32 +23,30 @@ case class AbilityRenderer(abilityId: AbilityId) {
     channelTextureRegion = atlas.findRegion(getAbility.channelSpriteType)
     activeTextureRegion = atlas.findRegion(getAbility.activeSpriteType)
 
-    val channelFrames = for { i <- (0 until getAbility.channelFrameCount).toArray } yield {
-      new TextureRegion(
+    val channelFrames =
+      for { i <- (0 until getAbility.channelFrameCount).toArray } yield new TextureRegion(
         channelTextureRegion,
         i * getAbility.textureWidth,
         0,
         getAbility.textureWidth,
         getAbility.textureHeight
       )
-    }
     channelAnimation = new Animation[TextureRegion](getAbility.channelFrameDuration, channelFrames: _*)
 
-    val activeFrames = for { i <- (0 until getAbility.activeFrameCount).toArray } yield {
-      new TextureRegion(
+    val activeFrames =
+      for { i <- (0 until getAbility.activeFrameCount).toArray } yield new TextureRegion(
         activeTextureRegion,
         i * getAbility.textureWidth,
         0,
         getAbility.textureWidth,
         getAbility.textureHeight
       )
-    }
     activeAnimation = new Animation[TextureRegion](getAbility.activeFrameDuration, activeFrames: _*)
   }
 
   def update()(implicit gameState: GameState): Unit = {
 
-    def updateSprite(texture: TextureRegion): Unit = {
+    def updateSprite(texture: TextureRegion): Unit =
       if (getAbility.state.hitbox.nonEmpty) {
         val hitbox = getAbility.state.hitbox.get
 
@@ -58,13 +56,10 @@ case class AbilityRenderer(abilityId: AbilityId) {
         sprite.setOriginCenter()
         sprite.setRotation(hitbox.rotation)
         sprite.setScale(hitbox.scale)
-      } else {
+      } else
         throw new RuntimeException(
           "cannot update sprite without filling in hitbox information! dir vector for ability probably not set"
         )
-      }
-
-    }
 
     if (getAbility.state.stage == AbilityStage.Channel) {
 
@@ -83,9 +78,7 @@ case class AbilityRenderer(abilityId: AbilityId) {
 
   }
 
-  def render(batch: SpriteBatch)(implicit gameState: GameState): Unit = {
-    if (getAbility.state.stage == AbilityStage.Channel || getAbility.state.stage == AbilityStage.Active) {
+  def render(batch: SpriteBatch)(implicit gameState: GameState): Unit =
+    if (getAbility.state.stage == AbilityStage.Channel || getAbility.state.stage == AbilityStage.Active)
       sprite.draw(batch)
-    }
-  }
 }

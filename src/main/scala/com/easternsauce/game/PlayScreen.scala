@@ -22,15 +22,15 @@ import com.softwaremill.quicklens.ModifyPimp
 object PlayScreen extends Screen {
 
   var spriteBatch: SpriteBatch = _
-  var hudBatch: SpriteBatch = _
+  var hudBatch: SpriteBatch    = _
 
   var maps: Map[AreaId, TiledMap] = _
 
   var worldCamera: OrthographicCamera = _
-  var hudCamera: OrthographicCamera = _
+  var hudCamera: OrthographicCamera   = _
 
   var worldViewport: Viewport = _
-  var hudViewport: Viewport = _
+  var hudViewport: Viewport   = _
 
   var gameState: AtomicSTRef[GameState] = _
 
@@ -59,12 +59,11 @@ object PlayScreen extends Screen {
     gameState = AtomicSTRef(
       GameState(
         creatures = Map(
-          CreatureId("player") -> Player(id = CreatureId("player"), areaId = AreaId("area1"), pos = Vec2(22, 4)),
+          CreatureId("player")  -> Player(id = CreatureId("player"), areaId = AreaId("area1"), pos = Vec2(22, 4)),
           CreatureId("skellie") -> Skeleton(id = CreatureId("skellie"), areaId = AreaId("area1"), pos = Vec2(24, 4))
         ),
         currentPlayerId = CreatureId("player"),
-        currentAreaId = AreaId("area1"),
-        currentAreaInitialized = false
+        currentAreaId = AreaId("area1")
       )
     )
 
@@ -79,7 +78,7 @@ object PlayScreen extends Screen {
   }
 
   def setSpriteBatch(spriteBatch: SpriteBatch): Unit = this.spriteBatch = spriteBatch
-  def setHudBatch(hudBatch: SpriteBatch): Unit = this.hudBatch = hudBatch
+  def setHudBatch(hudBatch: SpriteBatch): Unit       = this.hudBatch = hudBatch
 
   def setMaps(maps: Map[AreaId, TiledMap]): Unit = this.maps = maps
 
@@ -111,7 +110,8 @@ object PlayScreen extends Screen {
 
     Gdx.gl.glClearColor(0, 0, 0, 1)
 
-    val coverageBuffer = if (Gdx.graphics.getBufferFormat.coverageSampling) GL20.GL_COVERAGE_BUFFER_BIT_NV else 0
+    val coverageBuffer =
+      if (Gdx.graphics.getBufferFormat.coverageSampling) GL20.GL_COVERAGE_BUFFER_BIT_NV else 0
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT | coverageBuffer)
 
     tiledMapRenderer.render(Array(0, 1))
@@ -144,14 +144,20 @@ object PlayScreen extends Screen {
 
   }
 
-  def processExternalEvents()(implicit gameState: GameState, events: List[ExternalEvent]): Unit = {
+  def processExternalEvents(
+  )(
+    implicit gameState: GameState,
+    events: List[ExternalEvent]
+  ): Unit =
     events.foreach {
-      case AbilityBodyCreateEvent(abilityId)           => PhysicsEngineController.addAbilityBody(abilityId)
-      case AbilityBodyActivateEvent(abilityId)         => PhysicsEngineController.activateAbilityBody(abilityId)
-      case AbilitySpriteRendererCreateEvent(abilityId) => SpriteRendererController.addRenderer(abilityId)
-      case AbilityBodyDestroyEvent(abilityId)          => PhysicsEngineController.destroyAbilityBody(abilityId)
+      case AbilityBodyCreateEvent(abilityId) => PhysicsEngineController.addAbilityBody(abilityId)
+      case AbilityBodyDestroyEvent(abilityId) =>
+        PhysicsEngineController.removeAbilityBody(abilityId)
+      case AbilityBodyActivateEvent(abilityId) =>
+        PhysicsEngineController.activateAbilityBody(abilityId)
+      case AbilitySpriteRendererCreateEvent(abilityId) =>
+        SpriteRendererController.addRenderer(abilityId)
     }
-  }
 
   def update(delta: Float): Unit = {
     tiledMapRenderer.setView(worldCamera)
@@ -169,63 +175,70 @@ object PlayScreen extends Screen {
 
   def commitUpdatedState(delta: Float): (GameState, List[ExternalEvent]) = {
 
-    val playerDirectionInput: Map[WorldDirection, Boolean] = {
+    val playerDirectionInput: Map[WorldDirection, Boolean] =
       Map(
-        WorldDirection.Left -> Gdx.input.isKeyPressed(Input.Keys.A),
+        WorldDirection.Left  -> Gdx.input.isKeyPressed(Input.Keys.A),
         WorldDirection.Right -> Gdx.input.isKeyPressed(Input.Keys.D),
-        WorldDirection.Down -> Gdx.input.isKeyPressed(Input.Keys.S),
-        WorldDirection.Up -> Gdx.input.isKeyPressed(Input.Keys.W)
+        WorldDirection.Down  -> Gdx.input.isKeyPressed(Input.Keys.S),
+        WorldDirection.Up    -> Gdx.input.isKeyPressed(Input.Keys.W)
       )
-    }
     implicit val gs: GameState = gameState.aref.get()
 
-    val singularGameFrame = if (!gs.currentAreaInitialized) {
-      initializeArea(gs.currentAreaId)
-    } else {
+    val singularGameFrame =
       updateCreaturePhysics() |+|
         updateCreatures(delta) |+|
         updateAbilities(delta) |+|
         updateAreas() |+|
         handlePlayerMovementInput(playerDirectionInput)
-    }
 
     gameState.commit(singularGameFrame)
   }
 
-  private def updateAreas()(implicit gameState: GameState): GameStateTransition = {
-    Monoid[GameStateTransition].empty
-  }
+  private def updateAreas()(implicit gameState: GameState): GameStateTransition =
+    if (gameState.currentAreaInitialized)
+      Monoid[GameStateTransition].empty
+    else
+      initializeArea(gameState.currentAreaId)
 
-  private def updateAbilities(delta: Float)(implicit gameState: GameState): GameStateTransition = {
-    gameState.abilities.keys.toList.foldMap(implicit id => getAbility.update(delta))
-  }
+  private def updateAbilities(delta: Float)(implicit gameState: GameState): GameStateTransition =
+    if (gameState.currentAreaInitialized)
+      gameState.abilities.keys.toList.foldMap(implicit id => getAbility.update(delta))
+    else
+      Monoid[GameStateTransition].empty
 
   // forcefully set creature positions to physics engine values
-  private def updateCreaturePhysics()(implicit gameState: GameState): GameStateTransition = {
-    gameState.creatures.keys.toList.foldMap(handleCreaturePhysicsUpdate)
-  }
+  private def updateCreaturePhysics()(implicit gameState: GameState): GameStateTransition =
+    if (gameState.currentAreaInitialized)
+      gameState.creatures.keys.toList.foldMap(handleCreaturePhysicsUpdate)
+    else
+      Monoid[GameStateTransition].empty
 
-  private def updateCreatures(delta: Float)(implicit gameState: GameState): GameStateTransition = {
-    gameState.creatures.keys.toList.foldMap(implicit id => getCreature.update(delta) |+| processCreaturePathfinding())
-  }
+  private def updateCreatures(delta: Float)(implicit gameState: GameState): GameStateTransition =
+    if (gameState.currentAreaInitialized)
+      gameState.creatures.keys.toList.foldMap(implicit id => getCreature.update(delta) |+| processCreaturePathfinding())
+    else
+      Monoid[GameStateTransition].empty
 
-  private def processCreaturePathfinding()(implicit
+  private def processCreaturePathfinding(
+  )(
+    implicit
     creatureId: CreatureId,
     gameState: GameState
-  ): GameStateTransition = {
+  ): GameStateTransition =
     if (
       getCreature.state.areaId == gameState.currentAreaId &&
       getCreature.isEnemy &&
       getCreature.state.targetCreatureId.nonEmpty &&
       (getCreature.state.forcePathCalculation || getCreature.state.pathCalculationCooldownTimer.time > 1f)
     ) {
-      val target = gameState.creatures(getCreature.state.targetCreatureId.get)
+      val target  = gameState.creatures(getCreature.state.targetCreatureId.get)
       val terrain = PhysicsEngineController.physicsWorlds(getCreature.state.areaId)
 
       val isLineOfSight = terrain.isLineOfSight(getCreature.state.pos, target.state.pos)
 
       if (!isLineOfSight) {
-        val path = Astar.findPath(terrain, getCreature.state.pos, target.state.pos, getCreature.capability)
+        val path =
+          Astar.findPath(terrain, getCreature.state.pos, target.state.pos, getCreature.capability)
 
         State[GameState, List[ExternalEvent]] { implicit gameState =>
           (
@@ -241,17 +254,17 @@ object PlayScreen extends Screen {
           )
         }
 
-      } else {
+      } else
         State[GameState, List[ExternalEvent]] { implicit gameState =>
           (modifyCreature(_.modify(_.state.pathTowardsTarget).setTo(None)), List())
         }
-      }
-    } else {
+    } else
       Monoid[GameStateTransition].empty
-    }
-  }
 
-  override def resize(width: Int, height: Int): Unit = {
+  override def resize(
+    width: Int,
+    height: Int
+  ): Unit = {
     worldViewport.update(width, height)
     hudViewport.update(width, height)
   }

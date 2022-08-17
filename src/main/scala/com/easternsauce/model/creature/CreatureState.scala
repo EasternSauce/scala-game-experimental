@@ -18,5 +18,4 @@ case class CreatureState(
   life: Float = 100f,
   maxLife: Float = 100f,
   useAbilityTimer: SimpleTimer = SimpleTimer(time = 4f, isRunning = true),
-  inbetweenAbilitiesTime: Float = 0f
-)
+  inbetweenAbilitiesTime: Float = 0f)
