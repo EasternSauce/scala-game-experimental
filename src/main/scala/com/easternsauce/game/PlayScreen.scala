@@ -191,6 +191,8 @@ object PlayScreen extends Screen {
         updateAreas() |+|
         handlePlayerMovementInput(playerDirectionInput)
 
+    // TODO: add processing physics events above
+
     gameState.commit(singularGameFrame)
   }
 

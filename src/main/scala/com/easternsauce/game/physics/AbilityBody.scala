@@ -3,9 +3,9 @@ package com.easternsauce.game.physics
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.physics.box2d.Body
 import com.easternsauce.model.GameState
-import com.easternsauce.model.ids.AbilityId
+import com.easternsauce.model.ids.{AbilityId, CreatureId}
 
-case class AbilityBody(abilityId: AbilityId) {
+case class AbilityBody(creatureId: CreatureId, abilityId: AbilityId) {
   var b2Body: Body = _
 
   private val sprite = new Sprite()

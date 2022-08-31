@@ -4,7 +4,7 @@ import cats.Monoid
 import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import com.easternsauce.game.ExternalEvent
-import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyCreature}
+import com.easternsauce.model.GameState.{getAbility, getCreature, modifyCreature, GameStateTransition}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
@@ -12,6 +12,7 @@ import com.easternsauce.model.{GameState, Vec2, WorldDirection}
 import com.softwaremill.quicklens.ModifyPimp
 
 import scala.language.postfixOps
+import scala.util.chaining.scalaUtilChainingOps
 
 trait Creature {
   val state: CreatureState
@@ -40,8 +41,10 @@ trait Creature {
 
   def isMoving: Boolean = state.currentSpeed > 0f
 
-  def isPlayer: Boolean                  = false
-  def isEnemy: Boolean                   = false
+  def isPlayer: Boolean = false
+
+  def isEnemy: Boolean = false
+
   def isControlledAutomatically: Boolean = false
 
   def facingDirection: WorldDirection =
@@ -77,9 +80,13 @@ trait Creature {
 
   def isAlive = true // TODO
 
+  def onDeath(): GameStateTransition = Monoid[GameStateTransition].empty
+
   def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
     updateTimers(delta) |+|
       (if (isControlledAutomatically) updateAutomaticControls()
+       else Monoid[GameStateTransition].empty) |+|
+      (if (state.life > 0f && state.life <= 0f) onDeath()
        else Monoid[GameStateTransition].empty)
 
   def updateTimers(delta: Float)(implicit gameState: GameState): GameStateTransition =
@@ -101,6 +108,35 @@ trait Creature {
     if (getCreature.abilityNames.contains(defaultAbilityName))
       getAbility.perform(dir)
     else Monoid[GameStateTransition].empty
+  }
+
+  def takeLifeDamage(
+    damage: Float,
+    sourcePosX: Float,
+    sourcePosY: Float
+  ): GameStateTransition = {
+    val actualDamage = damage * 100f / (100f + state.totalArmor)
+
+    //      .usingIf(creature.onGettingHitSoundId.nonEmpty)(_.prepended(PlaySoundEvent(creature.onGettingHitSoundId.get)))
+    State { implicit gameState: GameState =>
+      (
+        modifyCreature(
+          _.pipe(creature =>
+            if (creature.state.life - actualDamage > 0)
+              creature.modify(_.state.life).setTo(creature.state.life - actualDamage)
+            else creature.modify(_.state.life).setTo(0f)
+          )
+        ),
+        List()
+      )
+    }
+//  .activateEffect("knockback", 0.02f)
+//  .modify(_.params.knockbackDir)
+//  .setTo(
+//    Vec2(creatures(creatureId).params.posX - sourcePosX, creatures(creatureId).params.posY - sourcePosY).normal
+//  )
+//  .modify(_.params.knockbackVelocity)
+//  .setTo(20f))
   }
 
   def init()(implicit gameState: GameState): GameStateTransition =
