@@ -19,4 +19,6 @@ case class CreatureState(
   maxLife: Float = 100f,
   useAbilityTimer: SimpleTimer = SimpleTimer(time = 4f, isRunning = true),
   inbetweenAbilitiesTime: Float = 0f,
-  totalArmor: Float = 0f)
+  totalArmor: Float = 0f,
+  isDead: Boolean = false,
+  events: List[CreatureEvent] = List())

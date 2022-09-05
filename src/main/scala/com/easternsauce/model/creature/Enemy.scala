@@ -4,9 +4,9 @@ import cats.Monoid
 import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import com.easternsauce.game.ExternalEvent
-import com.easternsauce.model.GameState.{getAbility, getCreature, modifyCreature, GameStateTransition}
+import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyCreature}
 import com.easternsauce.model.ids.AbilityId
-import com.easternsauce.model.{ids, GameState, Vec2}
+import com.easternsauce.model.{GameState, Vec2, ids}
 import com.softwaremill.quicklens.ModifyPimp
 
 import scala.util.Random

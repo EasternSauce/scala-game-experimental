@@ -10,7 +10,7 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
-import com.easternsauce.game.physics.{Astar, PhysicsEngineController}
+import com.easternsauce.game.physics.{AbilityCollisionEvent, Astar, PhysicsEngineController, PhysicsEvent}
 import com.easternsauce.game.renderer.SpriteRendererController
 import com.easternsauce.model.GameState._
 import com.easternsauce.model.WorldDirection.WorldDirection
@@ -144,10 +144,40 @@ object PlayScreen extends Screen {
 
   }
 
+  def processPhysicsEvents(physicsEventQueue: List[PhysicsEvent])(implicit gameState: GameState): GameStateTransition =
+    physicsEventQueue.foldMap {
+      case AbilityCollisionEvent(creatureId, abilityId, collidedCreatureId) =>
+        if (gameState.creatures.contains(creatureId)) {
+          val ability = gameState.abilities(abilityId)
+
+          val attackingDisallowed: Boolean =
+            getCreature(creatureId, gameState).isControlledAutomatically && getCreature(
+              collidedCreatureId,
+              gameState
+            ).isControlledAutomatically
+
+          if (
+            getCreature(collidedCreatureId, gameState).isAlive && !attackingDisallowed /*&& !getCreature(collidedCreatureId)
+          .isEffectActive("immunityFrames")*/
+          ) {
+            val damage =
+              /*if (ability.isWeaponAttack) creatures(creatureId).weaponDamage else abilityComponent.damage*/ 20f // TODO
+            getCreature(collidedCreatureId, gameState).takeLifeDamage(
+              damage,
+              getCreature(creatureId, gameState).state.pos.x,
+              getCreature(creatureId, gameState).state.pos.y
+            )
+          } else Monoid[GameStateTransition].empty
+
+        } else Monoid[GameStateTransition].empty
+
+      case _ => Monoid[GameStateTransition].empty
+    }
+
   def processExternalEvents(
-  )(
-    implicit gameState: GameState,
     events: List[ExternalEvent]
+  )(
+    implicit gameState: GameState
   ): Unit =
     events.foreach {
       case AbilityBodyCreateEvent(abilityId) => PhysicsEngineController.addAbilityBody(abilityId)
@@ -166,7 +196,9 @@ object PlayScreen extends Screen {
     // single frame calculation + side effects
     implicit val (gameState, events) = commitUpdatedState(delta)
 
-    processExternalEvents()
+    PhysicsEngineController.physicsEventQueue.clear()
+
+    processExternalEvents(events)
 
     SpriteRendererController.update()
     PhysicsEngineController.update()
@@ -189,7 +221,8 @@ object PlayScreen extends Screen {
         updateCreatures(delta) |+|
         updateAbilities(delta) |+|
         updateAreas() |+|
-        handlePlayerMovementInput(playerDirectionInput)
+        handlePlayerMovementInput(playerDirectionInput) |+|
+        processPhysicsEvents(PhysicsEngineController.physicsEventQueue.toList)
 
     // TODO: add processing physics events above
 

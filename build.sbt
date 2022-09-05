@@ -8,13 +8,13 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 resolvers += "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases/"
 resolvers += "jitpack" at "https://jitpack.io"
 
-libraryDependencies += "com.badlogicgames.gdx" % "gdx" % "1.10.0"
-libraryDependencies += "com.badlogicgames.gdx" % "gdx-box2d" % "1.10.0"
+libraryDependencies += "com.badlogicgames.gdx" % "gdx"                % "1.10.0"
+libraryDependencies += "com.badlogicgames.gdx" % "gdx-box2d"          % "1.10.0"
 libraryDependencies += "com.badlogicgames.gdx" % "gdx-backend-lwjgl3" % "1.10.0"
-libraryDependencies += "com.badlogicgames.gdx" % "gdx-freetype" % "1.10.0"
+libraryDependencies += "com.badlogicgames.gdx" % "gdx-freetype"       % "1.10.0"
 
-libraryDependencies += "com.badlogicgames.gdx" % "gdx-platform" % "1.10.0" classifier "natives-desktop"
-libraryDependencies += "com.badlogicgames.gdx" % "gdx-box2d-platform" % "1.10.0" classifier "natives-desktop"
+libraryDependencies += "com.badlogicgames.gdx" % "gdx-platform"          % "1.10.0" classifier "natives-desktop"
+libraryDependencies += "com.badlogicgames.gdx" % "gdx-box2d-platform"    % "1.10.0" classifier "natives-desktop"
 libraryDependencies += "com.badlogicgames.gdx" % "gdx-freetype-platform" % "1.10.0" classifier "natives-desktop"
 
 libraryDependencies += "space.earlygrey" % "shapedrawer" % "2.4.0"

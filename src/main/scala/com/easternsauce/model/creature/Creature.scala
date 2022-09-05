@@ -2,9 +2,9 @@ package com.easternsauce.model.creature
 
 import cats.Monoid
 import cats.data.State
-import cats.implicits.catsSyntaxSemigroup
+import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.easternsauce.game.ExternalEvent
-import com.easternsauce.model.GameState.{getAbility, getCreature, modifyCreature, GameStateTransition}
+import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
@@ -80,14 +80,17 @@ trait Creature {
 
   def isAlive = true // TODO
 
-  def onDeath(): GameStateTransition = Monoid[GameStateTransition].empty
+  def onDeath(): GameStateTransition = {
+    println("dying")
+    Monoid[GameStateTransition].empty
+  }
 
   def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
     updateTimers(delta) |+|
       (if (isControlledAutomatically) updateAutomaticControls()
        else Monoid[GameStateTransition].empty) |+|
-      (if (state.life > 0f && state.life <= 0f) onDeath()
-       else Monoid[GameStateTransition].empty)
+      state.events.foldMap { case CreatureDeathEvent() => onDeath() } |+|
+      State(implicit gameState => (modifyCreature(_.modify(_.state.events).setTo(List())), List()))
 
   def updateTimers(delta: Float)(implicit gameState: GameState): GameStateTransition =
     State { implicit gameState =>
@@ -114,7 +117,11 @@ trait Creature {
     damage: Float,
     sourcePosX: Float,
     sourcePosY: Float
+  )(
+    implicit gameState: GameState
   ): GameStateTransition = {
+    val beforeLife = getCreature.state.life
+
     val actualDamage = damage * 100f / (100f + state.totalArmor)
 
     //      .usingIf(creature.onGettingHitSoundId.nonEmpty)(_.prepended(PlaySoundEvent(creature.onGettingHitSoundId.get)))
@@ -124,8 +131,12 @@ trait Creature {
           _.pipe(creature =>
             if (creature.state.life - actualDamage > 0)
               creature.modify(_.state.life).setTo(creature.state.life - actualDamage)
-            else creature.modify(_.state.life).setTo(0f)
+            else creature.modify(_.state.life).setTo(0f).modify(_.state.isDead).setTo(true)
           )
+        ).pipe(implicit gameState =>
+          if (beforeLife > 0f && getCreature.state.life <= 0f)
+            modifyCreature(_.modify(_.state.events).using(_.appended(CreatureDeathEvent())))
+          else gameState
         ),
         List()
       )

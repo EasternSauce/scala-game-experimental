@@ -1,7 +1,7 @@
 package com.easternsauce.game.physics
 
 import com.badlogic.gdx.maps.tiled.TiledMap
-import com.badlogic.gdx.physics.box2d.{Contact, ContactImpulse, ContactListener, Manifold, World}
+import com.badlogic.gdx.physics.box2d._
 import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.getAbility
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
@@ -36,7 +36,7 @@ case object PhysicsEngineController {
   }
 
   def addAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
-    val creatureId = getAbility(abilityId, gameState).creatureId
+    val creatureId  = getAbility(abilityId, gameState).creatureId
     val abilityBody = AbilityBody(creatureId, abilityId)
 
     abilityBodies = abilityBodies.updated(abilityId, abilityBody)
@@ -64,10 +64,10 @@ case object PhysicsEngineController {
         val objA = contact.getFixtureA.getBody.getUserData
         val objB = contact.getFixtureB.getBody.getUserData
 
-        def onContactStart(pair: (AnyRef, AnyRef)): Unit = {
+        def onContactStart(pair: (AnyRef, AnyRef)): Unit =
           pair match { // will run onContact twice for same type objects!
             case (creatureBody: CreatureBody, abilityBody: AbilityBody) =>
-              if (creatureBody.creatureId != abilityBody.creatureId) {
+              if (creatureBody.creatureId != abilityBody.creatureId)
                 physicsEventQueue.prepend(
                   AbilityCollisionEvent(
                     abilityBody.creatureId,
@@ -75,8 +75,7 @@ case object PhysicsEngineController {
                     creatureBody.creatureId
                   )
                 )
-              }
-//            case (entityBody: EntityBody, areaGateBody: AreaGateBody) =>
+            //            case (entityBody: EntityBody, areaGateBody: AreaGateBody) =>
 //              physicsEventQueue.prepend(AreaGateCollisionStartEvent(entityBody.creatureId, areaGateBody))
 //            case (entityBody: EntityBody, lootPileBody: LootPileBody) =>
 //              physicsEventQueue.prepend(
@@ -84,7 +83,6 @@ case object PhysicsEngineController {
 //              )
             case _ =>
           }
-        }
 
         onContactStart(objA, objB)
         onContactStart(objB, objA)
@@ -94,7 +92,7 @@ case object PhysicsEngineController {
         val objA = contact.getFixtureA.getBody.getUserData
         val objB = contact.getFixtureB.getBody.getUserData
 
-        def onContactEnd(pair: (AnyRef, AnyRef)): Unit = {
+        def onContactEnd(pair: (AnyRef, AnyRef)): Unit =
           pair match { // will run onContact twice for same type objects!
 //            case (entityBody: EntityBody, _: AreaGateBody) =>
 //              physicsEventQueue.prepend(AreaGateCollisionEndEvent(entityBody.creatureId))
@@ -104,14 +102,19 @@ case object PhysicsEngineController {
 //              )
             case _ =>
           }
-        }
 
         onContactEnd(objA, objB)
         onContactEnd(objB, objA)
       }
-      override def preSolve(contact: Contact, oldManifold: Manifold): Unit = {}
+      override def preSolve(
+        contact: Contact,
+        oldManifold: Manifold
+      ): Unit = {}
 
-      override def postSolve(contact: Contact, impulse: ContactImpulse): Unit = {}
+      override def postSolve(
+        contact: Contact,
+        impulse: ContactImpulse
+      ): Unit = {}
     }
 
     world.setContactListener(contactListener)
