@@ -3,7 +3,7 @@ package com.easternsauce.game
 import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
-import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.graphics.{Color, GL20, OrthographicCamera}
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
@@ -21,8 +21,8 @@ import com.softwaremill.quicklens.ModifyPimp
 
 object PlayScreen extends Screen {
 
-  var spriteBatch: SpriteBatch = _
-  var hudBatch: SpriteBatch    = _
+  var worldDrawingLayer: DrawingLayer = _
+  var hudDrawingLayer: DrawingLayer   = _
 
   var maps: Map[AreaId, TiledMap] = _
 
@@ -77,8 +77,8 @@ object PlayScreen extends Screen {
 
   }
 
-  def setSpriteBatch(spriteBatch: SpriteBatch): Unit = this.spriteBatch = spriteBatch
-  def setHudBatch(hudBatch: SpriteBatch): Unit       = this.hudBatch = hudBatch
+  def setWorldDrawingLayer(worldDrawingLayer: DrawingLayer): Unit = this.worldDrawingLayer = worldDrawingLayer
+  def setHudDrawingLayer(hudDrawingLayer: DrawingLayer): Unit     = this.hudDrawingLayer = hudDrawingLayer
 
   def setMaps(maps: Map[AreaId, TiledMap]): Unit = this.maps = maps
 
@@ -105,8 +105,8 @@ object PlayScreen extends Screen {
   override def render(delta: Float): Unit = {
     update(delta)
 
-    spriteBatch.setProjectionMatrix(worldCamera.combined)
-    hudBatch.setProjectionMatrix(hudCamera.combined)
+    worldDrawingLayer.setProjectionMatrix(worldCamera.combined)
+    hudDrawingLayer.setProjectionMatrix(hudCamera.combined)
 
     Gdx.gl.glClearColor(0, 0, 0, 1)
 
@@ -116,27 +116,28 @@ object PlayScreen extends Screen {
 
     tiledMapRenderer.render(Array(0, 1))
 
-    spriteBatch.begin()
+    worldDrawingLayer.begin()
 
-    SpriteRendererController.renderAliveEntities(spriteBatch, debugEnabled)(gameState.aref.get())
+    SpriteRendererController.renderDeadCreatures(worldDrawingLayer, debugEnabled)(gameState.aref.get())
+    SpriteRendererController.renderAliveCreatures(worldDrawingLayer, debugEnabled)(gameState.aref.get())
 
-    spriteBatch.end()
+    worldDrawingLayer.end()
 
-    hudBatch.begin()
+    hudDrawingLayer.begin()
 
     import com.easternsauce.game.Assets.bitmapFontToEnrichedBitmapFont
     val fps = Gdx.graphics.getFramesPerSecond
-    Assets.defaultFont.draw(hudBatch, s"$fps fps", 3, Constants.WindowHeight - 3, Color.WHITE)
+    Assets.defaultFont.draw(hudDrawingLayer.spriteBatch, s"$fps fps", 3, Constants.WindowHeight - 3, Color.WHITE)
 
-    hudBatch.end()
+    hudDrawingLayer.end()
 
     tiledMapRenderer.render(Array(2, 3))
 
-    spriteBatch.begin()
+    worldDrawingLayer.begin()
 
-    SpriteRendererController.renderAbilities(spriteBatch)(gameState.aref.get())
+    SpriteRendererController.renderAbilities(worldDrawingLayer)(gameState.aref.get())
 
-    spriteBatch.end()
+    worldDrawingLayer.end()
 
     val currentTerrain = PhysicsEngineController.physicsWorlds(gameState.aref.get().currentAreaId)
 
@@ -187,6 +188,8 @@ object PlayScreen extends Screen {
         PhysicsEngineController.activateAbilityBody(abilityId)
       case AbilitySpriteRendererCreateEvent(abilityId) =>
         SpriteRendererController.addRenderer(abilityId)
+      case CreatureBodySetSensorEvent(creatureId) =>
+        PhysicsEngineController.setCreatureBodyToSensor(creatureId)
     }
 
   def update(delta: Float): Unit = {

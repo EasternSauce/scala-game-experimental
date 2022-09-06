@@ -3,7 +3,7 @@ package com.easternsauce.model.creature
 import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
-import com.easternsauce.game.ExternalEvent
+import com.easternsauce.game.{CreatureBodySetSensorEvent, ExternalEvent}
 import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
@@ -78,12 +78,12 @@ trait Creature {
       (modifyCreature(_.modify(_.state.currentSpeed).setTo(0f)), List())
     }
 
-  def isAlive = true // TODO
+  def isAlive: Boolean = state.life > 0f
 
-  def onDeath(): GameStateTransition = {
-    println("dying")
-    Monoid[GameStateTransition].empty
-  }
+  def ableToMove: Boolean = /*!this.isEffectActive("stagger") && !this.isEffectActive("knockback") &&*/ this.isAlive
+
+  def onDeath(): GameStateTransition =
+    State(implicit gameState => (gameState, List(CreatureBodySetSensorEvent(id))))
 
   def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
     updateTimers(delta) |+|

@@ -1,7 +1,8 @@
 package com.easternsauce.game.renderer
 
-import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.maps.tiled.TiledMap
+import com.easternsauce.game.DrawingLayer
 import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.getCreature
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
@@ -40,23 +41,48 @@ object SpriteRendererController {
     abilitySpriteRenderers(abilityId).init(atlas)
   }
 
-  def renderAliveEntities(
-    batch: SpriteBatch,
+  def renderAliveCreatures(
+    drawingLayer: DrawingLayer,
     debugEnabled: Boolean
   )(
     implicit gameState: GameState
-  ): Unit =
+  ): Unit = {
+
     gameState.creatures.filter { case (_, creature) => creature.isAlive }.keys.foreach { implicit creatureId =>
       if (
         creatureSpriteRenderers.contains(creatureId) &&
         getCreature.state.areaId == gameState.currentAreaId
       )
+        creatureSpriteRenderers(creatureId).render(drawingLayer)
+    }
+
+    gameState.creatures.filter { case (_, creature) => creature.isAlive }.keys.foreach { creatureId =>
+      if (
+        creatureSpriteRenderers.contains(creatureId) &&
+        gameState.creatures(creatureId).state.areaId == gameState.currentAreaId
+      )
+        creatureSpriteRenderers(creatureId).renderLifeBar(drawingLayer, gameState)
+    }
+
+  }
+
+  def renderDeadCreatures(
+    batch: DrawingLayer,
+    debugEnabled: Boolean
+  )(
+    implicit gameState: GameState
+  ): Unit =
+    gameState.creatures.filter { case (_, creature) => !creature.isAlive }.keys.foreach { creatureId =>
+      if (
+        creatureSpriteRenderers.contains(creatureId) &&
+        gameState.creatures(creatureId).state.areaId == gameState.currentAreaId
+      )
         creatureSpriteRenderers(creatureId).render(batch)
     }
 
-  def renderAbilities(batch: SpriteBatch)(implicit gameState: GameState): Unit =
+  def renderAbilities(drawingLayer: DrawingLayer)(implicit gameState: GameState): Unit =
     gameState.abilities.keys.foreach { abilityId =>
       if (abilitySpriteRenderers.contains(abilityId))
-        abilitySpriteRenderers(abilityId).render(batch)
+        abilitySpriteRenderers(abilityId).render(drawingLayer)
     }
 }

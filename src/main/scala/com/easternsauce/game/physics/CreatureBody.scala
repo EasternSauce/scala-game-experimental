@@ -31,7 +31,8 @@ case class CreatureBody(creatureId: CreatureId) {
     val vectorY         = normalMovingDir.y * v
 
     if (bodyCreated)
-      setVelocity(new Vector2(vectorX, vectorY))
+      if (creature.ableToMove)
+        setVelocity(new Vector2(vectorX, vectorY))
   }
 
   def pos: Vector2 = b2Body.getWorldCenter

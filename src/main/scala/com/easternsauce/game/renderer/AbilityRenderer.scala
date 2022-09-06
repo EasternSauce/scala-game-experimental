@@ -1,6 +1,7 @@
 package com.easternsauce.game.renderer
 
 import com.badlogic.gdx.graphics.g2d._
+import com.easternsauce.game.DrawingLayer
 import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.getAbility
 import com.easternsauce.model.ability.AbilityStage
@@ -78,7 +79,7 @@ case class AbilityRenderer(abilityId: AbilityId) {
 
   }
 
-  def render(batch: SpriteBatch)(implicit gameState: GameState): Unit =
+  def render(drawingLayer: DrawingLayer)(implicit gameState: GameState): Unit =
     if (getAbility.state.stage == AbilityStage.Channel || getAbility.state.stage == AbilityStage.Active)
-      sprite.draw(batch)
+      sprite.draw(drawingLayer.spriteBatch)
 }

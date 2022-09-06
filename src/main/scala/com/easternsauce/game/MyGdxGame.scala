@@ -1,14 +1,14 @@
 package com.easternsauce.game
 
 import com.badlogic.gdx.Game
-import com.badlogic.gdx.graphics.g2d.{SpriteBatch, TextureAtlas}
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.maps.tiled.{TiledMap, TmxMapLoader}
 import com.easternsauce.model.ids.AreaId
 
 object MyGdxGame extends Game {
 
-  var spriteBatch: SpriteBatch = _
-  var hudBatch: SpriteBatch    = _
+  var worldDrawingLayer: DrawingLayer = _
+  var hudDrawingLayer: DrawingLayer   = _
 
   var atlas: TextureAtlas = _
 
@@ -26,8 +26,8 @@ object MyGdxGame extends Game {
   override def create(): Unit = {
     Assets.loadAssets()
 
-    spriteBatch = new SpriteBatch()
-    hudBatch = new SpriteBatch()
+    worldDrawingLayer = DrawingLayer()
+    hudDrawingLayer = DrawingLayer()
 
     atlas = new TextureAtlas("assets/atlas/packed_atlas.atlas")
 
@@ -37,8 +37,8 @@ object MyGdxGame extends Game {
       case (areaId, directory) => areaId -> mapLoader.load(directory + "/tile_map.tmx")
     }
 
-    PlayScreen.setSpriteBatch(spriteBatch)
-    PlayScreen.setHudBatch(hudBatch)
+    PlayScreen.setWorldDrawingLayer(worldDrawingLayer)
+    PlayScreen.setHudDrawingLayer(hudDrawingLayer)
     PlayScreen.setMaps(maps)
     PlayScreen.init(atlas)
 

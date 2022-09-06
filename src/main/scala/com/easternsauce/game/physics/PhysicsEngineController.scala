@@ -51,6 +51,9 @@ case object PhysicsEngineController {
     abilityBodies(abilityId).isActive = false
   }
 
+  def setCreatureBodyToSensor(creatureId: CreatureId): Unit =
+    creatureBodies(creatureId).b2Body.getFixtureList.get(0).setSensor(true)
+
   def update()(implicit gameState: GameState): Unit = {
     physicsWorlds(gameState.currentAreaId).step()
     creatureBodies.values.foreach(_.update())
@@ -119,4 +122,5 @@ case object PhysicsEngineController {
 
     world.setContactListener(contactListener)
   }
+
 }
