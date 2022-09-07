@@ -1,11 +1,11 @@
 package com.easternsauce.game.physics
 
-import com.easternsauce.game.EnhancedChainingSyntax.enhancedScalaUtilChainingOps
 import com.easternsauce.model.Vec2
 import com.softwaremill.quicklens._
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Map
+import scala.util.chaining.scalaUtilChainingOps
 
 object Astar {
   def generatePathingGraph(terrain: PhysicsWorld): Map[TilePos, PathingNode] = {
@@ -46,24 +46,40 @@ object Astar {
           .pipe(tryAddingEdge(_, terrain, x, y, x + 1, y, straightWeight))
           .pipe(tryAddingEdge(_, terrain, x, y, x, y - 1, straightWeight))
           .pipe(tryAddingEdge(_, terrain, x, y, x, y + 1, straightWeight))
-          .pipeIf(
-            x - 1 >= 0 && y - 1 >= 0
-              && terrain.traversables(TilePos(x - 1, y)) && terrain.traversables(TilePos(x, y - 1))
-          )(tryAddingEdge(_, terrain, x, y, x - 1, y - 1, diagonalWeight))
-          .pipeIf(
-            x + 1 < terrain.widthInTiles && y - 1 >= 0
-              && terrain.traversables(TilePos(x + 1, y)) && terrain.traversables(TilePos(x, y - 1))
-          )(tryAddingEdge(_, terrain, x, y, x + 1, y - 1, diagonalWeight))
-          .pipeIf(
-            x - 1 >= 0 && y + 1 < terrain.heightInTiles
-              && terrain.traversables(TilePos(x - 1, y)) && terrain
-              .traversables(TilePos(x, y + 1))
-          )(tryAddingEdge(_, terrain, x, y, x - 1, y + 1, diagonalWeight))
-          .pipeIf(
-            x + 1 < terrain.widthInTiles && y + 1 < terrain.heightInTiles
-              && terrain.traversables(TilePos(x + 1, y)) && terrain
-              .traversables(TilePos(x, y + 1))
-          )(tryAddingEdge(_, terrain, x, y, x + 1, y + 1, diagonalWeight))
+          .pipe(
+            pathingNodes =>
+              if (
+                x - 1 >= 0 && y - 1 >= 0
+                && terrain.traversables(TilePos(x - 1, y)) && terrain.traversables(TilePos(x, y - 1))
+              ) tryAddingEdge(pathingNodes, terrain, x, y, x - 1, y - 1, diagonalWeight)
+              else pathingNodes
+          )
+          .pipe(
+            pathingNodes =>
+              if (
+                x + 1 < terrain.widthInTiles && y - 1 >= 0
+                && terrain.traversables(TilePos(x + 1, y)) && terrain.traversables(TilePos(x, y - 1))
+              ) tryAddingEdge(pathingNodes, terrain, x, y, x + 1, y - 1, diagonalWeight)
+              else pathingNodes
+          )
+          .pipe(
+            pathingNodes =>
+              if (
+                x - 1 >= 0 && y + 1 < terrain.heightInTiles
+                && terrain.traversables(TilePos(x - 1, y)) && terrain
+                  .traversables(TilePos(x, y + 1))
+              ) tryAddingEdge(pathingNodes, terrain, x, y, x - 1, y + 1, diagonalWeight)
+              else pathingNodes
+          )
+          .pipe(
+            pathingNodes =>
+              if (
+                x + 1 < terrain.widthInTiles && y + 1 < terrain.heightInTiles
+                && terrain.traversables(TilePos(x + 1, y)) && terrain
+                  .traversables(TilePos(x, y + 1))
+              ) tryAddingEdge(pathingNodes, terrain, x, y, x + 1, y + 1, diagonalWeight)
+              else pathingNodes
+          )
     }
 
   }
