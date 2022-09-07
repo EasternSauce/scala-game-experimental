@@ -14,19 +14,19 @@ case class PhysicsWorld(map: TiledMap) {
 
   private val layer = map.getLayers.get(0).asInstanceOf[TiledMapTileLayer]
 
-  var traversables: Map[TilePos, Boolean]           = Map()
+  var traversables: Map[TilePos, Boolean] = Map()
   var traversableWithMargins: Map[TilePos, Boolean] = Map()
-  var flyover: Map[TilePos, Boolean]                = Map()
+  var flyover: Map[TilePos, Boolean] = Map()
 
   var clearances: Map[TilePos, Int] = Map()
 
-  val tileWidth: Float  = layer.getTileWidth * Constants.MapScale / Constants.PPM
+  val tileWidth: Float = layer.getTileWidth * Constants.MapScale / Constants.PPM
   val tileHeight: Float = layer.getTileHeight * Constants.MapScale / Constants.PPM
 
-  val terrainTiles: ListBuffer[TerrainTileBody]   = ListBuffer()
+  val terrainTiles: ListBuffer[TerrainTileBody] = ListBuffer()
   val terrainBorders: ListBuffer[TerrainTileBody] = ListBuffer()
 
-  def widthInTiles: Int  = layer.getWidth
+  def widthInTiles: Int = layer.getWidth
   def heightInTiles: Int = layer.getHeight
 
   var pathingGraph: Map[TilePos, PathingNode] = _
@@ -53,14 +53,8 @@ case class PhysicsWorld(map: TiledMap) {
     pathingGraph = Astar.generatePathingGraph(this)
   }
 
-  private def createTerrainTiles(
-    widthInTiles: Int,
-    heightInTiles: Int
-  ): Unit = {
-    def tileExists(
-      x: Int,
-      y: Int
-    ) = x >= 0 && x < widthInTiles && y >= 0 && y < heightInTiles
+  private def createTerrainTiles(widthInTiles: Int, heightInTiles: Int): Unit = {
+    def tileExists(x: Int, y: Int) = x >= 0 && x < widthInTiles && y >= 0 && y < heightInTiles
 
     for (layerNum <- 0 to 1) { // two layers
       val layer: TiledMapTileLayer =
@@ -85,8 +79,8 @@ case class PhysicsWorld(map: TiledMap) {
 
             List((0, 1), (1, 0), (-1, 0), (0, -1), (1, 1), (-1, 1), (-1, -1), (1, -1))
               .filter(pair => tileExists(x + pair._1, y + pair._2))
-              .foreach(pair =>
-                traversableWithMargins = traversableWithMargins + (TilePos(y + pair._1, x + pair._2) -> false)
+              .foreach(
+                pair => traversableWithMargins = traversableWithMargins + (TilePos(y + pair._1, x + pair._2) -> false)
               )
           }
 
@@ -112,10 +106,7 @@ case class PhysicsWorld(map: TiledMap) {
     clearances = calculateClearances(traversables, widthInTiles, heightInTiles)
   }
 
-  private def createBorders(
-    widthInTiles: Int,
-    heightInTiles: Int
-  ): Unit = {
+  private def createBorders(widthInTiles: Int, heightInTiles: Int): Unit = {
 
     for { x <- Seq.range(0, widthInTiles) } {
       terrainBorders += TerrainTileBody(x, -1, tileWidth, tileHeight)
@@ -136,10 +127,7 @@ case class PhysicsWorld(map: TiledMap) {
   def getClosestTile(pos: Vec2): TilePos =
     TilePos((pos.x / tileWidth).toInt, (pos.y / tileHeight).toInt)
 
-  def isLineOfSight(
-    fromPos: Vec2,
-    toPos: Vec2
-  ): Boolean = {
+  def isLineOfSight(fromPos: Vec2, toPos: Vec2): Boolean = {
     val lineWidth = 0.3f
 
     val lineOfSightRect =
@@ -168,10 +156,7 @@ case class PhysicsWorld(map: TiledMap) {
   ): Map[TilePos, Int] = {
     var clearances: Map[TilePos, Int] = Map()
 
-    def tryAddClearance(
-      pos: TilePos,
-      level: Int
-    ): Unit =
+    def tryAddClearance(pos: TilePos, level: Int): Unit =
       if (
         !clearances.contains(
           pos

@@ -20,7 +20,8 @@ case class GameState(
   projectiles: Map[ProjectileId, Projectile] = Map(),
   currentPlayerId: CreatureId,
   currentAreaId: AreaId,
-  currentAreaInitialized: Boolean = false)
+  currentAreaInitialized: Boolean = false
+)
 
 object GameState {
   type GameStateTransition = State[GameState, List[ExternalEvent]]
@@ -31,54 +32,29 @@ object GameState {
         State { state =>
           (state, List())
         }
-      def combine(
-        x: GameStateTransition,
-        y: GameStateTransition
-      ): GameStateTransition =
+      def combine(x: GameStateTransition, y: GameStateTransition): GameStateTransition =
         List(x, y).sequence.map(_.flatten)
 
     }
 
-  def modifyCreature(
-    action: Creature => Creature
-  )(
-    implicit creatureId: CreatureId,
-    gameState: GameState
-  ): GameState =
+  def modifyCreature(action: Creature => Creature)(implicit creatureId: CreatureId, gameState: GameState): GameState =
     modify(gameState)(_.creatures.at(creatureId)).using(action)
 
-  def getCreature(
-    implicit creatureId: CreatureId,
-    gameState: GameState
-  ): Creature =
+  def getCreature(implicit creatureId: CreatureId, gameState: GameState): Creature =
     gameState.creatures(creatureId)
 
-  def modifyAbility(
-    action: Ability => Ability
-  )(
-    implicit abilityId: AbilityId,
-    gameState: GameState
-  ): GameState =
+  def modifyAbility(action: Ability => Ability)(implicit abilityId: AbilityId, gameState: GameState): GameState =
     modify(gameState)(_.abilities.at(abilityId)).using(action)
 
-  def getAbility(
-    implicit abilityId: AbilityId,
-    gameState: GameState
-  ): Ability =
+  def getAbility(implicit abilityId: AbilityId, gameState: GameState): Ability =
     gameState.abilities(abilityId)
 
   def modifyProjectile(
     action: Projectile => Projectile
-  )(
-    implicit projectileId: ProjectileId,
-    gameState: GameState
-  ): GameState =
+  )(implicit projectileId: ProjectileId, gameState: GameState): GameState =
     modify(gameState)(_.projectiles.at(projectileId)).using(action)
 
-  def getProjectile(
-    implicit projectileId: ProjectileId,
-    gameState: GameState
-  ): Projectile =
+  def getProjectile(implicit projectileId: ProjectileId, gameState: GameState): Projectile =
     gameState.projectiles(projectileId)
 
   def player(implicit gameState: GameState): Creature =
@@ -86,9 +62,7 @@ object GameState {
 
   def handlePlayerMovementInput(
     input: Map[WorldDirection, Boolean]
-  )(
-    implicit gameState: GameState
-  ): GameStateTransition =
+  )(implicit gameState: GameState): GameStateTransition =
     if (gameState.currentAreaInitialized) {
       val movingDirX = (input(WorldDirection.Left), input(WorldDirection.Right)) match {
         case (true, false) => -1
@@ -106,7 +80,7 @@ object GameState {
       implicit val playerId: CreatureId = gameState.currentPlayerId
 
       val wasMoving = getCreature.isMoving
-      val isMoving  = movingDir != Vec2(0, 0)
+      val isMoving = movingDir != Vec2(0, 0)
 
       val mouseClicked = Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) // TODO: this is temp
 
@@ -126,11 +100,12 @@ object GameState {
            getAbility.perform(mouseDirVector) |+|
              State { implicit gameState =>
                (
-                 gameState.pipe(implicit gameState =>
-                   modifyAbility(
-                     _.modify(_.state.dirVector)
-                       .setTo(Some(mouseDirVector))
-                   )
+                 gameState.pipe(
+                   implicit gameState =>
+                     modifyAbility(
+                       _.modify(_.state.dirVector)
+                         .setTo(Some(mouseDirVector))
+                     )
                  ),
                  List()
                )
@@ -149,12 +124,7 @@ object GameState {
     }
   }
 
-  def runMovingLogic(
-    wasMoving: Boolean,
-    isMoving: Boolean,
-    movingDir: Vec2
-  )(
-    implicit
+  def runMovingLogic(wasMoving: Boolean, isMoving: Boolean, movingDir: Vec2)(implicit
     gameState: GameState
   ): GameStateTransition = {
     implicit val playerId: CreatureId = gameState.currentPlayerId

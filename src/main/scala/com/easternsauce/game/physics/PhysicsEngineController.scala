@@ -10,8 +10,8 @@ import scala.collection.mutable.ListBuffer
 
 case object PhysicsEngineController {
   var creatureBodies: Map[CreatureId, CreatureBody] = _
-  var abilityBodies: Map[AbilityId, AbilityBody]    = _
-  var physicsWorlds: Map[AreaId, PhysicsWorld]      = _
+  var abilityBodies: Map[AbilityId, AbilityBody] = _
+  var physicsWorlds: Map[AreaId, PhysicsWorld] = _
 
   var physicsEventQueue: ListBuffer[PhysicsEvent] = _
 
@@ -36,7 +36,7 @@ case object PhysicsEngineController {
   }
 
   def addAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
-    val creatureId  = getAbility(abilityId, gameState).creatureId
+    val creatureId = getAbility(abilityId, gameState).creatureId
     val abilityBody = AbilityBody(creatureId, abilityId)
 
     abilityBodies = abilityBodies.updated(abilityId, abilityBody)
@@ -72,11 +72,7 @@ case object PhysicsEngineController {
             case (creatureBody: CreatureBody, abilityBody: AbilityBody) =>
               if (creatureBody.creatureId != abilityBody.creatureId)
                 physicsEventQueue.prepend(
-                  AbilityCollisionEvent(
-                    abilityBody.creatureId,
-                    abilityBody.abilityId,
-                    creatureBody.creatureId
-                  )
+                  AbilityCollisionEvent(abilityBody.creatureId, abilityBody.abilityId, creatureBody.creatureId)
                 )
             //            case (entityBody: EntityBody, areaGateBody: AreaGateBody) =>
 //              physicsEventQueue.prepend(AreaGateCollisionStartEvent(entityBody.creatureId, areaGateBody))
@@ -109,15 +105,9 @@ case object PhysicsEngineController {
         onContactEnd(objA, objB)
         onContactEnd(objB, objA)
       }
-      override def preSolve(
-        contact: Contact,
-        oldManifold: Manifold
-      ): Unit = {}
+      override def preSolve(contact: Contact, oldManifold: Manifold): Unit = {}
 
-      override def postSolve(
-        contact: Contact,
-        impulse: ContactImpulse
-      ): Unit = {}
+      override def postSolve(contact: Contact, impulse: ContactImpulse): Unit = {}
     }
 
     world.setContactListener(contactListener)

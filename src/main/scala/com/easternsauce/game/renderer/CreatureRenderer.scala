@@ -11,7 +11,7 @@ import com.easternsauce.model.ids.CreatureId
 
 case class CreatureRenderer(creatureId: CreatureId) {
   implicit val _creatureId: CreatureId = creatureId
-  var sprite: Sprite                   = _
+  var sprite: Sprite = _
 
   var facingTextures: Array[TextureRegion] = _
 
@@ -61,10 +61,7 @@ case class CreatureRenderer(creatureId: CreatureId) {
       .getKeyFrame(player.state.animationTimer.time, true)
   }
 
-  def facingTexture(
-    gameState: GameState,
-    currentDirection: WorldDirection
-  ): TextureRegion = {
+  def facingTexture(gameState: GameState, currentDirection: WorldDirection): TextureRegion = {
     val creature = gameState.creatures(creatureId)
 
     facingTextures(creature.dirMap(currentDirection))
@@ -99,18 +96,15 @@ case class CreatureRenderer(creatureId: CreatureId) {
   def render(drawingLayer: DrawingLayer): Unit =
     sprite.draw(drawingLayer.spriteBatch)
 
-  def renderLifeBar(
-    drawingLayer: DrawingLayer,
-    gameState: GameState
-  ): Unit = {
+  def renderLifeBar(drawingLayer: DrawingLayer, gameState: GameState): Unit = {
     val lifeBarHeight = 0.16f
-    val lifeBarWidth  = 2.0f
+    val lifeBarWidth = 2.0f
 
     val creature = gameState.creatures(creatureId)
 
     val currentLifeBarWidth = lifeBarWidth * creature.state.life / creature.state.maxLife
-    val barPosX             = creature.state.pos.x - lifeBarWidth / 2
-    val barPosY             = creature.state.pos.y + sprite.getWidth / 2 + 0.3125f
+    val barPosX = creature.state.pos.x - lifeBarWidth / 2
+    val barPosY = creature.state.pos.y + sprite.getWidth / 2 + 0.3125f
 
     drawingLayer
       .filledRectangle(new Rectangle(barPosX, barPosY, lifeBarWidth, lifeBarHeight), Color.ORANGE)

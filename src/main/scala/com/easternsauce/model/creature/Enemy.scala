@@ -12,15 +12,16 @@ import com.softwaremill.quicklens.ModifyPimp
 import scala.util.Random
 
 trait Enemy extends Creature {
-  override def isEnemy: Boolean                   = true
+  override def isEnemy: Boolean = true
   override def isControlledAutomatically: Boolean = true
-  val enemySearchDistance                         = 30f
+  val enemySearchDistance = 30f
 
   def findTarget()(implicit gameState: GameState): Option[Creature] = {
-    val potentialTargets: List[Creature] = gameState.creatures.values.toList.filter(target =>
-      target.state.areaId == getCreature.state.areaId &&
-        target.isPlayer &&
-        target.state.pos.distance(getCreature.state.pos) < enemySearchDistance
+    val potentialTargets: List[Creature] = gameState.creatures.values.toList.filter(
+      target =>
+        target.state.areaId == getCreature.state.areaId &&
+          target.isPlayer &&
+          target.state.pos.distance(getCreature.state.pos) < enemySearchDistance
     )
 
     potentialTargets match {
@@ -32,7 +33,7 @@ trait Enemy extends Creature {
   }
 
   override def updateAutomaticControls()(implicit gameState: GameState): GameStateTransition = {
-    val potentialTarget   = findTarget()
+    val potentialTarget = findTarget()
     val potentialTargetId = potentialTarget.map(_.state.id)
 
     if (potentialTarget.nonEmpty && this.isAlive && potentialTarget.get.isAlive) {
@@ -54,12 +55,10 @@ trait Enemy extends Creature {
 
   private def handleAbilityUsage(
     potentialTarget: Option[Creature]
-  )(
-    implicit gameState: GameState
-  ): GameStateTransition = {
+  )(implicit gameState: GameState): GameStateTransition = {
 
     val pickedAbilityName = pickAbilityToUse()
-    val dirVector         = getCreature.state.pos.vectorTowards(potentialTarget.get.state.pos)
+    val dirVector = getCreature.state.pos.vectorTowards(potentialTarget.get.state.pos)
     if (
       getCreature.state.useAbilityTimer.time > useAbilityTimeout + getCreature.state.inbetweenAbilitiesTime &&
       abilityUsages.nonEmpty &&
@@ -83,22 +82,14 @@ trait Enemy extends Creature {
 
   }
 
-  private def handleAttackTarget(
-    potentialTarget: Option[Creature],
-    vectorTowardsTarget: Vec2
-  )(
-    implicit
+  private def handleAttackTarget(potentialTarget: Option[Creature], vectorTowardsTarget: Vec2)(implicit
     gameState: GameState
   ): GameStateTransition =
     if (potentialTarget.get.state.pos.distance(getCreature.state.pos) < 3f)
       getCreature.attack(vectorTowardsTarget)
     else Monoid[GameStateTransition].empty
 
-  private def handleMovement(
-    potentialTarget: Option[Creature],
-    vectorTowardsTarget: Vec2
-  )(
-    implicit
+  private def handleMovement(potentialTarget: Option[Creature], vectorTowardsTarget: Vec2)(implicit
     gameState: GameState
   ): GameStateTransition =
     if (
@@ -106,7 +97,7 @@ trait Enemy extends Creature {
       potentialTarget.get.state.pos.distance(getCreature.state.pos) < enemySearchDistance
     )
       if (getCreature.state.pathTowardsTarget.nonEmpty && getCreature.state.pathTowardsTarget.get.nonEmpty) {
-        val path           = getCreature.state.pathTowardsTarget.get
+        val path = getCreature.state.pathTowardsTarget.get
         val nextNodeOnPath = path.head
         if (getCreature.state.pos.distance(nextNodeOnPath) < 2f)
           State[GameState, List[ExternalEvent]] { implicit gameState =>
@@ -121,9 +112,7 @@ trait Enemy extends Creature {
 
   private def handleNewTarget(
     potentialTargetId: Option[ids.CreatureId]
-  )(
-    implicit gameState: GameState
-  ): GameStateTransition =
+  )(implicit gameState: GameState): GameStateTransition =
     if (getCreature.state.targetCreatureId.isEmpty || getCreature.state.targetCreatureId != potentialTargetId)
       State[GameState, List[ExternalEvent]] { implicit gameState =>
         (
@@ -155,7 +144,7 @@ trait Enemy extends Creature {
       var completeWeight = 0.0f
       for (abilityUsage <- filteredAbilityUsages.values)
         completeWeight += abilityUsage.weight
-      val r           = Math.random * completeWeight
+      val r = Math.random * completeWeight
       var countWeight = 0.0
       for (abilityUsage <- filteredAbilityUsages) {
         val (key, value) = abilityUsage

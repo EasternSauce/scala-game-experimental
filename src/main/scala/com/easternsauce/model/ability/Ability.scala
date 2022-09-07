@@ -26,17 +26,17 @@ trait Ability {
   val activeFrameCount: Int
   val channelFrameDuration: Float
   val activeFrameDuration: Float
-  val scale: Float                     = 1.0f
-  val initSpeed: Float                 = 0f
-  val activeAnimationLooping: Boolean  = false
+  val scale: Float = 1.0f
+  val initSpeed: Float = 0f
+  val activeAnimationLooping: Boolean = false
   val channelAnimationLooping: Boolean = false
 
   val attackRange: Float = 1.8f
 
-  implicit def id: AbilityId          = state.id
+  implicit def id: AbilityId = state.id
   implicit def creatureId: CreatureId = state.creatureId
 
-  def width: Float  = textureWidth.toFloat * scale / Constants.PPM
+  def width: Float = textureWidth.toFloat * scale / Constants.PPM
   def height: Float = textureHeight.toFloat * scale / Constants.PPM
 
   def ableToPerform: Boolean =
@@ -189,10 +189,7 @@ trait Ability {
 }
 
 object Ability {
-  def abilityByName(
-    creatureId: CreatureId,
-    name: String
-  ): Ability =
+  def abilityByName(creatureId: CreatureId, name: String): Ability =
     name match {
       case "slash" => SlashAbility(AbilityId.derive(creatureId, name), creatureId)
     }

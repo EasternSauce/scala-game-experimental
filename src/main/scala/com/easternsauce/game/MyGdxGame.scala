@@ -8,7 +8,7 @@ import com.easternsauce.model.ids.AreaId
 object MyGdxGame extends Game {
 
   var worldDrawingLayer: DrawingLayer = _
-  var hudDrawingLayer: DrawingLayer   = _
+  var hudDrawingLayer: DrawingLayer = _
 
   var atlas: TextureAtlas = _
 

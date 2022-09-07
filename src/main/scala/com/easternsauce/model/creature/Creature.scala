@@ -4,7 +4,7 @@ import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.easternsauce.game.{CreatureBodySetSensorEvent, ExternalEvent}
-import com.easternsauce.model.GameState.{getAbility, getCreature, modifyCreature, GameStateTransition}
+import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
@@ -91,19 +91,17 @@ trait Creature {
        else Monoid[GameStateTransition].empty) |+|
       state.events.foldMap { case CreatureDeathEvent() => onDeath() } |+|
       State(implicit gameState => (modifyCreature(_.modify(_.state.events).setTo(List())), List())) |+|
-      State(implicit gameState =>
-        (
-          modifyCreature(_.modify(_.state.effects).using(_.map {
-            case (name, effect) => (name, effect.update(delta))
-          })),
-          List()
-        )
+      State(
+        implicit gameState =>
+          (
+            modifyCreature(_.modify(_.state.effects).using(_.map {
+              case (name, effect) => (name, effect.update(delta))
+            })),
+            List()
+          )
       )
 
-  def activateEffect(
-    effect: String,
-    time: Float
-  ): GameStateTransition =
+  def activateEffect(effect: String, time: Float): GameStateTransition =
     if (state.effects.contains(effect))
       State { implicit gameState =>
         (modifyCreature(_.modify(_.state.effects.at(effect)).using(_.activate(time))), List())
@@ -111,8 +109,9 @@ trait Creature {
     else
       State { implicit gameState =>
         (
-          modifyCreature(creature =>
-            creature.modify(_.state.effects).setTo(creature.state.effects + (effect -> Effect(effect).activate(time)))
+          modifyCreature(
+            creature =>
+              creature.modify(_.state.effects).setTo(creature.state.effects + (effect -> Effect(effect).activate(time)))
           ),
           List()
         )
@@ -142,12 +141,8 @@ trait Creature {
     else Monoid[GameStateTransition].empty
   }
 
-  def takeLifeDamage(
-    damage: Float,
-    sourcePosX: Float,
-    sourcePosY: Float
-  )(
-    implicit gameState: GameState
+  def takeLifeDamage(damage: Float, sourcePosX: Float, sourcePosY: Float)(implicit
+    gameState: GameState
   ): GameStateTransition = {
     val beforeLife = getCreature.state.life
 
@@ -157,15 +152,17 @@ trait Creature {
     State { implicit gameState: GameState =>
       (
         modifyCreature(
-          _.pipe(creature =>
-            if (creature.state.life - actualDamage > 0)
-              creature.modify(_.state.life).setTo(creature.state.life - actualDamage)
-            else creature.modify(_.state.life).setTo(0f).modify(_.state.isDead).setTo(true)
+          _.pipe(
+            creature =>
+              if (creature.state.life - actualDamage > 0)
+                creature.modify(_.state.life).setTo(creature.state.life - actualDamage)
+              else creature.modify(_.state.life).setTo(0f).modify(_.state.isDead).setTo(true)
           )
-        ).pipe(implicit gameState =>
-          if (beforeLife > 0f && getCreature.state.life <= 0f)
-            modifyCreature(_.modify(_.state.events).using(_.appended(CreatureDeathEvent())))
-          else gameState
+        ).pipe(
+          implicit gameState =>
+            if (beforeLife > 0f && getCreature.state.life <= 0f)
+              modifyCreature(_.modify(_.state.events).using(_.appended(CreatureDeathEvent())))
+            else gameState
         ),
         List()
       )
@@ -205,4 +202,5 @@ case class AbilityUsage(
   weight: Float,
   minimumDistance: Float = 0f,
   maximumDistance: Float = Float.MaxValue,
-  lifeThreshold: Float = 1.0f)
+  lifeThreshold: Float = 1.0f
+)

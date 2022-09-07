@@ -49,10 +49,7 @@ object B2BodyFactory {
 
   }
 
-  def createTerrainTileB2body(
-    world: World,
-    terrainTileBody: TerrainTileBody
-  ): Body =
+  def createTerrainTileB2body(world: World, terrainTileBody: TerrainTileBody): Body =
     createB2body(
       world = world,
       posX = terrainTileBody.x * terrainTileBody.tileWidth + terrainTileBody.tileWidth / 2,
@@ -62,11 +59,7 @@ object B2BodyFactory {
       shape = Rectangle(terrainTileBody.tileWidth, terrainTileBody.tileHeight)
     )
 
-  def createCreatureB2body(
-    world: World,
-    creatureBody: CreatureBody,
-    creature: Creature
-  ): Body =
+  def createCreatureB2body(world: World, creatureBody: CreatureBody, creature: Creature): Body =
     createB2body(
       world = world,
       posX = creature.state.pos.x,
@@ -103,10 +96,7 @@ sealed abstract class BodyShape { def b2Shape(): Shape }
 case class Circle(radius: Float) extends BodyShape {
   def b2Shape(): Shape = { val shape = new CircleShape(); shape.setRadius(radius); shape }
 }
-case class Rectangle(
-  width: Float,
-  height: Float)
-    extends BodyShape {
+case class Rectangle(width: Float, height: Float) extends BodyShape {
   def b2Shape(): Shape = {
     val shape = new PolygonShape(); shape.setAsBox(width / 2, height / 2); shape
   }

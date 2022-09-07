@@ -22,5 +22,5 @@ case class CreatureState(
   totalArmor: Float = 0f,
   isDead: Boolean = false,
   events: List[CreatureEvent] = List(),
-effects: Map[String, Effect] = Map())
-
+  effects: Map[String, Effect] = Map()
+)

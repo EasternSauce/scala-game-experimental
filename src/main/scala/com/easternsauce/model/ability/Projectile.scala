@@ -39,13 +39,14 @@ trait Projectile {
              State[GameState, List[ExternalEvent]] { implicit gameState =>
                (
                  gameState
-                   .pipe(implicit gameState =>
-                     modifyProjectile(
-                       _.modify(_.stage)
-                         .setTo(ProjectileStage.Active)
-                         .modify(_.timer)
-                         .using(_.restart())
-                     )
+                   .pipe(
+                     implicit gameState =>
+                       modifyProjectile(
+                         _.modify(_.stage)
+                           .setTo(ProjectileStage.Active)
+                           .modify(_.timer)
+                           .using(_.restart())
+                       )
                    ),
                  List()
                )
@@ -69,9 +70,5 @@ trait Projectile {
     runStageLogic() |+|
       updateTimers(delta)
 
-  def copy(
-    id: ProjectileId = id,
-    timer: SimpleTimer = timer,
-    stage: ProjectileStage = stage
-  ): Projectile
+  def copy(id: ProjectileId = id, timer: SimpleTimer = timer, stage: ProjectileStage = stage): Projectile
 }

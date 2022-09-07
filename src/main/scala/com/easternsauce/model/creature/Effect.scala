@@ -5,17 +5,14 @@ import com.softwaremill.quicklens.ModifyPimp
 
 import scala.util.chaining.scalaUtilChainingOps
 
-case class Effect(
-  name: String,
-  endTime: Float = 0f,
-  timer: SimpleTimer = SimpleTimer(),
-  isActive: Boolean = false) {
+case class Effect(name: String, endTime: Float = 0f, timer: SimpleTimer = SimpleTimer(), isActive: Boolean = false) {
   def update(delta: Float): Effect =
     this
       .modify(_.timer)
       .using(_.update(delta))
-      .pipe(effect =>
-        if (this.isActive && this.timer.time > this.endTime) effect.modify(_.isActive).setTo(false) else effect
+      .pipe(
+        effect =>
+          if (this.isActive && this.timer.time > this.endTime) effect.modify(_.isActive).setTo(false) else effect
       )
 
   def stop(): Effect =

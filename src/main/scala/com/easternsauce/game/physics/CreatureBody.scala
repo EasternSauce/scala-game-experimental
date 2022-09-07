@@ -11,7 +11,7 @@ case class CreatureBody(creatureId: CreatureId) {
 
   def init()(implicit gameState: GameState): Unit = {
     implicit val _creatureId: CreatureId = creatureId
-    val physicsWorld                     = PhysicsEngineController.physicsWorlds(getCreature.state.areaId)
+    val physicsWorld = PhysicsEngineController.physicsWorlds(getCreature.state.areaId)
 
     b2Body =
       B2BodyFactory.createCreatureB2body(world = physicsWorld.b2world, creatureBody = this, creature = getCreature)
@@ -25,10 +25,10 @@ case class CreatureBody(creatureId: CreatureId) {
 
     val bodyCreated = PhysicsEngineController.creatureBodies.contains(creatureId)
 
-    val v               = creature.state.currentSpeed
+    val v = creature.state.currentSpeed
     val normalMovingDir = creature.state.movingDir.normal
-    val vectorX         = normalMovingDir.x * v
-    val vectorY         = normalMovingDir.y * v
+    val vectorX = normalMovingDir.x * v
+    val vectorY = normalMovingDir.y * v
 
     if (bodyCreated)
       if (creature.ableToMove)

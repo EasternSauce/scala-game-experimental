@@ -15,10 +15,7 @@ case class DrawingLayer() {
 
   def end(): Unit = spriteBatch.end()
 
-  def filledRectangle(
-    rect: Rectangle,
-    color: Color
-  ): Unit = shapeDrawer.filledRectangle(rect, color)
+  def filledRectangle(rect: Rectangle, color: Color): Unit = shapeDrawer.filledRectangle(rect, color)
 
   def setProjectionMatrix(projection: Matrix4): Unit = spriteBatch.setProjectionMatrix(projection)
 

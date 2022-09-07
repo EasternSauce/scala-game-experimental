@@ -69,13 +69,8 @@ object Astar {
   }
 
   // caution: heavy computational load!
-  def findPath(
-    terrain: PhysicsWorld,
-    startPos: Vec2,
-    finishPos: Vec2,
-    capability: Int
-  ): List[Vec2] = {
-    val startTilePos  = terrain.getClosestTile(startPos)
+  def findPath(terrain: PhysicsWorld, startPos: Vec2, finishPos: Vec2, capability: Int): List[Vec2] = {
+    val startTilePos = terrain.getClosestTile(startPos)
     val finishTilePos = terrain.getClosestTile(finishPos)
 
     val freshAstarGraph = Astar
@@ -132,7 +127,7 @@ object Astar {
         astarState
       else {
         val originNode = astarState.astarGraph(originNodePos)
-        val neighbor   = astarState.astarGraph(neighborPos)
+        val neighbor = astarState.astarGraph(neighborPos)
 
         val tentativeGscore = originNode.g + distanceBetweenNodes
         neighbor match {
@@ -181,22 +176,13 @@ object Astar {
   def getAstarGraph(pathingGraph: Map[TilePos, PathingNode]): Map[TilePos, AstarNode] =
     pathingGraph.view.mapValues(AstarNode(_)).toMap
 
-  def calculateHeuristic(
-    startPos: TilePos,
-    finishPos: TilePos
-  ): Double =
+  def calculateHeuristic(startPos: TilePos, finishPos: TilePos): Double =
     (Math.abs(finishPos.x - startPos.x) + Math.abs(finishPos.y - startPos.y)) * 10
 
 }
 
-case class PathingNode(
-  pos: TilePos,
-  clearance: Int,
-  outgoingEdges: List[PathingEdge] = List()) {
-  def addEdge(
-    weight: Float,
-    node: PathingNode
-  ): PathingNode = {
+case class PathingNode(pos: TilePos, clearance: Int, outgoingEdges: List[PathingEdge] = List()) {
+  def addEdge(weight: Float, node: PathingNode): PathingNode = {
     val newEdge = PathingEdge(weight, node.pos)
     PathingNode(pos, clearance, newEdge :: outgoingEdges)
   }
@@ -204,16 +190,15 @@ case class PathingNode(
   override def toString: String = "(" + pos.x + ", " + pos.y + ":" + outgoingEdges.size + ")"
 }
 
-case class PathingEdge(
-  weight: Float,
-  neighborPos: TilePos)
+case class PathingEdge(weight: Float, neighborPos: TilePos)
 
 case class AstarNode(
   pathingNode: PathingNode,
   parent: Option[TilePos] = None,
   f: Double = Double.MaxValue,
   g: Double = Double.MaxValue,
-  h: Double = Double.MaxValue) {
+  h: Double = Double.MaxValue
+) {
   def pos: TilePos = pathingNode.pos
 }
 
@@ -222,4 +207,5 @@ case class AstarState(
   openSet: Set[TilePos],
   closedSet: Set[TilePos],
   finishPos: TilePos,
-  foundPath: Boolean)
+  foundPath: Boolean
+)

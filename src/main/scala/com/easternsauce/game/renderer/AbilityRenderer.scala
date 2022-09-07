@@ -13,10 +13,10 @@ case class AbilityRenderer(abilityId: AbilityId) {
   var sprite: Sprite = _
 
   var channelAnimation: Animation[TextureRegion] = _
-  var activeAnimation: Animation[TextureRegion]  = _
+  var activeAnimation: Animation[TextureRegion] = _
 
   var channelTextureRegion: TextureRegion = _
-  var activeTextureRegion: TextureRegion  = _
+  var activeTextureRegion: TextureRegion = _
 
   def init(atlas: TextureAtlas)(implicit gameState: GameState): Unit = {
     sprite = new Sprite()
