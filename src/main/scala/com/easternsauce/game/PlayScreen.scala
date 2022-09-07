@@ -22,15 +22,15 @@ import com.softwaremill.quicklens.ModifyPimp
 object PlayScreen extends Screen {
 
   var worldDrawingLayer: DrawingLayer = _
-  var hudDrawingLayer: DrawingLayer   = _
+  var hudDrawingLayer: DrawingLayer = _
 
   var maps: Map[AreaId, TiledMap] = _
 
   var worldCamera: OrthographicCamera = _
-  var hudCamera: OrthographicCamera   = _
+  var hudCamera: OrthographicCamera = _
 
   var worldViewport: Viewport = _
-  var hudViewport: Viewport   = _
+  var hudViewport: Viewport = _
 
   var gameState: AtomicSTRef[GameState] = _
 
@@ -59,7 +59,7 @@ object PlayScreen extends Screen {
     gameState = AtomicSTRef(
       GameState(
         creatures = Map(
-          CreatureId("player")  -> Player(id = CreatureId("player"), areaId = AreaId("area1"), pos = Vec2(22, 4)),
+          CreatureId("player") -> Player(id = CreatureId("player"), areaId = AreaId("area1"), pos = Vec2(22, 4)),
           CreatureId("skellie") -> Skeleton(id = CreatureId("skellie"), areaId = AreaId("area1"), pos = Vec2(24, 4))
         ),
         currentPlayerId = CreatureId("player"),
@@ -78,7 +78,7 @@ object PlayScreen extends Screen {
   }
 
   def setWorldDrawingLayer(worldDrawingLayer: DrawingLayer): Unit = this.worldDrawingLayer = worldDrawingLayer
-  def setHudDrawingLayer(hudDrawingLayer: DrawingLayer): Unit     = this.hudDrawingLayer = hudDrawingLayer
+  def setHudDrawingLayer(hudDrawingLayer: DrawingLayer): Unit = this.hudDrawingLayer = hudDrawingLayer
 
   def setMaps(maps: Map[AreaId, TiledMap]): Unit = this.maps = maps
 
@@ -158,16 +158,18 @@ object PlayScreen extends Screen {
             ).isControlledAutomatically
 
           if (
-            getCreature(collidedCreatureId, gameState).isAlive && !attackingDisallowed /*&& !getCreature(collidedCreatureId)
-          .isEffectActive("immunityFrames")*/
+            getCreature(collidedCreatureId, gameState).isAlive && !attackingDisallowed && !getCreature(
+              collidedCreatureId,
+              gameState
+            ).isEffectActive("immunityFrames")
           ) {
+            val attackedCreature = getCreature(collidedCreatureId, gameState)
+            val attackingCreature = getCreature(creatureId, gameState)
             val damage =
               /*if (ability.isWeaponAttack) creatures(creatureId).weaponDamage else abilityComponent.damage*/ 20f // TODO
-            getCreature(collidedCreatureId, gameState).takeLifeDamage(
-              damage,
-              getCreature(creatureId, gameState).state.pos.x,
-              getCreature(creatureId, gameState).state.pos.y
-            )
+            attackedCreature.takeLifeDamage(damage, attackingCreature.state.pos.x, attackingCreature.state.pos.y) |+|
+              attackedCreature.activateEffect("immunityFrames", 1f) |+|
+              attackedCreature.activateEffect("stagger", 0.35f)
           } else Monoid[GameStateTransition].empty
 
         } else Monoid[GameStateTransition].empty
@@ -175,11 +177,7 @@ object PlayScreen extends Screen {
       case _ => Monoid[GameStateTransition].empty
     }
 
-  def processExternalEvents(
-    events: List[ExternalEvent]
-  )(
-    implicit gameState: GameState
-  ): Unit =
+  def processExternalEvents(events: List[ExternalEvent])(implicit gameState: GameState): Unit =
     events.foreach {
       case AbilityBodyCreateEvent(abilityId) => PhysicsEngineController.addAbilityBody(abilityId)
       case AbilityBodyDestroyEvent(abilityId) =>
@@ -212,10 +210,10 @@ object PlayScreen extends Screen {
 
     val playerDirectionInput: Map[WorldDirection, Boolean] =
       Map(
-        WorldDirection.Left  -> Gdx.input.isKeyPressed(Input.Keys.A),
+        WorldDirection.Left -> Gdx.input.isKeyPressed(Input.Keys.A),
         WorldDirection.Right -> Gdx.input.isKeyPressed(Input.Keys.D),
-        WorldDirection.Down  -> Gdx.input.isKeyPressed(Input.Keys.S),
-        WorldDirection.Up    -> Gdx.input.isKeyPressed(Input.Keys.W)
+        WorldDirection.Down -> Gdx.input.isKeyPressed(Input.Keys.S),
+        WorldDirection.Up -> Gdx.input.isKeyPressed(Input.Keys.W)
       )
     implicit val gs: GameState = gameState.aref.get()
 
@@ -257,19 +255,14 @@ object PlayScreen extends Screen {
     else
       Monoid[GameStateTransition].empty
 
-  private def processCreaturePathfinding(
-  )(
-    implicit
-    creatureId: CreatureId,
-    gameState: GameState
-  ): GameStateTransition =
+  private def processCreaturePathfinding()(implicit creatureId: CreatureId, gameState: GameState): GameStateTransition =
     if (
       getCreature.state.areaId == gameState.currentAreaId &&
       getCreature.isEnemy &&
       getCreature.state.targetCreatureId.nonEmpty &&
       (getCreature.state.forcePathCalculation || getCreature.state.pathCalculationCooldownTimer.time > 1f)
     ) {
-      val target  = gameState.creatures(getCreature.state.targetCreatureId.get)
+      val target = gameState.creatures(getCreature.state.targetCreatureId.get)
       val terrain = PhysicsEngineController.physicsWorlds(getCreature.state.areaId)
 
       val isLineOfSight = terrain.isLineOfSight(getCreature.state.pos, target.state.pos)
@@ -299,10 +292,7 @@ object PlayScreen extends Screen {
     } else
       Monoid[GameStateTransition].empty
 
-  override def resize(
-    width: Int,
-    height: Int
-  ): Unit = {
+  override def resize(width: Int, height: Int): Unit = {
     worldViewport.update(width, height)
     hudViewport.update(width, height)
   }

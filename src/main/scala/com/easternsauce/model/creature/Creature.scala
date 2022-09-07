@@ -4,12 +4,12 @@ import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.easternsauce.game.{CreatureBodySetSensorEvent, ExternalEvent}
-import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyCreature}
+import com.easternsauce.model.GameState.{getAbility, getCreature, modifyCreature, GameStateTransition}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2, WorldDirection}
-import com.softwaremill.quicklens.ModifyPimp
+import com.softwaremill.quicklens._
 
 import scala.language.postfixOps
 import scala.util.chaining.scalaUtilChainingOps
@@ -90,7 +90,36 @@ trait Creature {
       (if (isControlledAutomatically) updateAutomaticControls()
        else Monoid[GameStateTransition].empty) |+|
       state.events.foldMap { case CreatureDeathEvent() => onDeath() } |+|
-      State(implicit gameState => (modifyCreature(_.modify(_.state.events).setTo(List())), List()))
+      State(implicit gameState => (modifyCreature(_.modify(_.state.events).setTo(List())), List())) |+|
+      State(implicit gameState =>
+        (
+          modifyCreature(_.modify(_.state.effects).using(_.map {
+            case (name, effect) => (name, effect.update(delta))
+          })),
+          List()
+        )
+      )
+
+  def activateEffect(
+    effect: String,
+    time: Float
+  ): GameStateTransition =
+    if (state.effects.contains(effect))
+      State { implicit gameState =>
+        (modifyCreature(_.modify(_.state.effects.at(effect)).using(_.activate(time))), List())
+      }
+    else
+      State { implicit gameState =>
+        (
+          modifyCreature(creature =>
+            creature.modify(_.state.effects).setTo(creature.state.effects + (effect -> Effect(effect).activate(time)))
+          ),
+          List()
+        )
+      }
+
+  def isEffectActive(effect: String): Boolean =
+    state.effects.contains(effect) && state.effects(effect).isActive
 
   def updateTimers(delta: Float)(implicit gameState: GameState): GameStateTransition =
     State { implicit gameState =>
