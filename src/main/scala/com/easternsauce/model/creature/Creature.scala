@@ -4,7 +4,7 @@ import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.easternsauce.game.{CreatureBodySetSensorEvent, ExternalEvent}
-import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyCreature}
+import com.easternsauce.model.GameState.{GameStateTransition, gameStateMonoid, getAbility, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
@@ -15,6 +15,7 @@ import scala.language.postfixOps
 import scala.util.chaining.scalaUtilChainingOps
 
 trait Creature {
+
   val state: CreatureState
 
   val textureName: String
@@ -35,7 +36,12 @@ trait Creature {
 
   val abilityUsages: Map[String, AbilityUsage] = Map()
 
-  var useAbilityTimeout: Float = 4
+  val useAbilityTimeout: Float = 4
+
+  val staminaRegenerationTickTime = 0.02f
+  val staminaRegeneration = 0.8f
+  val staminaOveruseTime = 2.8f
+  val staminaRegenerationDisabled = 1.7f
 
   implicit val id: CreatureId = state.id
 
@@ -87,6 +93,7 @@ trait Creature {
 
   def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
     updateTimers(delta) |+|
+      updateStamina(delta) |+|
       (if (isControlledAutomatically) updateAutomaticControls()
        else Monoid[GameStateTransition].empty) |+|
       state.events.foldMap { case CreatureDeathEvent() => onDeath() } |+|
@@ -124,8 +131,15 @@ trait Creature {
     State { implicit gameState =>
       (
         modifyCreature(
-          _.modifyAll(_.state.animationTimer, _.state.pathCalculationCooldownTimer, _.state.useAbilityTimer)
-            .using(_.update(delta))
+          _.modifyAll(
+            _.state.animationTimer,
+            _.state.pathCalculationCooldownTimer,
+            _.state.useAbilityTimer,
+            _.state.staminaRegenerationDisabledTimer,
+            _.state.staminaOveruseTimer,
+            _.state.staminaDrainTimer,
+            _.state.staminaRegenerationTimer
+          ).using(_.update(delta))
         ),
         List()
       )
@@ -176,8 +190,82 @@ trait Creature {
 //  .setTo(20f))
   }
 
+  def takeStaminaDamage(damage: Float): GameStateTransition =
+    State { implicit gameState =>
+      (
+        if (state.stamina - damage > 0) modifyCreature(_.modify(_.state.stamina).setTo(state.stamina - damage))
+        else {
+          modifyCreature(
+            _.modify(_.state.stamina)
+              .setTo(0f)
+              .modify(_.state.staminaOveruse)
+              .setTo(true)
+              .modify(_.state.staminaOveruseTimer)
+              .using(_.restart())
+          )
+        },
+        List()
+      )
+    }
+
+  def updateStamina(delta: Float): GameStateTransition = {
+    State[GameState, List[ExternalEvent]] { implicit gameState =>
+      (
+        gameState
+          .pipe(
+            implicit gameState =>
+              if (state.isSprinting && state.stamina > 0)
+                modifyCreature(_.modify(_.state.staminaDrainTimer).using(_.update(delta)))
+              else gameState
+          )
+          .pipe(
+            implicit gameState =>
+              if (!state.isStaminaRegenerationDisabled && !state.isSprinting)
+                modifyCreature(
+                  creature =>
+                    if (
+                      creature.state.staminaRegenerationTimer.time > creature.staminaRegenerationTickTime /* && !abilityActive */ && !creature.state.staminaOveruse
+                    ) {
+                      creature
+                        .pipe(creature => {
+                          val afterRegeneration = creature.state.stamina + creature.staminaRegeneration
+                          creature
+                            .modify(_.state.stamina)
+                            .setToIf(creature.state.stamina < creature.state.maxStamina)(
+                              Math.min(afterRegeneration, creature.state.maxStamina)
+                            )
+                        })
+                        .modify(_.state.staminaRegenerationTimer)
+                        .using(_.restart())
+                    } else creature
+                )
+              else gameState
+          )
+          .pipe(
+            implicit gameState =>
+              modifyCreature(
+                creature =>
+                  creature
+                    .modify(_.state.staminaOveruse)
+                    .setToIf(
+                      creature.state.staminaOveruse && creature.state.staminaOveruseTimer.time > creature.staminaOveruseTime
+                    )(false)
+              )
+          )
+          .pipe(
+            implicit gameState =>
+              modifyCreature(
+                _.modify(_.state.isStaminaRegenerationDisabled)
+                  .setToIf(state.staminaRegenerationDisabledTimer.time > staminaRegenerationDisabled)(false)
+              )
+          ),
+        List()
+      )
+    }
+  }
+
   def init()(implicit gameState: GameState): GameStateTransition =
-    State { gameState =>
+    State { implicit gameState =>
       (
         // init abilities
         abilityNames.foldLeft(gameState) {

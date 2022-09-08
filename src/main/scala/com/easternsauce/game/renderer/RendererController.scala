@@ -1,13 +1,15 @@
 package com.easternsauce.game.renderer
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.maps.tiled.TiledMap
+import com.badlogic.gdx.math.Rectangle
 import com.easternsauce.game.DrawingLayer
-import com.easternsauce.model.GameState
+import com.easternsauce.model.{GameState, Vec2}
 import com.easternsauce.model.GameState.getCreature
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 
-object SpriteRendererController {
+object RendererController {
   var creatureSpriteRenderers: Map[CreatureId, CreatureRenderer] = _
   var abilitySpriteRenderers: Map[AbilityId, AbilityRenderer] = _
   var atlas: TextureAtlas = _
@@ -70,4 +72,36 @@ object SpriteRendererController {
       if (abilitySpriteRenderers.contains(abilityId))
         abilitySpriteRenderers(abilityId).render(drawingLayer)
     }
+
+  def renderLifeAndStamina(drawingLayer: DrawingLayer)(implicit gameState: GameState): Unit = {
+    val player = GameState.player
+
+    val maxLifeRect = new Rectangle(10, 40, 100, 10)
+    val lifeRect =
+      new Rectangle(10, 40, 100 * player.state.life / player.state.maxLife, 10)
+    val maxStaminaRect = new Rectangle(10, 25, 100, 10)
+    val staminaRect =
+      new Rectangle(10, 25, 100 * player.state.stamina / player.state.maxStamina, 10)
+
+    drawingLayer.shapeDrawer.filledRectangle(maxLifeRect, Color.ORANGE)
+
+    if (player.state.life <= player.state.maxLife) {
+      drawingLayer.shapeDrawer.filledRectangle(lifeRect, Color.RED)
+    } else {
+      drawingLayer.shapeDrawer.filledRectangle(maxLifeRect, Color.ROYAL)
+    }
+
+    drawingLayer.shapeDrawer.filledRectangle(maxStaminaRect, Color.ORANGE)
+    drawingLayer.shapeDrawer.filledRectangle(staminaRect, Color.GREEN)
+  }
+
+  def renderHud(drawingLayer: DrawingLayer, mousePosition: Vec2)(implicit gameState: GameState): Unit = {
+
+
+//    inventoryRenderer.render(gameState, batch, mousePosition)
+//
+//    lootPickupMenuRenderer.render(gameState, batch, mousePosition)
+
+    renderLifeAndStamina(drawingLayer)
+  }
 }

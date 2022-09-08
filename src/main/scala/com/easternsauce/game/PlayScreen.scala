@@ -7,11 +7,12 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.graphics.{Color, GL20, OrthographicCamera}
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
+import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
 import com.easternsauce.game.physics.{AbilityCollisionEvent, Astar, PhysicsEngineController, PhysicsEvent}
-import com.easternsauce.game.renderer.SpriteRendererController
+import com.easternsauce.game.renderer.RendererController
 import com.easternsauce.model.GameState._
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
@@ -72,7 +73,7 @@ object PlayScreen extends Screen {
 
     implicit val gs: GameState = gameState.aref.get()
 
-    SpriteRendererController.init(atlas, maps)
+    RendererController.init(atlas, maps)
     PhysicsEngineController.init(maps)
 
   }
@@ -103,6 +104,8 @@ object PlayScreen extends Screen {
   override def show(): Unit = {}
 
   override def render(delta: Float): Unit = {
+    implicit val gs: GameState = gameState.aref.get()
+
     update(delta)
 
     worldDrawingLayer.setProjectionMatrix(worldCamera.combined)
@@ -118,12 +121,14 @@ object PlayScreen extends Screen {
 
     worldDrawingLayer.begin()
 
-    SpriteRendererController.renderDeadCreatures(worldDrawingLayer, debugEnabled)(gameState.aref.get())
-    SpriteRendererController.renderAliveCreatures(worldDrawingLayer, debugEnabled)(gameState.aref.get())
+    RendererController.renderDeadCreatures(worldDrawingLayer, debugEnabled)
+    RendererController.renderAliveCreatures(worldDrawingLayer, debugEnabled)
 
     worldDrawingLayer.end()
 
     hudDrawingLayer.begin()
+
+    RendererController.renderHud(hudDrawingLayer, mousePosWindowScaled)
 
     import com.easternsauce.game.Assets.bitmapFontToEnrichedBitmapFont
     val fps = Gdx.graphics.getFramesPerSecond
@@ -135,11 +140,11 @@ object PlayScreen extends Screen {
 
     worldDrawingLayer.begin()
 
-    SpriteRendererController.renderAbilities(worldDrawingLayer)(gameState.aref.get())
+    RendererController.renderAbilities(worldDrawingLayer)
 
     worldDrawingLayer.end()
 
-    val currentTerrain = PhysicsEngineController.physicsWorlds(gameState.aref.get().currentAreaId)
+    val currentTerrain = PhysicsEngineController.physicsWorlds(gs.currentAreaId)
 
     if (debugEnabled) b2DebugRenderer.render(currentTerrain.b2world, worldCamera.combined)
 
@@ -185,7 +190,7 @@ object PlayScreen extends Screen {
       case AbilityBodyActivateEvent(abilityId) =>
         PhysicsEngineController.activateAbilityBody(abilityId)
       case AbilitySpriteRendererCreateEvent(abilityId) =>
-        SpriteRendererController.addRenderer(abilityId)
+        RendererController.addRenderer(abilityId)
       case CreatureBodySetSensorEvent(creatureId) =>
         PhysicsEngineController.setCreatureBodyToSensor(creatureId)
     }
@@ -201,7 +206,7 @@ object PlayScreen extends Screen {
 
     processExternalEvents(events)
 
-    SpriteRendererController.update()
+    RendererController.update()
     PhysicsEngineController.update()
 
   }
@@ -255,7 +260,7 @@ object PlayScreen extends Screen {
     else
       Monoid[GameStateTransition].empty
 
-  private def processCreaturePathfinding()(implicit creatureId: CreatureId, gameState: GameState): GameStateTransition =
+  private def processCreaturePathfinding()(implicit creatureId: CreatureId, gameState: GameState): GameStateTransition = {
     if (
       getCreature.state.areaId == gameState.currentAreaId &&
       getCreature.isEnemy &&
@@ -291,6 +296,13 @@ object PlayScreen extends Screen {
         }
     } else
       Monoid[GameStateTransition].empty
+  }
+
+  def mousePosWindowScaled: Vec2 = {
+    val v = new Vector3(Gdx.input.getX.toFloat, Gdx.input.getY.toFloat, 0f)
+    hudCamera.unproject(v)
+    Vec2(v.x, v.y)
+  }
 
   override def resize(width: Int, height: Int): Unit = {
     worldViewport.update(width, height)

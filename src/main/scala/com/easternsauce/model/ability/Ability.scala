@@ -39,8 +39,8 @@ trait Ability {
   def width: Float = textureWidth.toFloat * scale / Constants.PPM
   def height: Float = textureHeight.toFloat * scale / Constants.PPM
 
-  def ableToPerform: Boolean =
-    !state.justPerformed && state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime
+  def ableToPerform(implicit gameState: GameState): Boolean =
+    !state.justPerformed && state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime && getCreature.state.stamina > 0 && !onCooldown
 
   def onCooldown: Boolean = false // TODO
 
@@ -59,7 +59,18 @@ trait Ability {
             ),
             List()
           )
-        }
+        } |+|
+        State { implicit gameState =>
+          (
+            modifyCreature(
+              _.modify(_.state.staminaRegenerationDisabledTimer)
+                .using(_.restart())
+                .modify(_.state.isStaminaRegenerationDisabled)
+                .setTo(true)
+            ),
+            List()
+          )} |+|
+      getCreature.takeStaminaDamage(15f)
     else Monoid[GameStateTransition].empty
 
   def onActiveStart()(implicit gameState: GameState): GameStateTransition

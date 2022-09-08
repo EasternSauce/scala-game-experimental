@@ -17,10 +17,20 @@ case class CreatureState(
   pathTowardsTarget: Option[List[Vec2]] = None,
   life: Float = 100f,
   maxLife: Float = 100f,
+  stamina: Float = 100f,
+  maxStamina: Float = 100f,
   useAbilityTimer: SimpleTimer = SimpleTimer(time = 4f, isRunning = true),
   inbetweenAbilitiesTime: Float = 0f,
   totalArmor: Float = 0f,
   isDead: Boolean = false,
   events: List[CreatureEvent] = List(),
-  effects: Map[String, Effect] = Map()
-)
+  effects: Map[String, Effect] = Map(),
+  staminaRegenerationDisabledTimer: SimpleTimer = SimpleTimer(),
+  isStaminaRegenerationDisabled: Boolean = false,
+  staminaOveruse: Boolean = false,
+  staminaOveruseTimer: SimpleTimer = SimpleTimer(),
+  isSprinting: Boolean = false,
+  staminaDrainTimer: SimpleTimer = SimpleTimer(),
+  staminaRegenerationTimer: SimpleTimer = SimpleTimer(isRunning = true),
+
+                        )
