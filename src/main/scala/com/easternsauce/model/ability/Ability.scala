@@ -40,15 +40,27 @@ trait Ability {
   def height: Float = textureHeight.toFloat * scale / Constants.PPM
 
   def ableToPerform(implicit gameState: GameState): Boolean =
-    !state.justPerformed && state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime && getCreature.state.stamina > 0 && !onCooldown
+    getCreature.isAlive && !state.justPerformed && state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime && getCreature.state.stamina > 0 && !onCooldown
 
   def onCooldown: Boolean = false // TODO
 
   def perform(dir: Vec2)(implicit gameState: GameState): GameStateTransition =
     if (ableToPerform)
       State[GameState, List[ExternalEvent]] { implicit gameState =>
-        (modifyCreature(_.modify(_.state.actionDirVector).setTo(dir)), List())
+        (
+          gameState.pipe(
+            implicit gameState =>
+              modifyAbility(
+                _.modify(_.state.dirVector)
+                  .setTo(Some(dir))
+              )
+          ),
+          List()
+        )
       } |+|
+        State[GameState, List[ExternalEvent]] { implicit gameState =>
+          (modifyCreature(_.modify(_.state.actionDirVector).setTo(dir)), List())
+        } |+|
         State { implicit gameState =>
           (
             modifyAbility(
@@ -69,8 +81,9 @@ trait Ability {
                 .setTo(true)
             ),
             List()
-          )} |+|
-      getCreature.takeStaminaDamage(15f)
+          )
+        } |+|
+        getCreature.takeStaminaDamage(15f)
     else Monoid[GameStateTransition].empty
 
   def onActiveStart()(implicit gameState: GameState): GameStateTransition

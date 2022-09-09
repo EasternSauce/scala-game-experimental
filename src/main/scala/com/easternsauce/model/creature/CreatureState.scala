@@ -31,6 +31,5 @@ case class CreatureState(
   staminaOveruseTimer: SimpleTimer = SimpleTimer(),
   isSprinting: Boolean = false,
   staminaDrainTimer: SimpleTimer = SimpleTimer(),
-  staminaRegenerationTimer: SimpleTimer = SimpleTimer(isRunning = true),
-
-                        )
+  staminaRegenerationTimer: SimpleTimer = SimpleTimer(isRunning = true)
+)

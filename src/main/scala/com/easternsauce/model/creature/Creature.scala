@@ -41,7 +41,7 @@ trait Creature {
   val staminaRegenerationTickTime = 0.02f
   val staminaRegeneration = 0.8f
   val staminaOveruseTime = 2.8f
-  val staminaRegenerationDisabled = 1.7f
+  val staminaRegenerationDisabledTime = 1.7f
 
   implicit val id: CreatureId = state.id
 
@@ -209,7 +209,7 @@ trait Creature {
     }
 
   def updateStamina(delta: Float): GameStateTransition = {
-    State[GameState, List[ExternalEvent]] { implicit gameState =>
+    State { implicit gameState =>
       (
         gameState
           .pipe(
@@ -250,13 +250,8 @@ trait Creature {
                     .setToIf(
                       creature.state.staminaOveruse && creature.state.staminaOveruseTimer.time > creature.staminaOveruseTime
                     )(false)
-              )
-          )
-          .pipe(
-            implicit gameState =>
-              modifyCreature(
-                _.modify(_.state.isStaminaRegenerationDisabled)
-                  .setToIf(state.staminaRegenerationDisabledTimer.time > staminaRegenerationDisabled)(false)
+                    .modify(_.state.isStaminaRegenerationDisabled)
+                    .setToIf(state.staminaRegenerationDisabledTimer.time > staminaRegenerationDisabledTime)(false)
               )
           ),
         List()

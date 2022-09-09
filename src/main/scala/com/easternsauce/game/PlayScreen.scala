@@ -260,7 +260,10 @@ object PlayScreen extends Screen {
     else
       Monoid[GameStateTransition].empty
 
-  private def processCreaturePathfinding()(implicit creatureId: CreatureId, gameState: GameState): GameStateTransition = {
+  private def processCreaturePathfinding()(implicit
+    creatureId: CreatureId,
+    gameState: GameState
+  ): GameStateTransition = {
     if (
       getCreature.state.areaId == gameState.currentAreaId &&
       getCreature.isEnemy &&

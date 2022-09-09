@@ -12,8 +12,6 @@ import com.easternsauce.model.creature.Creature
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId, ProjectileId}
 import com.softwaremill.quicklens._
 
-import scala.util.chaining.scalaUtilChainingOps
-
 case class GameState(
   creatures: Map[CreatureId, Creature] = Map(),
   abilities: Map[AbilityId, Ability] = Map(),
@@ -97,19 +95,7 @@ object GameState {
 
       runMovingLogic(wasMoving, isMoving, movingDir) |+|
         (if (mouseClicked)
-           getAbility.perform(mouseDirVector) |+|
-             State { implicit gameState =>
-               (
-                 gameState.pipe(
-                   implicit gameState =>
-                     modifyAbility(
-                       _.modify(_.state.dirVector)
-                         .setTo(Some(mouseDirVector))
-                     )
-                 ),
-                 List()
-               )
-             }
+           getAbility.perform(mouseDirVector)
          else Monoid[GameStateTransition].empty)
     } else
       Monoid[GameStateTransition].empty

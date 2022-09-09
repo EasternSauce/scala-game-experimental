@@ -5,9 +5,9 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.math.Rectangle
 import com.easternsauce.game.DrawingLayer
-import com.easternsauce.model.{GameState, Vec2}
 import com.easternsauce.model.GameState.getCreature
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
+import com.easternsauce.model.{GameState, Vec2}
 
 object RendererController {
   var creatureSpriteRenderers: Map[CreatureId, CreatureRenderer] = _
@@ -96,7 +96,6 @@ object RendererController {
   }
 
   def renderHud(drawingLayer: DrawingLayer, mousePosition: Vec2)(implicit gameState: GameState): Unit = {
-
 
 //    inventoryRenderer.render(gameState, batch, mousePosition)
 //
