@@ -47,6 +47,8 @@ object GameState {
   def getAbility(implicit abilityId: AbilityId, gameState: GameState): Ability =
     gameState.abilities(abilityId)
 
+  def getAbilitiesOfCreature(implicit creatureId: CreatureId, gameState: GameState): Map[AbilityId, Ability] = gameState.abilities.filter{case (_,ability) => ability.creatureId == creatureId}
+
   def modifyProjectile(
     action: Projectile => Projectile
   )(implicit projectileId: ProjectileId, gameState: GameState): GameState =

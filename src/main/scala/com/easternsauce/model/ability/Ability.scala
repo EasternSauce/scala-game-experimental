@@ -209,6 +209,18 @@ trait Ability {
       (gameState.pipe(implicit gameState => modifyAbility(_.modify(_.state.stageTimer).using(_.update(delta)))), List())
     }
 
+  def forceStop(): GameStateTransition = {
+    if (state.stage != AbilityStage.Inactive)
+      State { implicit gameState =>
+        (
+          gameState.pipe(implicit gameState => modifyAbility(_.modify(_.state.stage).setTo(AbilityStage.Inactive))),
+          List(AbilityBodyDestroyEvent(id))
+        )
+      }
+    else Monoid[GameStateTransition].empty
+
+  }
+
   def copy(state: AbilityState = state): Ability
 }
 

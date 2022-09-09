@@ -46,9 +46,12 @@ case object PhysicsEngineController {
     abilityBodies(abilityId).init()
     abilityBodies(abilityId).isActive = true
   }
+
   def removeAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
-    abilityBodies(abilityId).destroy()
-    abilityBodies(abilityId).isActive = false
+    if (abilityBodies(abilityId).isActive) {
+      abilityBodies(abilityId).destroy()
+      abilityBodies(abilityId).isActive = false
+    }
   }
 
   def setCreatureBodyToSensor(creatureId: CreatureId): Unit =
