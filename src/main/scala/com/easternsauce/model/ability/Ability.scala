@@ -16,17 +16,8 @@ trait Ability {
   val state: AbilityState
   val cooldownTime: Float
 
-  val textureWidth: Int
-  val textureHeight: Int
-  val activeTime: Float
-  val channelTime: Float
-  val channelSpriteType: String
-  val activeSpriteType: String
-  val channelFrameCount: Int
-  val activeFrameCount: Int
-  val channelFrameDuration: Float
-  val activeFrameDuration: Float
-  val scale: Float = 1.0f
+  val animation: AbilityAnimation
+
   val initSpeed: Float = 0f
   val activeAnimationLooping: Boolean = false
   val channelAnimationLooping: Boolean = false
@@ -36,8 +27,8 @@ trait Ability {
   implicit def id: AbilityId = state.id
   implicit def creatureId: CreatureId = state.creatureId
 
-  def width: Float = textureWidth.toFloat * scale / Constants.PPM
-  def height: Float = textureHeight.toFloat * scale / Constants.PPM
+  def width: Float = animation.textureWidth.toFloat * animation.scale / Constants.PPM
+  def height: Float = animation.textureHeight.toFloat * animation.scale / Constants.PPM
 
   def ableToPerform(implicit gameState: GameState): Boolean =
     getCreature.isAlive && !state.justPerformed && state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime && getCreature.state.stamina > 0 && !onCooldown
@@ -125,7 +116,7 @@ trait Ability {
                 width = width,
                 height = height,
                 rotation = theta,
-                scale = scale
+                scale = animation.scale
               )
             )
           )
@@ -143,14 +134,14 @@ trait Ability {
       case AbilityStage.Channel =>
         onChannelUpdate() |+|
           (
-            if (state.stageTimer.time > getAbility.channelTime)
+            if (state.stageTimer.time > getAbility.animation.channelTime)
               updateStateToActive()
             else
               Monoid[GameStateTransition].empty
           )
       case AbilityStage.Active =>
         onActiveUpdate() |+| (
-          if (state.stageTimer.time > getAbility.activeTime)
+          if (state.stageTimer.time > getAbility.animation.activeTime)
             updateStateToInactive()
           else
             Monoid[GameStateTransition].empty

@@ -21,28 +21,28 @@ case class AbilityRenderer(abilityId: AbilityId) {
   def init(atlas: TextureAtlas)(implicit gameState: GameState): Unit = {
     sprite = new Sprite()
 
-    channelTextureRegion = atlas.findRegion(getAbility.channelSpriteType)
-    activeTextureRegion = atlas.findRegion(getAbility.activeSpriteType)
+    channelTextureRegion = atlas.findRegion(getAbility.animation.channelSpriteType)
+    activeTextureRegion = atlas.findRegion(getAbility.animation.activeSpriteType)
 
     val channelFrames =
-      for { i <- (0 until getAbility.channelFrameCount).toArray } yield new TextureRegion(
+      for { i <- (0 until getAbility.animation.channelFrameCount).toArray } yield new TextureRegion(
         channelTextureRegion,
-        i * getAbility.textureWidth,
+        i * getAbility.animation.textureWidth,
         0,
-        getAbility.textureWidth,
-        getAbility.textureHeight
+        getAbility.animation.textureWidth,
+        getAbility.animation.textureHeight
       )
-    channelAnimation = new Animation[TextureRegion](getAbility.channelFrameDuration, channelFrames: _*)
+    channelAnimation = new Animation[TextureRegion](getAbility.animation.channelFrameDuration, channelFrames: _*)
 
     val activeFrames =
-      for { i <- (0 until getAbility.activeFrameCount).toArray } yield new TextureRegion(
+      for { i <- (0 until getAbility.animation.activeFrameCount).toArray } yield new TextureRegion(
         activeTextureRegion,
-        i * getAbility.textureWidth,
+        i * getAbility.animation.textureWidth,
         0,
-        getAbility.textureWidth,
-        getAbility.textureHeight
+        getAbility.animation.textureWidth,
+        getAbility.animation.textureHeight
       )
-    activeAnimation = new Animation[TextureRegion](getAbility.activeFrameDuration, activeFrames: _*)
+    activeAnimation = new Animation[TextureRegion](getAbility.animation.activeFrameDuration, activeFrames: _*)
   }
 
   def update()(implicit gameState: GameState): Unit = {
