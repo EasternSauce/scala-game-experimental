@@ -6,7 +6,7 @@ filter: Nearest, Nearest
 repeat: none
 arrow
   rotate: false
-  xy: 1048, 398
+  xy: 1806, 504
   size: 40, 40
   orig: 40, 40
   offset: 0, 0
@@ -27,7 +27,7 @@ background2
   index: -1
 bag
   rotate: false
-  xy: 1960, 512
+  xy: 2680, 950
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -41,14 +41,14 @@ bubble
   index: -1
 cursor
   rotate: false
-  xy: 977, 146
+  xy: 2426, 704
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 downarrow
   rotate: false
-  xy: 2106, 528
+  xy: 950, 146
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -97,7 +97,7 @@ ghost
   index: -1
 goblet
   rotate: false
-  xy: 2106, 562
+  xy: 2008, 562
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
@@ -111,14 +111,14 @@ goblet_lit
   index: -1
 goblin
   rotate: false
-  xy: 2008, 498
+  xy: 2426, 738
   size: 96, 128
   orig: 96, 128
   offset: 0, 0
   index: -1
 ice_shard
   rotate: false
-  xy: 1806, 472
+  xy: 2426, 868
   size: 152, 72
   orig: 152, 72
   offset: 0, 0
@@ -146,7 +146,7 @@ nice_icons
   index: -1
 pillar
   rotate: false
-  xy: 950, 128
+  xy: 1048, 388
   size: 25, 50
   orig: 25, 50
   offset: 0, 0
@@ -167,7 +167,7 @@ skeleton
   index: -1
 slash
   rotate: false
-  xy: 3836, 976
+  xy: 2438, 942
   size: 240, 40
   orig: 240, 40
   offset: 0, 0
@@ -175,6 +175,13 @@ slash
 slash2
   rotate: false
   xy: 628, 34
+  size: 240, 40
+  orig: 240, 40
+  offset: 0, 0
+  index: -1
+slash2mirrored
+  rotate: false
+  xy: 3594, 976
   size: 240, 40
   orig: 240, 40
   offset: 0, 0
@@ -188,7 +195,7 @@ slash_windup
   index: -1
 slash_windup2
   rotate: false
-  xy: 3594, 976
+  xy: 3836, 976
   size: 240, 40
   orig: 240, 40
   offset: 0, 0
@@ -202,7 +209,7 @@ taurus
   index: -1
 treasure
   rotate: false
-  xy: 1048, 364
+  xy: 2580, 908
   size: 32, 32
   orig: 32, 32
   offset: 0, 0

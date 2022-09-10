@@ -4,7 +4,7 @@ import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import cats.kernel.Monoid
 import com.badlogic.gdx.math.Vector2
-import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, Constants, ExternalEvent}
+import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, ExternalEvent}
 import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyAbility, modifyCreature}
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
@@ -16,7 +16,9 @@ trait Ability {
   val state: AbilityState
   val cooldownTime: Float
 
-  val animation: AbilityAnimation
+  val animationCycle: List[AbilityAnimation]
+
+  def currentAnimation: AbilityAnimation = animationCycle(state.currentAnimationIndex)
 
   val initSpeed: Float = 0f
   val activeAnimationLooping: Boolean = false
@@ -26,9 +28,6 @@ trait Ability {
 
   implicit def id: AbilityId = state.id
   implicit def creatureId: CreatureId = state.creatureId
-
-  def width: Float = animation.textureWidth.toFloat * animation.scale / Constants.PPM
-  def height: Float = animation.textureHeight.toFloat * animation.scale / Constants.PPM
 
   def ableToPerform(implicit gameState: GameState): Boolean =
     getCreature.isAlive && !state.justPerformed && state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime && getCreature.state.stamina > 0 && !onCooldown
@@ -74,7 +73,7 @@ trait Ability {
             List()
           )
         } |+|
-        getCreature.takeStaminaDamage(15f)
+        getCreature.takeStaminaDamage(8f)
     else Monoid[GameStateTransition].empty
 
   def onActiveStart()(implicit gameState: GameState): GameStateTransition
@@ -113,10 +112,10 @@ trait Ability {
             Some(
               Hitbox(
                 pos = Vec2(attackRectX, attackRectY),
-                width = width,
-                height = height,
+                width = currentAnimation.width,
+                height = currentAnimation.height,
                 rotation = theta,
-                scale = animation.scale
+                scale = currentAnimation.scale
               )
             )
           )
@@ -134,14 +133,14 @@ trait Ability {
       case AbilityStage.Channel =>
         onChannelUpdate() |+|
           (
-            if (state.stageTimer.time > getAbility.animation.channelTime)
+            if (state.stageTimer.time > getAbility.currentAnimation.channelTime)
               updateStateToActive()
             else
               Monoid[GameStateTransition].empty
           )
       case AbilityStage.Active =>
         onActiveUpdate() |+| (
-          if (state.stageTimer.time > getAbility.animation.activeTime)
+          if (state.stageTimer.time > getAbility.currentAnimation.activeTime)
             updateStateToInactive()
           else
             Monoid[GameStateTransition].empty
@@ -149,7 +148,7 @@ trait Ability {
 
     }) |+| updateTimers(delta)
 
-  private def updateStateToInactive()(implicit gameState: GameState): GameStateTransition =
+  private def updateStateToInactive()(implicit gameState: GameState): GameStateTransition = {
     onInactiveStart() |+|
       State { implicit gameState =>
         (
@@ -158,10 +157,13 @@ trait Ability {
               .setTo(AbilityStage.Inactive)
               .modify(_.state.stageTimer)
               .using(_.restart())
+              .modify(_.state.currentAnimationIndex)
+              .setTo((state.currentAnimationIndex + 1) % getAbility.animationCycle.length)
           ),
           List(AbilityBodyDestroyEvent(id))
         )
       }
+  }
 
   private def updateStateToActive()(implicit gameState: GameState): GameStateTransition =
     onActiveStart() |+|

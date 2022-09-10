@@ -10,7 +10,6 @@ import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2, WorldDirection}
 import com.softwaremill.quicklens._
-import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 
 import scala.language.postfixOps
 import scala.util.chaining.scalaUtilChainingOps
@@ -90,7 +89,9 @@ trait Creature {
   def ableToMove: Boolean = /*!this.isEffectActive("stagger") && !this.isEffectActive("knockback") &&*/ this.isAlive
 
   def onDeath()(implicit gameState: GameState): GameStateTransition =
-    State[GameState, List[ExternalEvent]] (implicit gameState => (gameState, List(CreatureBodySetSensorEvent(id)))) |+| getAbilitiesOfCreature.values.toList.foldMap(_.forceStop())
+    State[GameState, List[ExternalEvent]](
+      implicit gameState => (gameState, List(CreatureBodySetSensorEvent(id)))
+    ) |+| getAbilitiesOfCreature.values.toList.foldMap(_.forceStop())
 
   def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
     updateTimers(delta) |+|

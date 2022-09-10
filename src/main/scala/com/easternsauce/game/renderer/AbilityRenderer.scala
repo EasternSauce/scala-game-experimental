@@ -12,37 +12,47 @@ case class AbilityRenderer(abilityId: AbilityId) {
 
   var sprite: Sprite = _
 
-  var channelAnimation: Animation[TextureRegion] = _
-  var activeAnimation: Animation[TextureRegion] = _
+  var channelAnimations: List[Animation[TextureRegion]] = List()
+  var activeAnimations: List[Animation[TextureRegion]] = List()
 
-  var channelTextureRegion: TextureRegion = _
-  var activeTextureRegion: TextureRegion = _
+  var channelTextureRegions: List[TextureRegion] = List()
+  var activeTextureRegions: List[TextureRegion] = List()
 
   def init(atlas: TextureAtlas)(implicit gameState: GameState): Unit = {
     sprite = new Sprite()
 
-    channelTextureRegion = atlas.findRegion(getAbility.animation.channelSpriteType)
-    activeTextureRegion = atlas.findRegion(getAbility.animation.activeSpriteType)
+    for (i <- getAbility.animationCycle.indices) {
+      val animation = getAbility.animationCycle(i)
 
-    val channelFrames =
-      for { i <- (0 until getAbility.animation.channelFrameCount).toArray } yield new TextureRegion(
-        channelTextureRegion,
-        i * getAbility.animation.textureWidth,
-        0,
-        getAbility.animation.textureWidth,
-        getAbility.animation.textureHeight
-      )
-    channelAnimation = new Animation[TextureRegion](getAbility.animation.channelFrameDuration, channelFrames: _*)
+      val channelTextureRegion = atlas.findRegion(animation.channelSpriteType)
+      val activeTextureRegion = atlas.findRegion(animation.activeSpriteType)
 
-    val activeFrames =
-      for { i <- (0 until getAbility.animation.activeFrameCount).toArray } yield new TextureRegion(
-        activeTextureRegion,
-        i * getAbility.animation.textureWidth,
-        0,
-        getAbility.animation.textureWidth,
-        getAbility.animation.textureHeight
-      )
-    activeAnimation = new Animation[TextureRegion](getAbility.animation.activeFrameDuration, activeFrames: _*)
+      val channelFrames =
+        for { i <- (0 until animation.channelFrameCount).toArray } yield new TextureRegion(
+          channelTextureRegion,
+          i * animation.textureWidth,
+          0,
+          animation.textureWidth,
+          animation.textureHeight
+        )
+      val channelAnimation = new Animation[TextureRegion](animation.channelFrameDuration, channelFrames: _*)
+
+      val activeFrames =
+        for { i <- (0 until animation.activeFrameCount).toArray } yield new TextureRegion(
+          activeTextureRegion,
+          i * animation.textureWidth,
+          0,
+          animation.textureWidth,
+          animation.textureHeight
+        )
+      val activeAnimation = new Animation[TextureRegion](animation.activeFrameDuration, activeFrames: _*)
+
+      channelTextureRegions = channelTextureRegions ++ List(channelTextureRegion)
+      activeTextureRegions = activeTextureRegions ++ List(activeTextureRegion)
+      channelAnimations = channelAnimations ++ List(channelAnimation)
+      activeAnimations = activeAnimations ++ List(activeAnimation)
+    }
+
   }
 
   def update()(implicit gameState: GameState): Unit = {
@@ -65,7 +75,8 @@ case class AbilityRenderer(abilityId: AbilityId) {
     if (getAbility.state.stage == AbilityStage.Channel) {
 
       val texture =
-        channelAnimation.getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
+        channelAnimations(getAbility.state.currentAnimationIndex)
+          .getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
       updateSprite(texture)
 
     }
@@ -73,7 +84,8 @@ case class AbilityRenderer(abilityId: AbilityId) {
     if (getAbility.state.stage == AbilityStage.Active) {
 
       val texture =
-        activeAnimation.getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
+        activeAnimations(getAbility.state.currentAnimationIndex)
+          .getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
       updateSprite(texture)
     }
 

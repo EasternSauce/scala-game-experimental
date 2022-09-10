@@ -12,5 +12,6 @@ case class AbilityState(
   stage: AbilityStage = AbilityStage.Inactive,
   dirVector: Option[Vec2] = None,
   hitbox: Option[Hitbox] = None,
-  justPerformed: Boolean = false
+  justPerformed: Boolean = false,
+  currentAnimationIndex: Int = 0
 )

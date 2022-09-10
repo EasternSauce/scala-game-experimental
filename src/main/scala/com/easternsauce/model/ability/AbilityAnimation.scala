@@ -1,5 +1,7 @@
 package com.easternsauce.model.ability
 
+import com.easternsauce.game.Constants
+
 trait AbilityAnimation {
   val textureWidth: Int
   val textureHeight: Int
@@ -13,6 +15,9 @@ trait AbilityAnimation {
   val activeFrameDuration: Float
 
   val scale: Float
+
+  def width: Float = textureWidth.toFloat * scale / Constants.PPM
+  def height: Float = textureHeight.toFloat * scale / Constants.PPM
 }
 
 object SlashAnimation extends AbilityAnimation {
@@ -22,6 +27,21 @@ object SlashAnimation extends AbilityAnimation {
   val channelTime: Float = 0.3f
   val channelSpriteType: String = "slash_windup2"
   val activeSpriteType: String = "slash2"
+  val channelFrameCount: Int = 6
+  val activeFrameCount: Int = 6
+  val channelFrameDuration: Float = 0.05f
+  val activeFrameDuration: Float = 0.05f
+
+  override val scale: Float = 1.4f
+}
+
+object BackslashAnimation extends AbilityAnimation {
+  val textureWidth: Int = 40
+  val textureHeight: Int = 40
+  val activeTime: Float = 0.3f
+  val channelTime: Float = 0.3f
+  val channelSpriteType: String = "slash_windup2"
+  val activeSpriteType: String = "slash2mirrored"
   val channelFrameCount: Int = 6
   val activeFrameCount: Int = 6
   val channelFrameDuration: Float = 0.05f
