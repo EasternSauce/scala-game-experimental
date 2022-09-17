@@ -90,7 +90,7 @@ trait Creature {
 
   def onDeath()(implicit gameState: GameState): GameStateTransition =
     State[GameState, List[ExternalEvent]](
-      implicit gameState => (gameState, List(CreatureBodySetSensorEvent(id)))
+      implicit gameState => (modifyCreature(_.modify(_.state.stamina).setTo(0f)), List(CreatureBodySetSensorEvent(id)))
     ) |+| getAbilitiesOfCreature.values.toList.foldMap(_.forceStop())
 
   def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
@@ -222,7 +222,7 @@ trait Creature {
           )
           .pipe(
             implicit gameState =>
-              if (!state.isStaminaRegenerationDisabled && !state.isSprinting)
+              if (isAlive && !state.isStaminaRegenerationDisabled && !state.isSprinting)
                 modifyCreature(
                   creature =>
                     if (

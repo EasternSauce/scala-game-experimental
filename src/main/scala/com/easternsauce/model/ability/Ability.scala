@@ -222,7 +222,9 @@ trait Ability {
 object Ability {
   def abilityByName(creatureId: CreatureId, name: String): Ability =
     name match {
-      case "slash" => SlashAbility(AbilityId.derive(creatureId, name), creatureId)
+      case "slash"        => SlashAbility(AbilityId.derive(creatureId, name), creatureId)
+      case "triple_slash" => TripleSlashAbility(AbilityId.derive(creatureId, name), creatureId)
+
     }
 
 }

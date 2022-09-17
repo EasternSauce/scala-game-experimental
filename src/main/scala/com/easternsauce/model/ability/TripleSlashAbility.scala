@@ -4,11 +4,15 @@ import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.GameStateTransition
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 
-case class SlashAbility(state: AbilityState) extends Ability {
+case class TripleSlashAbility(state: AbilityState) extends Ability {
   val cooldownTime: Float = 0.3f
 
   override val attackPhases: List[AttackPhase] =
-    List(AttackPhase(animation = SlashAnimation))
+    List(
+      AttackPhase(animation = SlashAnimation),
+      AttackPhase(animation = BackslashAnimation),
+      AttackPhase(animation = SlamAnimation)
+    )
 
   override def onActiveStart()(implicit gameState: GameState): GameStateTransition =
     updateHitbox()
@@ -27,11 +31,11 @@ case class SlashAbility(state: AbilityState) extends Ability {
       (gameState, List())
     }
 
-  override def copy(state: AbilityState = state): Ability = SlashAbility(state)
+  override def copy(state: AbilityState = state): Ability = TripleSlashAbility(state)
 
 }
 
-object SlashAbility {
+object TripleSlashAbility {
   def apply(id: AbilityId, creatureId: CreatureId): Ability =
-    new SlashAbility(AbilityState(id = id, creatureId = creatureId))
+    new TripleSlashAbility(AbilityState(id = id, creatureId = creatureId))
 }

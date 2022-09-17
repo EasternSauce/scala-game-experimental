@@ -27,6 +27,9 @@ case class AbilityRenderer(abilityId: AbilityId) {
       val channelTextureRegion = atlas.findRegion(animation.channelSpriteType)
       val activeTextureRegion = atlas.findRegion(animation.activeSpriteType)
 
+      if (channelTextureRegion == null) throw new RuntimeException("region missing for " + animation.channelSpriteType)
+      if (activeTextureRegion == null) throw new RuntimeException("region missing for " + animation.activeSpriteType)
+
       val channelFrames =
         for { i <- (0 until animation.channelFrameCount).toArray } yield new TextureRegion(
           channelTextureRegion,

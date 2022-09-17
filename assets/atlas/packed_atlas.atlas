@@ -6,7 +6,7 @@ filter: Nearest, Nearest
 repeat: none
 arrow
   rotate: false
-  xy: 1806, 504
+  xy: 2000, 440
   size: 40, 40
   orig: 40, 40
   offset: 0, 0
@@ -27,7 +27,7 @@ background2
   index: -1
 bag
   rotate: false
-  xy: 2680, 950
+  xy: 1048, 406
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -41,7 +41,7 @@ bubble
   index: -1
 cursor
   rotate: false
-  xy: 2426, 704
+  xy: 870, 18
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -76,14 +76,14 @@ female1
   index: -1
 fist_slam
   rotate: false
-  xy: 1604, 266
+  xy: 1798, 400
   size: 200, 80
   orig: 200, 80
   offset: 0, 0
   index: -1
 fist_slam_windup
   rotate: false
-  xy: 1806, 546
+  xy: 1604, 266
   size: 200, 80
   orig: 200, 80
   offset: 0, 0
@@ -97,7 +97,7 @@ ghost
   index: -1
 goblet
   rotate: false
-  xy: 2008, 562
+  xy: 2592, 918
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
@@ -111,14 +111,14 @@ goblet_lit
   index: -1
 goblin
   rotate: false
-  xy: 2426, 738
+  xy: 2048, 498
   size: 96, 128
   orig: 96, 128
   offset: 0, 0
   index: -1
 ice_shard
   rotate: false
-  xy: 2426, 868
+  xy: 2438, 910
   size: 152, 72
   orig: 152, 72
   offset: 0, 0
@@ -146,7 +146,7 @@ nice_icons
   index: -1
 pillar
   rotate: false
-  xy: 1048, 388
+  xy: 1798, 348
   size: 25, 50
   orig: 25, 50
   offset: 0, 0
@@ -165,37 +165,51 @@ skeleton
   orig: 576, 256
   offset: 0, 0
   index: -1
+slam
+  rotate: false
+  xy: 628, 56
+  size: 240, 60
+  orig: 240, 60
+  offset: 0, 0
+  index: -1
+slam_windup
+  rotate: false
+  xy: 1806, 566
+  size: 240, 60
+  orig: 240, 60
+  offset: 0, 0
+  index: -1
 slash
   rotate: false
-  xy: 2438, 942
+  xy: 3836, 976
   size: 240, 40
   orig: 240, 40
   offset: 0, 0
   index: -1
 slash2
   rotate: false
-  xy: 628, 34
+  xy: 1806, 524
   size: 240, 40
   orig: 240, 40
   offset: 0, 0
   index: -1
 slash2mirrored
   rotate: false
-  xy: 3594, 976
+  xy: 1806, 482
   size: 240, 40
   orig: 240, 40
   offset: 0, 0
   index: -1
 slash_windup
   rotate: false
-  xy: 628, 76
+  xy: 628, 14
   size: 240, 40
   orig: 240, 40
   offset: 0, 0
   index: -1
 slash_windup2
   rotate: false
-  xy: 3836, 976
+  xy: 3594, 976
   size: 240, 40
   orig: 240, 40
   offset: 0, 0
@@ -209,7 +223,7 @@ taurus
   index: -1
 treasure
   rotate: false
-  xy: 2580, 908
+  xy: 2146, 594
   size: 32, 32
   orig: 32, 32
   offset: 0, 0

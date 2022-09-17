@@ -18,7 +18,7 @@ case class Player(state: CreatureState) extends Creature {
 
   override val isPlayer = true
 
-  override val abilityNames: List[String] = List("slash")
+  override val abilityNames: List[String] = List("triple_slash")
 
   override val speed: Float = 15f
 

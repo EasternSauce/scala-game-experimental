@@ -94,7 +94,7 @@ object GameState {
       val mouseDirVector =
         Vec2(mouseX - centerX, (Gdx.graphics.getHeight - mouseY) - centerY).normal
 
-      implicit val abilityId: AbilityId = AbilityId.derive(gameState.currentPlayerId, "slash")
+      implicit val abilityId: AbilityId = AbilityId.derive(gameState.currentPlayerId, "triple_slash")
 
       runMovingLogic(wasMoving, isMoving, movingDir) |+|
         (if (mouseClicked)
