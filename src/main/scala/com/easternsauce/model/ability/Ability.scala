@@ -18,13 +18,15 @@ trait Ability {
 
   val attackPhases: List[AttackPhase]
 
-  def currentAnimation: AbilityAnimation = attackPhases(state.currentAttackPhase).animation
+  def currentAnimation: AbilityAnimationData = attackPhases(state.currentAttackPhase).animation
 
   val initSpeed: Float = 0f
   val activeAnimationLooping: Boolean = false
   val channelAnimationLooping: Boolean = false
 
   val attackRange: Float = 1.8f
+
+  val currentAttackPhaseResetTimeout: Float = 1.3f
 
   implicit def id: AbilityId = state.id
   implicit def creatureId: CreatureId = state.creatureId
@@ -146,7 +148,11 @@ trait Ability {
             Monoid[GameStateTransition].empty
         )
 
-    }) |+| updateTimers(delta)
+    }) |+| updateTimers(delta) |+| (if (state.currentAttackPhaseResetTimer.time > currentAttackPhaseResetTimeout)
+                                      State { implicit gameState =>
+                                        (modifyAbility(_.modify(_.state.currentAttackPhase).setTo(0)), List())
+                                      }
+                                    else Monoid[GameStateTransition].empty)
 
   private def updateStateToInactive()(implicit gameState: GameState): GameStateTransition = {
     onInactiveStart() |+|
@@ -192,6 +198,8 @@ trait Ability {
               .using(_.restart())
               .modify(_.state.justPerformed)
               .setTo(false)
+              .modify(_.state.currentAttackPhaseResetTimer)
+              .using(_.restart())
           ),
           List()
         )
@@ -199,7 +207,13 @@ trait Ability {
 
   private def updateTimers(delta: Float): GameStateTransition =
     State { implicit gameState =>
-      (gameState.pipe(implicit gameState => modifyAbility(_.modify(_.state.stageTimer).using(_.update(delta)))), List())
+      (
+        gameState.pipe(
+          implicit gameState =>
+            modifyAbility(_.modifyAll(_.state.stageTimer, _.state.currentAttackPhaseResetTimer).using(_.update(delta)))
+        ),
+        List()
+      )
     }
 
   def forceStop(): GameStateTransition = {

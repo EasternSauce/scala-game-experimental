@@ -2,7 +2,7 @@ package com.easternsauce.model.ability
 
 import com.easternsauce.game.Constants
 
-trait AbilityAnimation {
+trait AbilityAnimationData {
   val textureWidth: Int
   val textureHeight: Int
   val activeTime: Float
@@ -20,7 +20,7 @@ trait AbilityAnimation {
   def height: Float = textureHeight.toFloat * scale / Constants.PPM
 }
 
-object SlashAnimation extends AbilityAnimation {
+object SlashAnimationData extends AbilityAnimationData {
   val textureWidth: Int = 40
   val textureHeight: Int = 40
   val activeTime: Float = 0.3f
@@ -35,7 +35,7 @@ object SlashAnimation extends AbilityAnimation {
   override val scale: Float = 1.4f
 }
 
-object BackslashAnimation extends AbilityAnimation {
+object BackslashAnimationData extends AbilityAnimationData {
   val textureWidth: Int = 40
   val textureHeight: Int = 40
   val activeTime: Float = 0.3f
@@ -50,7 +50,7 @@ object BackslashAnimation extends AbilityAnimation {
   override val scale: Float = 1.4f
 }
 
-object SlamAnimation extends AbilityAnimation {
+object SlamAnimationData extends AbilityAnimationData {
   val textureWidth: Int = 40
   val textureHeight: Int = 60
   val activeTime: Float = 0.3f

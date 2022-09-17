@@ -1,3 +1,3 @@
 package com.easternsauce.model.ability
 
-case class AttackPhase(animation: AbilityAnimation) {}
+case class AttackPhase(animation: AbilityAnimationData) {}

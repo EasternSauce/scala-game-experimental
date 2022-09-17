@@ -13,5 +13,6 @@ case class AbilityState(
   dirVector: Option[Vec2] = None,
   hitbox: Option[Hitbox] = None,
   justPerformed: Boolean = false,
-  currentAttackPhase: Int = 0
+  currentAttackPhase: Int = 0,
+  currentAttackPhaseResetTimer: SimpleTimer = SimpleTimer()
 )
