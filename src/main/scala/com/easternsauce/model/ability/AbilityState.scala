@@ -9,9 +9,9 @@ case class AbilityState(
   creatureId: CreatureId,
   projectiles: Option[List[ProjectileId]] = None,
   stageTimer: SimpleTimer = SimpleTimer(time = Float.MaxValue),
-  stage: AbilityStage = AbilityStage.Inactive,
+  stage: AbilityStage = AbilityStage.InactiveStage,
   dirVector: Option[Vec2] = None,
   hitbox: Option[Hitbox] = None,
   justPerformed: Boolean = false,
-  currentAnimationIndex: Int = 0
+  currentAttackPhase: Int = 0
 )

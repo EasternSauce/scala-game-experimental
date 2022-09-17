@@ -21,8 +21,8 @@ case class AbilityRenderer(abilityId: AbilityId) {
   def init(atlas: TextureAtlas)(implicit gameState: GameState): Unit = {
     sprite = new Sprite()
 
-    for (i <- getAbility.animationCycle.indices) {
-      val animation = getAbility.animationCycle(i)
+    for (i <- getAbility.attackPhases.indices) {
+      val animation = getAbility.attackPhases(i).animation
 
       val channelTextureRegion = atlas.findRegion(animation.channelSpriteType)
       val activeTextureRegion = atlas.findRegion(animation.activeSpriteType)
@@ -72,19 +72,19 @@ case class AbilityRenderer(abilityId: AbilityId) {
           "cannot update sprite without filling in hitbox information! dir vector for ability probably not set"
         )
 
-    if (getAbility.state.stage == AbilityStage.Channel) {
+    if (getAbility.state.stage == AbilityStage.ChannelStage) {
 
       val texture =
-        channelAnimations(getAbility.state.currentAnimationIndex)
+        channelAnimations(getAbility.state.currentAttackPhase)
           .getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
       updateSprite(texture)
 
     }
 
-    if (getAbility.state.stage == AbilityStage.Active) {
+    if (getAbility.state.stage == AbilityStage.ActiveStage) {
 
       val texture =
-        activeAnimations(getAbility.state.currentAnimationIndex)
+        activeAnimations(getAbility.state.currentAttackPhase)
           .getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
       updateSprite(texture)
     }
@@ -92,6 +92,6 @@ case class AbilityRenderer(abilityId: AbilityId) {
   }
 
   def render(drawingLayer: DrawingLayer)(implicit gameState: GameState): Unit =
-    if (getAbility.state.stage == AbilityStage.Channel || getAbility.state.stage == AbilityStage.Active)
+    if (getAbility.state.stage == AbilityStage.ChannelStage || getAbility.state.stage == AbilityStage.ActiveStage)
       sprite.draw(drawingLayer.spriteBatch)
 }

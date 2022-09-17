@@ -173,7 +173,7 @@ object PlayScreen extends Screen {
             val damage =
               /*if (ability.isWeaponAttack) creatures(creatureId).weaponDamage else abilityComponent.damage*/ 20f // TODO
             attackedCreature.takeLifeDamage(damage, attackingCreature.state.pos.x, attackingCreature.state.pos.y) |+|
-              attackedCreature.activateEffect("immunityFrames", 1f) |+|
+              attackedCreature.activateEffect("immunityFrames", 0.35f) |+|
               attackedCreature.activateEffect("stagger", 0.35f)
           } else Monoid[GameStateTransition].empty
 

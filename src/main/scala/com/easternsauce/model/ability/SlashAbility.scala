@@ -7,7 +7,8 @@ import com.easternsauce.model.ids.{AbilityId, CreatureId}
 case class SlashAbility(state: AbilityState) extends Ability {
   val cooldownTime: Float = 0.3f
 
-  override val animationCycle: List[AbilityAnimation] = List(SlashAnimation, BackslashAnimation)
+  override val attackPhases: List[AttackPhase] =
+    List(AttackPhase(animation = SlashAnimation), AttackPhase(animation = BackslashAnimation))
 
   override def onActiveStart()(implicit gameState: GameState): GameStateTransition =
     updateHitbox()

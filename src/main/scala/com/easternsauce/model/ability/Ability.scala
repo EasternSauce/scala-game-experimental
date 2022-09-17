@@ -16,9 +16,9 @@ trait Ability {
   val state: AbilityState
   val cooldownTime: Float
 
-  val animationCycle: List[AbilityAnimation]
+  val attackPhases: List[AttackPhase]
 
-  def currentAnimation: AbilityAnimation = animationCycle(state.currentAnimationIndex)
+  def currentAnimation: AbilityAnimation = attackPhases(state.currentAttackPhase).animation
 
   val initSpeed: Float = 0f
   val activeAnimationLooping: Boolean = false
@@ -30,7 +30,7 @@ trait Ability {
   implicit def creatureId: CreatureId = state.creatureId
 
   def ableToPerform(implicit gameState: GameState): Boolean =
-    getCreature.isAlive && !state.justPerformed && state.stage == AbilityStage.Inactive && state.stageTimer.time > cooldownTime && getCreature.state.stamina > 0 && !onCooldown
+    getCreature.isAlive && !state.justPerformed && state.stage == AbilityStage.InactiveStage && state.stageTimer.time > cooldownTime && getCreature.state.stamina > 0 && !onCooldown
 
   def onCooldown: Boolean = false // TODO
 
@@ -127,10 +127,10 @@ trait Ability {
 
   def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
     (state.stage match {
-      case AbilityStage.Inactive =>
+      case AbilityStage.InactiveStage =>
         if (state.justPerformed) updateStateToChannel()
         else Monoid[GameStateTransition].empty
-      case AbilityStage.Channel =>
+      case AbilityStage.ChannelStage =>
         onChannelUpdate() |+|
           (
             if (state.stageTimer.time > getAbility.currentAnimation.channelTime)
@@ -138,7 +138,7 @@ trait Ability {
             else
               Monoid[GameStateTransition].empty
           )
-      case AbilityStage.Active =>
+      case AbilityStage.ActiveStage =>
         onActiveUpdate() |+| (
           if (state.stageTimer.time > getAbility.currentAnimation.activeTime)
             updateStateToInactive()
@@ -154,11 +154,11 @@ trait Ability {
         (
           modifyAbility(
             _.modify(_.state.stage)
-              .setTo(AbilityStage.Inactive)
+              .setTo(AbilityStage.InactiveStage)
               .modify(_.state.stageTimer)
               .using(_.restart())
-              .modify(_.state.currentAnimationIndex)
-              .setTo((state.currentAnimationIndex + 1) % getAbility.animationCycle.length)
+              .modify(_.state.currentAttackPhase)
+              .setTo((state.currentAttackPhase + 1) % getAbility.attackPhases.length)
           ),
           List(AbilityBodyDestroyEvent(id))
         )
@@ -171,7 +171,7 @@ trait Ability {
         (
           modifyAbility(
             _.modify(_.state.stage)
-              .setTo(AbilityStage.Active)
+              .setTo(AbilityStage.ActiveStage)
               .modify(_.state.stageTimer)
               .using(_.restart())
           ),
@@ -185,7 +185,7 @@ trait Ability {
         (
           modifyAbility(
             _.modify(_.state.stage)
-              .setTo(AbilityStage.Channel)
+              .setTo(AbilityStage.ChannelStage)
               .modify(_.state.stageTimer)
               .using(_.restart())
               .modify(_.state.stageTimer)
@@ -203,10 +203,12 @@ trait Ability {
     }
 
   def forceStop(): GameStateTransition = {
-    if (state.stage != AbilityStage.Inactive)
+    if (state.stage != AbilityStage.InactiveStage)
       State { implicit gameState =>
         (
-          gameState.pipe(implicit gameState => modifyAbility(_.modify(_.state.stage).setTo(AbilityStage.Inactive))),
+          gameState.pipe(
+            implicit gameState => modifyAbility(_.modify(_.state.stage).setTo(AbilityStage.InactiveStage))
+          ),
           List(AbilityBodyDestroyEvent(id))
         )
       }
