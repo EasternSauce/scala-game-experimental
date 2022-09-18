@@ -30,9 +30,19 @@ case class CreatureBody(creatureId: CreatureId) {
     val vectorX = normalMovingDir.x * v
     val vectorY = normalMovingDir.y * v
 
-    if (bodyCreated)
-      if (creature.ableToMove)
+    if (bodyCreated) {
+      if (creature.isEffectActive("knockback")) {
+        PhysicsEngineController
+          .creatureBodies(creatureId)
+          .setVelocity(
+            new Vector2(
+              creature.state.knockbackDir.x * creature.state.knockbackVelocity,
+              creature.state.knockbackDir.y * creature.state.knockbackVelocity
+            )
+          )
+      } else if (creature.ableToMove)
         setVelocity(new Vector2(vectorX, vectorY))
+    }
   }
 
   def pos: Vector2 = b2Body.getWorldCenter

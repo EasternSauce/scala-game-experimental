@@ -86,7 +86,7 @@ trait Creature {
 
   def isAlive: Boolean = state.life > 0f
 
-  def ableToMove: Boolean = /*!this.isEffectActive("stagger") && !this.isEffectActive("knockback") &&*/ this.isAlive
+  def ableToMove: Boolean = !this.isEffectActive("stagger") && !this.isEffectActive("knockback") && this.isAlive
 
   def onDeath()(implicit gameState: GameState): GameStateTransition =
     State[GameState, List[ExternalEvent]](
@@ -165,7 +165,8 @@ trait Creature {
     val actualDamage = damage * 100f / (100f + state.totalArmor)
 
     //      .usingIf(creature.onGettingHitSoundId.nonEmpty)(_.prepended(PlaySoundEvent(creature.onGettingHitSoundId.get)))
-    State { implicit gameState: GameState =>
+
+    val handleTakeDamage = State[GameState, List[ExternalEvent]] { implicit gameState: GameState =>
       (
         modifyCreature(
           _.pipe(
@@ -183,13 +184,22 @@ trait Creature {
         List()
       )
     }
-//  .activateEffect("knockback", 0.02f)
-//  .modify(_.params.knockbackDir)
-//  .setTo(
-//    Vec2(creatures(creatureId).params.posX - sourcePosX, creatures(creatureId).params.posY - sourcePosY).normal
-//  )
-//  .modify(_.params.knockbackVelocity)
-//  .setTo(20f))
+
+    val handleKnockback = getCreature.activateEffect("knockback", 0.02f) |+| State[GameState, List[ExternalEvent]] {
+      implicit gameState: GameState =>
+        (
+          modifyCreature(
+            _.modify(_.state.knockbackDir)
+              .setTo(Vec2(getCreature.state.pos.x - sourcePosX, getCreature.state.pos.y - sourcePosY).normal)
+              .modify(_.state.knockbackVelocity)
+              .setTo(20f)
+          ),
+          List()
+        )
+    }
+
+    handleTakeDamage |+| handleKnockback
+
   }
 
   def takeStaminaDamage(damage: Float): GameStateTransition =
