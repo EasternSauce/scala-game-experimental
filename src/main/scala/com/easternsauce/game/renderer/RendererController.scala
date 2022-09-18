@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.math.Rectangle
 import com.easternsauce.game.DrawingLayer
+import com.easternsauce.game.physics.AreaGateBody
 import com.easternsauce.model.GameState.getCreature
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
@@ -12,9 +13,13 @@ import com.easternsauce.model.{GameState, Vec2}
 object RendererController {
   var creatureSpriteRenderers: Map[CreatureId, CreatureRenderer] = _
   var abilitySpriteRenderers: Map[AbilityId, AbilityRenderer] = _
+  var areaGateRenderers: List[AreaGateRenderer] = _
+
   var atlas: TextureAtlas = _
 
-  def init(atlas: TextureAtlas, maps: Map[AreaId, TiledMap])(implicit gameState: GameState): Unit = {
+  def init(atlas: TextureAtlas, maps: Map[AreaId, TiledMap], areaGates: List[AreaGateBody])(implicit
+    gameState: GameState
+  ): Unit = {
     this.atlas = atlas
 
     creatureSpriteRenderers =
@@ -22,6 +27,9 @@ object RendererController {
     creatureSpriteRenderers.values.foreach(_.init(atlas))
 
     abilitySpriteRenderers = Map()
+
+    areaGateRenderers = areaGates.map(AreaGateRenderer)
+
   }
 
   def update()(implicit gameState: GameState): Unit = {
@@ -102,5 +110,9 @@ object RendererController {
 //    lootPickupMenuRenderer.render(gameState, batch, mousePosition)
 
     renderLifeAndStamina(drawingLayer)
+  }
+
+  def renderAreaGates(gameState: GameState, drawingLayer: DrawingLayer): Unit = {
+    areaGateRenderers.foreach(_.render(gameState, drawingLayer))
   }
 }

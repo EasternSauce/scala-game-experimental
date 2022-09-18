@@ -89,6 +89,24 @@ object B2BodyFactory {
       isSensor = true
     )
 
+  def createAreaGateEntryPointB2body(
+    world: World,
+    areaGateBody: AreaGateBody,
+    posX: Float,
+    posY: Float,
+    width: Float,
+    height: Float
+  ): Body =
+    createB2body(
+      world = world,
+      posX = posX,
+      posY = posY,
+      bodyType = BodyType.StaticBody,
+      userData = areaGateBody,
+      shape = Rectangle(width, height),
+      isSensor = true
+    )
+
 }
 
 sealed abstract class BodyShape { def b2Shape(): Shape }

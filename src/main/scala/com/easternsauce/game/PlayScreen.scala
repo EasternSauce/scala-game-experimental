@@ -11,7 +11,7 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
 import com.badlogic.gdx.{Gdx, Input, Screen}
-import com.easternsauce.game.physics.{AbilityCollisionEvent, Astar, PhysicsEngineController, PhysicsEvent}
+import com.easternsauce.game.physics._
 import com.easternsauce.game.renderer.RendererController
 import com.easternsauce.model.GameState._
 import com.easternsauce.model.WorldDirection.WorldDirection
@@ -28,6 +28,7 @@ object PlayScreen extends Screen {
   var hudDrawingLayer: DrawingLayer = _
 
   var maps: Map[AreaId, TiledMap] = _
+  var areaGates: List[AreaGateBody] = _
 
   var worldCamera: OrthographicCamera = _
   var hudCamera: OrthographicCamera = _
@@ -75,7 +76,7 @@ object PlayScreen extends Screen {
 
     implicit val gs: GameState = gameState.aref.get()
 
-    RendererController.init(atlas, maps)
+    RendererController.init(atlas, maps, areaGates)
     PhysicsEngineController.init(maps)
 
   }
@@ -84,6 +85,7 @@ object PlayScreen extends Screen {
   def setHudDrawingLayer(hudDrawingLayer: DrawingLayer): Unit = this.hudDrawingLayer = hudDrawingLayer
 
   def setMaps(maps: Map[AreaId, TiledMap]): Unit = this.maps = maps
+  def setAreaGates(areaGates: List[AreaGateBody]): Unit = this.areaGates = areaGates
 
   def updateCamera(): Unit = {
 
@@ -122,6 +124,8 @@ object PlayScreen extends Screen {
     tiledMapRenderer.render(Array(0, 1))
 
     worldDrawingLayer.begin()
+
+    RendererController.renderAreaGates(gs, worldDrawingLayer)
 
     RendererController.renderDeadCreatures(worldDrawingLayer, debugEnabled)
     RendererController.renderAliveCreatures(worldDrawingLayer, debugEnabled)
