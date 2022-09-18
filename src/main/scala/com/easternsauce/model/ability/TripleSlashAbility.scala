@@ -9,9 +9,9 @@ case class TripleSlashAbility(state: AbilityState) extends Ability {
 
   override val attackPhases: List[AttackPhase] =
     List(
-      AttackPhase(animation = SlashAnimationData),
-      AttackPhase(animation = BackslashAnimationData),
-      AttackPhase(animation = SlamAnimationData)
+      AttackPhase(animation = SlashAnimationData, knockbackVelocity = 5f),
+      AttackPhase(animation = BackslashAnimationData, knockbackVelocity = 5f),
+      AttackPhase(animation = SlamAnimationData, knockbackVelocity = 40f)
     )
 
   override def onActiveStart()(implicit gameState: GameState): GameStateTransition =

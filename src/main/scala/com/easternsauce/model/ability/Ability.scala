@@ -18,7 +18,8 @@ trait Ability {
 
   val attackPhases: List[AttackPhase]
 
-  def currentAnimation: AbilityAnimationData = attackPhases(state.currentAttackPhase).animation
+  def currentAttackPhase: AttackPhase = attackPhases(state.currentAttackPhase)
+  def currentAnimation: AbilityAnimationData = currentAttackPhase.animation
 
   val initSpeed: Float = 0f
   val activeAnimationLooping: Boolean = false
@@ -35,6 +36,8 @@ trait Ability {
     getCreature.isAlive && !state.justPerformed && state.stage == AbilityStage.InactiveStage && state.stageTimer.time > cooldownTime && getCreature.state.stamina > 0 && !onCooldown
 
   def onCooldown: Boolean = false // TODO
+
+  def knockbackVelocity: Float = currentAttackPhase.knockbackVelocity
 
   def perform(dir: Vec2)(implicit gameState: GameState): GameStateTransition =
     if (ableToPerform)

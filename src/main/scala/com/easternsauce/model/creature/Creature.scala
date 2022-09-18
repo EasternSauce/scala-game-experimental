@@ -157,7 +157,7 @@ trait Creature {
     else Monoid[GameStateTransition].empty
   }
 
-  def takeLifeDamage(damage: Float, sourcePosX: Float, sourcePosY: Float)(implicit
+  def takeLifeDamage(damage: Float, sourcePosX: Float, sourcePosY: Float, knockbackVelocity: Float)(implicit
     gameState: GameState
   ): GameStateTransition = {
     val beforeLife = getCreature.state.life
@@ -185,14 +185,14 @@ trait Creature {
       )
     }
 
-    val handleKnockback = getCreature.activateEffect("knockback", 0.02f) |+| State[GameState, List[ExternalEvent]] {
+    val handleKnockback = getCreature.activateEffect("knockback", 0.05f) |+| State[GameState, List[ExternalEvent]] {
       implicit gameState: GameState =>
         (
           modifyCreature(
             _.modify(_.state.knockbackDir)
               .setTo(Vec2(getCreature.state.pos.x - sourcePosX, getCreature.state.pos.y - sourcePosY).normal)
               .modify(_.state.knockbackVelocity)
-              .setTo(20f)
+              .setTo(knockbackVelocity)
           ),
           List()
         )
