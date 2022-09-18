@@ -18,6 +18,8 @@ case class Skeleton(state: CreatureState) extends Enemy {
 
   override val abilityNames: List[String] = List("slash")
 
+  override val onGettingHitSoundId: Option[String] = Some("boneClick")
+
   override def copy(state: CreatureState = state): Creature = Skeleton(state)
 }
 

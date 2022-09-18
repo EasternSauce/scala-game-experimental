@@ -9,9 +9,24 @@ case class TripleSlashAbility(state: AbilityState) extends Ability {
 
   override val attackPhases: List[AttackPhase] =
     List(
-      AttackPhase(animation = SlashAnimationData, knockbackVelocity = 5f),
-      AttackPhase(animation = BackslashAnimationData, knockbackVelocity = 5f),
-      AttackPhase(animation = SlamAnimationData, knockbackVelocity = 40f)
+      AttackPhase(
+        animation = SlashAnimationData,
+        knockbackVelocity = 5f,
+        attackActiveSoundId = Some("swoosh"),
+        attackActiveSoundPitch = Some(1.0f)
+      ),
+      AttackPhase(
+        animation = BackslashAnimationData,
+        knockbackVelocity = 5f,
+        attackActiveSoundId = Some("swoosh"),
+        attackActiveSoundPitch = Some(1.3f)
+      ),
+      AttackPhase(
+        animation = SlamAnimationData,
+        knockbackVelocity = 30f,
+        attackActiveSoundId = Some("slam"),
+        attackActiveSoundPitch = Some(1.0f)
+      )
     )
 
   override def onActiveStart()(implicit gameState: GameState): GameStateTransition =

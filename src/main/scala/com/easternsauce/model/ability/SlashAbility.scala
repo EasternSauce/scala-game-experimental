@@ -8,7 +8,14 @@ case class SlashAbility(state: AbilityState) extends Ability {
   val cooldownTime: Float = 0.3f
 
   override val attackPhases: List[AttackPhase] =
-    List(AttackPhase(animation = SlashAnimationData, knockbackVelocity = 5f))
+    List(
+      AttackPhase(
+        animation = SlashAnimationData,
+        knockbackVelocity = 5f,
+        attackActiveSoundId = Some("swoosh"),
+        attackActiveSoundPitch = Some(1.0f)
+      )
+    )
 
   override def onActiveStart()(implicit gameState: GameState): GameStateTransition =
     updateHitbox()

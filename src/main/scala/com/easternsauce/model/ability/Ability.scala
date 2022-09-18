@@ -4,7 +4,7 @@ import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import cats.kernel.Monoid
 import com.badlogic.gdx.math.Vector2
-import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, ExternalEvent}
+import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, ExternalEvent, PlaySoundEvent}
 import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyAbility, modifyCreature}
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
@@ -20,6 +20,8 @@ trait Ability {
 
   def currentAttackPhase: AttackPhase = attackPhases(state.currentAttackPhase)
   def currentAnimation: AbilityAnimationData = currentAttackPhase.animation
+  def currentAttackActiveSoundId: Option[String] = currentAttackPhase.attackActiveSoundId
+  def currentAttackActiveSoundPitch: Option[Float] = currentAttackPhase.attackActiveSoundPitch
 
   val initSpeed: Float = 0f
   val activeAnimationLooping: Boolean = false
@@ -184,7 +186,10 @@ trait Ability {
               .modify(_.state.stageTimer)
               .using(_.restart())
           ),
-          List(AbilityBodyActivateEvent(id))
+          List(AbilityBodyActivateEvent(id)) ++
+            (if (currentAttackActiveSoundId.nonEmpty && currentAttackActiveSoundPitch.nonEmpty)
+               List(PlaySoundEvent(currentAttackActiveSoundId.get, currentAttackActiveSoundPitch.get))
+             else List())
         )
       }
 

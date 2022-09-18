@@ -22,6 +22,8 @@ case class Player(state: CreatureState) extends Creature {
 
   override val speed: Float = 15f
 
+  override val onGettingHitSoundId: Option[String] = Some("pain")
+
   override def copy(state: CreatureState = state): Creature = Player(state)
 }
 

@@ -3,7 +3,7 @@ package com.easternsauce.model.creature
 import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
-import com.easternsauce.game.{CreatureBodySetSensorEvent, ExternalEvent}
+import com.easternsauce.game.{CreatureBodySetSensorEvent, ExternalEvent, PlaySoundWithRandomPitchEvent}
 import com.easternsauce.model.GameState.{GameStateTransition, gameStateMonoid, getAbilitiesOfCreature, getAbility, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
@@ -42,6 +42,8 @@ trait Creature {
   val staminaRegeneration = 0.8f
   val staminaOveruseTime = 2.8f
   val staminaRegenerationDisabledTime = 1.7f
+
+  val onGettingHitSoundId: Option[String] = None
 
   implicit val id: CreatureId = state.id
 
@@ -181,12 +183,14 @@ trait Creature {
               modifyCreature(_.modify(_.state.events).using(_.appended(CreatureDeathEvent())))
             else gameState
         ),
-        List()
+        if (getCreature.onGettingHitSoundId.nonEmpty)
+          List(PlaySoundWithRandomPitchEvent(getCreature.onGettingHitSoundId.get))
+        else List()
       )
     }
 
-    val handleKnockback = getCreature.activateEffect("knockback", 0.05f) |+| State[GameState, List[ExternalEvent]] {
-      implicit gameState: GameState =>
+    val handleKnockback = getCreature.activateEffect("knockback", 0.05f) |+|
+      State[GameState, List[ExternalEvent]] { implicit gameState: GameState =>
         (
           modifyCreature(
             _.modify(_.state.knockbackDir)
@@ -196,7 +200,7 @@ trait Creature {
           ),
           List()
         )
-    }
+      }
 
     handleTakeDamage |+| handleKnockback
 

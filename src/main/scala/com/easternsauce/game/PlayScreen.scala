@@ -20,6 +20,8 @@ import com.easternsauce.model.creature.{Player, Skeleton}
 import com.easternsauce.model.ids.{AreaId, CreatureId}
 import com.softwaremill.quicklens.ModifyPimp
 
+import scala.util.Random
+
 object PlayScreen extends Screen {
 
   var worldDrawingLayer: DrawingLayer = _
@@ -198,6 +200,10 @@ object PlayScreen extends Screen {
         RendererController.addRenderer(abilityId)
       case CreatureBodySetSensorEvent(creatureId) =>
         PhysicsEngineController.setCreatureBodyToSensor(creatureId)
+      case PlaySoundEvent(soundId, pitch) =>
+        Assets.sound(soundId).play(0.1f, pitch, 1.0f)
+      case PlaySoundWithRandomPitchEvent(soundId) =>
+        Assets.sound(soundId).play(0.1f, Random.between(0.8f, 1.2f), 1f)
     }
 
   def update(delta: Float): Unit = {

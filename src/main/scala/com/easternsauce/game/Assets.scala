@@ -48,7 +48,8 @@ object Assets {
     "coinBag" -> "assets/sounds/coinbag.wav",
     "matchIgnite" -> "assets/sounds/match-ignite.wav",
     "appleCrunch" -> "assets/sounds/apple-crunch.wav",
-    "boneRattle" -> "assets/sounds/bone-rattle.wav"
+    "boneRattle" -> "assets/sounds/bone-rattle.wav",
+    "slam" -> "assets/sounds/slam.wav"
   )
 
   private val musicPaths =
