@@ -20,6 +20,7 @@ import com.easternsauce.model.creature.{Player, Skeleton}
 import com.easternsauce.model.ids.{AreaId, CreatureId}
 import com.softwaremill.quicklens.ModifyPimp
 
+import scala.language.postfixOps
 import scala.util.Random
 
 object PlayScreen extends Screen {
@@ -190,6 +191,41 @@ object PlayScreen extends Screen {
 
         } else Monoid[GameStateTransition].empty
 
+      case AreaGateCollisionStartEvent(creatureId, areaGateBody: AreaGateBody) =>
+        implicit val cId: CreatureId = creatureId
+
+        if (
+          gameState.creatures.contains(creatureId) && gameState
+            .creatures(creatureId)
+            .isPlayer && !gameState.creatures(creatureId).state.passedGateRecently
+        ) {
+          val (fromAreaId: AreaId, toAreaId: AreaId, posX: Float, posY: Float) =
+            getCreature.state.areaId match {
+              case areaId if areaId == areaGateBody.area1Id =>
+                (areaGateBody.area1Id, areaGateBody.area2Id, areaGateBody.x2, areaGateBody.y2)
+              case areaId if areaId == areaGateBody.area2Id =>
+                (areaGateBody.area2Id, areaGateBody.area1Id, areaGateBody.x1, areaGateBody.y1)
+              case _ => new RuntimeException("incorrect area for collision")
+            }
+          State[GameState, List[ExternalEvent]] { implicit gameState =>
+            (gameState, List(AreaChangeEvent(creatureId, fromAreaId, toAreaId, posX, posY)))
+          }
+          Monoid[GameStateTransition].empty
+        } else Monoid[GameStateTransition].empty
+      case AreaGateCollisionEndEvent(creatureId) =>
+        implicit val cId: CreatureId = creatureId
+        if (gameState.creatures.contains(creatureId) && gameState.creatures(creatureId).isPlayer) {
+          State[GameState, List[ExternalEvent]](
+            implicit gameState =>
+              (
+                modifyCreature {
+                  _.modify(_.state.passedGateRecently).setTo(false)
+                },
+                List()
+              )
+          )
+
+        } else Monoid[GameStateTransition].empty
       case _ => Monoid[GameStateTransition].empty
     }
 
@@ -208,6 +244,20 @@ object PlayScreen extends Screen {
         Assets.sound(soundId).play(0.1f, pitch, 1.0f)
       case PlaySoundWithRandomPitchEvent(soundId) =>
         Assets.sound(soundId).play(0.1f, Random.between(0.8f, 1.2f), 1f)
+      case AreaChangeEvent(creatureId, oldAreaId, newAreaId, posX, posY) =>
+        getArea(newAreaId, gameState).reset() |+|
+
+        State[GameState, List[ExternalEvent]] (implicit gameState => (        gameState
+          .assignCreatureToArea(creatureId, Some(oldAreaId), newAreaId)
+          .modifyGameStateCreature(creatureId) {
+            _.setPosition(posX, posY)
+              .modify(_.params.passedGateRecently)
+              .setTo(true)
+          }
+          .modify(_.currentAreaId)
+          .setToIf(creatureId == gameState.player.params.id)(newAreaId) // change game area, List()))
+
+
     }
 
   def update(delta: Float): Unit = {

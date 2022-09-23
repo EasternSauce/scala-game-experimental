@@ -8,6 +8,7 @@ import com.easternsauce.game._
 import com.easternsauce.game.physics.PhysicsEngineController
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.{Ability, Projectile}
+import com.easternsauce.model.area.Area
 import com.easternsauce.model.creature.Creature
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId, ProjectileId}
 import com.softwaremill.quicklens._
@@ -16,6 +17,7 @@ case class GameState(
   creatures: Map[CreatureId, Creature] = Map(),
   abilities: Map[AbilityId, Ability] = Map(),
   projectiles: Map[ProjectileId, Projectile] = Map(),
+  areas: Map[AreaId, Area] = Map(),
   currentPlayerId: CreatureId,
   currentAreaId: AreaId,
   currentAreaInitialized: Boolean = false
@@ -57,6 +59,12 @@ object GameState {
 
   def getProjectile(implicit projectileId: ProjectileId, gameState: GameState): Projectile =
     gameState.projectiles(projectileId)
+
+  def modifyArea(action: Area => Area)(implicit areaId: AreaId, gameState: GameState): GameState =
+    modify(gameState)(_.areas.at(areaId)).using(action)
+
+  def getArea(implicit areaId: AreaId, gameState: GameState): Area =
+    gameState.areas(areaId)
 
   def player(implicit gameState: GameState): Creature =
     gameState.creatures(gameState.currentPlayerId)

@@ -33,5 +33,6 @@ case class CreatureState(
   staminaDrainTimer: SimpleTimer = SimpleTimer(),
   staminaRegenerationTimer: SimpleTimer = SimpleTimer(isRunning = true),
   knockbackDir: Vec2 = Vec2(0, 0),
-  knockbackVelocity: Float = 0f
+  knockbackVelocity: Float = 0f,
+  passedGateRecently: Boolean = false
 )

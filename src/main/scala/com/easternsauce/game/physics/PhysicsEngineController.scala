@@ -78,6 +78,9 @@ case object PhysicsEngineController {
                 physicsEventQueue.prepend(
                   AbilityCollisionEvent(abilityBody.creatureId, abilityBody.abilityId, creatureBody.creatureId)
                 )
+            case (creatureBody: CreatureBody, areaGateBody: AreaGateBody) =>
+              physicsEventQueue.prepend(AreaGateCollisionStartEvent(creatureBody.creatureId, areaGateBody))
+
             //            case (entityBody: EntityBody, areaGateBody: AreaGateBody) =>
 //              physicsEventQueue.prepend(AreaGateCollisionStartEvent(entityBody.creatureId, areaGateBody))
 //            case (entityBody: EntityBody, lootPileBody: LootPileBody) =>
@@ -97,6 +100,8 @@ case object PhysicsEngineController {
 
         def onContactEnd(pair: (AnyRef, AnyRef)): Unit =
           pair match { // will run onContact twice for same type objects!
+            case (entityBody: CreatureBody, _: AreaGateBody) =>
+              physicsEventQueue.prepend(AreaGateCollisionEndEvent(entityBody.creatureId))
 //            case (entityBody: EntityBody, _: AreaGateBody) =>
 //              physicsEventQueue.prepend(AreaGateCollisionEndEvent(entityBody.creatureId))
 //            case (entityBody: EntityBody, lootPileBody: LootPileBody) =>

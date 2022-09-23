@@ -13,3 +13,4 @@ case class AbilityBodyDestroyEvent(abilityId: AbilityId) extends ExternalEvent
 case class CreatureBodySetSensorEvent(creatureId: CreatureId) extends ExternalEvent
 case class PlaySoundEvent(soundId: String, pitch: Float) extends ExternalEvent
 case class PlaySoundWithRandomPitchEvent(soundId: String) extends ExternalEvent
+case class AreaChangeEvent(creatureId: CreatureId, fromAreaId: AreaId, toAreaId: AreaId, posX: Float, posY: Float) extends ExternalEvent
