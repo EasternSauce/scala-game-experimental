@@ -16,6 +16,7 @@ import com.easternsauce.game.renderer.RendererController
 import com.easternsauce.model.GameState._
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model._
+import com.easternsauce.model.area.Area
 import com.easternsauce.model.creature.{Player, Skeleton}
 import com.easternsauce.model.ids.{AreaId, CreatureId}
 import com.softwaremill.quicklens.ModifyPimp
@@ -83,9 +84,11 @@ object PlayScreen extends Screen {
   }
 
   def setWorldDrawingLayer(worldDrawingLayer: DrawingLayer): Unit = this.worldDrawingLayer = worldDrawingLayer
+
   def setHudDrawingLayer(hudDrawingLayer: DrawingLayer): Unit = this.hudDrawingLayer = hudDrawingLayer
 
   def setMaps(maps: Map[AreaId, TiledMap]): Unit = this.maps = maps
+
   def setAreaGates(areaGates: List[AreaGateBody]): Unit = this.areaGates = areaGates
 
   def updateCamera(): Unit = {
@@ -178,7 +181,7 @@ object PlayScreen extends Screen {
             val attackedCreature = getCreature(collidedCreatureId, gameState)
             val attackingCreature = getCreature(creatureId, gameState)
             val damage =
-              /*if (ability.isWeaponAttack) creatures(creatureId).weaponDamage else abilityComponent.damage*/ 20f // TODO
+            /*if (ability.isWeaponAttack) creatures(creatureId).weaponDamage else abilityComponent.damage*/ 20f // TODO
             attackedCreature.takeLifeDamage(
               damage,
               attackingCreature.state.pos.x,
@@ -193,13 +196,13 @@ object PlayScreen extends Screen {
 
       case AreaGateCollisionStartEvent(creatureId, areaGateBody: AreaGateBody) =>
         implicit val cId: CreatureId = creatureId
-
+        println("zzzsadad")
         if (
           gameState.creatures.contains(creatureId) && gameState
             .creatures(creatureId)
             .isPlayer && !gameState.creatures(creatureId).state.passedGateRecently
         ) {
-          val (fromAreaId: AreaId, toAreaId: AreaId, posX: Float, posY: Float) =
+          val (fromAreaId: AreaId, toAreaId: AreaId, posX: Float, posY: Float) = {
             getCreature.state.areaId match {
               case areaId if areaId == areaGateBody.area1Id =>
                 (areaGateBody.area1Id, areaGateBody.area2Id, areaGateBody.x2, areaGateBody.y2)
@@ -207,10 +210,11 @@ object PlayScreen extends Screen {
                 (areaGateBody.area2Id, areaGateBody.area1Id, areaGateBody.x1, areaGateBody.y1)
               case _ => new RuntimeException("incorrect area for collision")
             }
+          }
+          println("event added")
           State[GameState, List[ExternalEvent]] { implicit gameState =>
             (gameState, List(AreaChangeEvent(creatureId, fromAreaId, toAreaId, posX, posY)))
           }
-          Monoid[GameStateTransition].empty
         } else Monoid[GameStateTransition].empty
       case AreaGateCollisionEndEvent(creatureId) =>
         implicit val cId: CreatureId = creatureId
@@ -245,19 +249,20 @@ object PlayScreen extends Screen {
       case PlaySoundWithRandomPitchEvent(soundId) =>
         Assets.sound(soundId).play(0.1f, Random.between(0.8f, 1.2f), 1f)
       case AreaChangeEvent(creatureId, oldAreaId, newAreaId, posX, posY) =>
+        implicit val cId: CreatureId = creatureId
+println("event")
         getArea(newAreaId, gameState).reset() |+|
-
-        State[GameState, List[ExternalEvent]] (implicit gameState => (        gameState
-          .assignCreatureToArea(creatureId, Some(oldAreaId), newAreaId)
-          .modifyGameStateCreature(creatureId) {
-            _.setPosition(posX, posY)
-              .modify(_.params.passedGateRecently)
-              .setTo(true)
+          getCreature.changeArea(Some(oldAreaId), newAreaId) |+|
+          getCreature.setPosition(posX, posY) |+|
+          State[GameState, List[ExternalEvent]] { implicit gameState: GameState =>
+            (modifyCreature {
+              _.modify(_.state.passedGateRecently)
+                .setTo(true)
+            }
+              .modify(_.currentAreaId)
+              .setToIf(creatureId == gameState.currentPlayerId)(newAreaId) // change game area
+              , List())
           }
-          .modify(_.currentAreaId)
-          .setToIf(creatureId == gameState.player.params.id)(newAreaId) // change game area, List()))
-
-
     }
 
   def update(delta: Float): Unit = {
@@ -326,14 +331,14 @@ object PlayScreen extends Screen {
       Monoid[GameStateTransition].empty
 
   private def processCreaturePathfinding()(implicit
-    creatureId: CreatureId,
-    gameState: GameState
+                                           creatureId: CreatureId,
+                                           gameState: GameState
   ): GameStateTransition = {
     if (
       getCreature.state.areaId == gameState.currentAreaId &&
-      getCreature.isEnemy &&
-      getCreature.state.targetCreatureId.nonEmpty &&
-      (getCreature.state.forcePathCalculation || getCreature.state.pathCalculationCooldownTimer.time > 1f)
+        getCreature.isEnemy &&
+        getCreature.state.targetCreatureId.nonEmpty &&
+        (getCreature.state.forcePathCalculation || getCreature.state.pathCalculationCooldownTimer.time > 1f)
     ) {
       val target = gameState.creatures(getCreature.state.targetCreatureId.get)
       val terrain = PhysicsEngineController.physicsWorlds(getCreature.state.areaId)

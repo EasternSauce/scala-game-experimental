@@ -4,10 +4,10 @@ import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.easternsauce.game.{CreatureBodySetSensorEvent, ExternalEvent, PlaySoundWithRandomPitchEvent}
-import com.easternsauce.model.GameState.{GameStateTransition, gameStateMonoid, getAbilitiesOfCreature, getAbility, getCreature, modifyCreature}
+import com.easternsauce.model.GameState.{GameStateTransition, gameStateMonoid, getAbilitiesOfCreature, getAbility, getArea, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
-import com.easternsauce.model.ids.{AbilityId, CreatureId}
+import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2, WorldDirection}
 import com.softwaremill.quicklens._
 
@@ -57,10 +57,10 @@ trait Creature {
 
   def facingDirection: WorldDirection =
     state.movingDir.angleDeg() match {
-      case angle if angle >= 45 && angle < 135  => WorldDirection.Up
+      case angle if angle >= 45 && angle < 135 => WorldDirection.Up
       case angle if angle >= 135 && angle < 225 => WorldDirection.Left
       case angle if angle >= 225 && angle < 315 => WorldDirection.Down
-      case _                                    => WorldDirection.Right
+      case _ => WorldDirection.Right
     }
 
   def moveInDir(dir: Vec2)(implicit gameState: GameState): GameStateTransition =
@@ -99,7 +99,7 @@ trait Creature {
     updateTimers(delta) |+|
       updateStamina(delta) |+|
       (if (isControlledAutomatically) updateAutomaticControls()
-       else Monoid[GameStateTransition].empty) |+|
+      else Monoid[GameStateTransition].empty) |+|
       state.events.foldMap { case CreatureDeathEvent() => onDeath() } |+|
       State(implicit gameState => (modifyCreature(_.modify(_.state.events).setTo(List())), List())) |+|
       State(
@@ -160,7 +160,7 @@ trait Creature {
   }
 
   def takeLifeDamage(damage: Float, sourcePosX: Float, sourcePosY: Float, knockbackVelocity: Float)(implicit
-    gameState: GameState
+                                                                                                    gameState: GameState
   ): GameStateTransition = {
     val beforeLife = getCreature.state.life
 
@@ -288,6 +288,46 @@ trait Creature {
       )
     }
 
+  def changeArea(oldAreaId: Option[AreaId], newAreaId: AreaId): GameStateTransition = {
+    println("change area")
+    State[GameState, List[ExternalEvent]] {
+      implicit gameState =>
+        (
+
+          if (oldAreaId.nonEmpty) {
+            modifyCreature {
+              _.modify(_.state.areaId).setTo(newAreaId)
+            } // set creature area id to new area id
+              .modify(_.areas.at(oldAreaId.get).state.creatures)
+              .using(_.filter(_ != state.id)) // remove creature id from old area
+              .modify(_.areas.at(newAreaId).state.creatures)
+              .using(state.id :: _) // add creature id to new area
+          } else {
+            modifyCreature {
+              _.modify(_.state.areaId).setTo(newAreaId)
+            } // set creature area id to new area id
+              .modify(_.areas.at(newAreaId).state.creatures)
+              .using(state.id :: _) // add creature id to new area
+          }
+          , List())
+    }
+
+
+  }
+
+  def setPosition(newPosX: Float, newPosY: Float): GameStateTransition = {
+    State[GameState, List[ExternalEvent]] {
+      implicit gameState =>
+        (modifyCreature {
+          _.modify(_.state.pos.x)
+            .setTo(newPosX)
+            .modify(_.state.pos.y)
+            .setTo(newPosY)
+        }, List())
+    }
+
+  }
+
   def capability: Int =
     if (width >= 0 && width < 2) 1
     else if (width >= 2 && width <= 4) 2
@@ -298,8 +338,8 @@ trait Creature {
 }
 
 case class AbilityUsage(
-  weight: Float,
-  minimumDistance: Float = 0f,
-  maximumDistance: Float = Float.MaxValue,
-  lifeThreshold: Float = 1.0f
-)
+                         weight: Float,
+                         minimumDistance: Float = 0f,
+                         maximumDistance: Float = Float.MaxValue,
+                         lifeThreshold: Float = 1.0f
+                       )
