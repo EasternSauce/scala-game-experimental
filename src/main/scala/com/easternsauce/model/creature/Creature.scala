@@ -288,8 +288,10 @@ trait Creature {
       )
     }
 
-  def changeArea(oldAreaId: Option[AreaId], newAreaId: AreaId): GameStateTransition = {
-    println("change area")
+  def changeArea(oldAreaId: Option[AreaId], newAreaId: AreaId)(implicit gameState: GameState): GameStateTransition = {
+    println("change area, current = " + gameState.currentAreaId)
+    println("trying to change area to " + newAreaId)
+
     State[GameState, List[ExternalEvent]] {
       implicit gameState =>
         (

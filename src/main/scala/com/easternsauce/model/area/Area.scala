@@ -1,5 +1,6 @@
 package com.easternsauce.model.area
 
+import cats.Monoid
 import cats.data.State
 import com.easternsauce.game.ExternalEvent
 import com.easternsauce.model.GameState
@@ -11,6 +12,6 @@ case class Area(state: AreaState) {
 
 
 
-  def reset(): GameStateTransition = ???
+  def reset(): GameStateTransition = Monoid[GameStateTransition].empty // TODO: area reset
 
 }

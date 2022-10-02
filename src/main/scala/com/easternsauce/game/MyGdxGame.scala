@@ -27,6 +27,8 @@ object MyGdxGame extends Game {
 
   var maps: Map[AreaId, TiledMap] = _
 
+  val mapScale: Float = 4.0f
+
   var mapLoader: TmxMapLoader = _
 
   override def create(): Unit = {
@@ -47,7 +49,7 @@ object MyGdxGame extends Game {
     PlayScreen.setHudDrawingLayer(hudDrawingLayer)
     PlayScreen.setMaps(maps)
     PlayScreen.setAreaGates(areaGates)
-    PlayScreen.init(atlas)
+    PlayScreen.init(atlas, mapsToLoad, mapScale)
 
     areaGates.foreach(_.init(PhysicsEngineController.physicsWorlds))
 

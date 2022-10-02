@@ -15,7 +15,7 @@ import com.easternsauce.game.physics._
 import com.easternsauce.game.renderer.RendererController
 import com.easternsauce.model.GameState._
 import com.easternsauce.model.WorldDirection.WorldDirection
-import com.easternsauce.model._
+import com.easternsauce.model.{GameState, _}
 import com.easternsauce.model.area.Area
 import com.easternsauce.model.creature.{Player, Skeleton}
 import com.easternsauce.model.ids.{AreaId, CreatureId}
@@ -40,19 +40,21 @@ object PlayScreen extends Screen {
 
   var gameState: AtomicSTRef[GameState] = _
 
-  var tiledMapRenderer: OrthogonalTiledMapRenderer = _
-
   val debugEnabled = true
 
   val b2DebugRenderer: Box2DDebugRenderer = new Box2DDebugRenderer()
 
-  def init(atlas: TextureAtlas): Unit = {
+  var mapScale: Float = _
+
+  def init(atlas: TextureAtlas, mapsToLoad: Map[AreaId, String], mapScale: Float): Unit = {
     worldCamera = new OrthographicCamera()
     hudCamera = {
       val cam = new OrthographicCamera()
       cam.position.set(Constants.WindowWidth / 2f, Constants.WindowHeight / 2f, 0)
       cam
     }
+
+    this.mapScale = mapScale
 
     worldViewport = new FitViewport(
       Constants.ViewpointWorldWidth / Constants.PPM,
@@ -73,13 +75,13 @@ object PlayScreen extends Screen {
       )
     )
 
-    tiledMapRenderer =
-      new OrthogonalTiledMapRenderer(maps(gameState.aref.get().currentAreaId), Constants.MapScale / Constants.PPM)
+    implicit val (_, events) = gameState.commit(GameState.init(mapsToLoad.keys.toList)(gameState.aref.get()))
 
-    implicit val gs: GameState = gameState.aref.get()
+    RendererController.init(atlas, maps, areaGates, mapScale)(gameState.aref.get())
+    PhysicsEngineController.init(maps)(gameState.aref.get())
 
-    RendererController.init(atlas, maps, areaGates)
-    PhysicsEngineController.init(maps)
+    processExternalEvents(events)(gameState.aref.get()) // process all queued events after init and before game loop starts
+
 
   }
 
@@ -125,7 +127,9 @@ object PlayScreen extends Screen {
       if (Gdx.graphics.getBufferFormat.coverageSampling) GL20.GL_COVERAGE_BUFFER_BIT_NV else 0
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT | coverageBuffer)
 
-    tiledMapRenderer.render(Array(0, 1))
+    val currentArea = RendererController.areaRenderers(gs.currentAreaId)
+
+    currentArea.render(Array(0, 1))
 
     worldDrawingLayer.begin()
 
@@ -146,7 +150,7 @@ object PlayScreen extends Screen {
 
     hudDrawingLayer.end()
 
-    tiledMapRenderer.render(Array(2, 3))
+    currentArea.render(Array(2, 3))
 
     worldDrawingLayer.begin()
 
@@ -211,10 +215,19 @@ object PlayScreen extends Screen {
               case _ => new RuntimeException("incorrect area for collision")
             }
           }
-          println("event added")
-          State[GameState, List[ExternalEvent]] { implicit gameState =>
-            (gameState, List(AreaChangeEvent(creatureId, fromAreaId, toAreaId, posX, posY)))
-          }
+          getArea(toAreaId, gameState).reset() |+|
+            getCreature.changeArea(Some(fromAreaId), toAreaId) |+|
+            getCreature.setPosition(posX, posY) |+|
+            State[GameState, List[ExternalEvent]] { implicit gameState: GameState =>
+              (modifyCreature {
+                _.modify(_.state.passedGateRecently)
+                  .setTo(true)
+              }
+                .modify(_.currentAreaId)
+                .setToIf(creatureId == gameState.currentPlayerId)(toAreaId) // change game area
+                , List())
+            }
+
         } else Monoid[GameStateTransition].empty
       case AreaGateCollisionEndEvent(creatureId) =>
         implicit val cId: CreatureId = creatureId
@@ -266,9 +279,6 @@ println("event")
     }
 
   def update(delta: Float): Unit = {
-    tiledMapRenderer.setView(worldCamera)
-    updateCamera()
-
     // single frame calculation + side effects
     implicit val (gameState, events) = commitUpdatedState(delta)
 
@@ -279,6 +289,7 @@ println("event")
     RendererController.update()
     PhysicsEngineController.update()
 
+    updateCamera()
   }
 
   def commitUpdatedState(delta: Float): (GameState, List[ExternalEvent]) = {
@@ -305,11 +316,11 @@ println("event")
     gameState.commit(singularGameFrame)
   }
 
-  private def updateAreas()(implicit gameState: GameState): GameStateTransition =
-    if (gameState.currentAreaInitialized)
+  private def updateAreas()(implicit gameState: GameState): GameStateTransition = // TODO: does nothing
+//    if (gameState.currentAreaInitialized)
       Monoid[GameStateTransition].empty
-    else
-      initializeArea(gameState.currentAreaId)
+//    else
+//      initializeCreaturesInArea(gameState.currentAreaId)
 
   private def updateAbilities(delta: Float)(implicit gameState: GameState): GameStateTransition =
     if (gameState.currentAreaInitialized)

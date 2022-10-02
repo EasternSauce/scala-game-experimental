@@ -5,22 +5,29 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.math.Rectangle
 import com.easternsauce.game.DrawingLayer
+import com.easternsauce.game.PlayScreen.worldCamera
 import com.easternsauce.game.physics.AreaGateBody
 import com.easternsauce.model.GameState.getCreature
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
 
 object RendererController {
+  var areaRenderers: Map[AreaId, AreaRenderer] = _
+
   var creatureSpriteRenderers: Map[CreatureId, CreatureRenderer] = _
   var abilitySpriteRenderers: Map[AbilityId, AbilityRenderer] = _
   var areaGateRenderers: List[AreaGateRenderer] = _
 
   var atlas: TextureAtlas = _
 
-  def init(atlas: TextureAtlas, maps: Map[AreaId, TiledMap], areaGates: List[AreaGateBody])(implicit
+  def init(atlas: TextureAtlas, maps: Map[AreaId, TiledMap], areaGates: List[AreaGateBody], mapScale: Float)(implicit
     gameState: GameState
   ): Unit = {
     this.atlas = atlas
+
+    areaRenderers = maps.map { case (areaId, map) => areaId -> AreaRenderer(areaId, map, mapScale) }
+
+    areaRenderers.values.foreach(_.init())
 
     creatureSpriteRenderers =
       gameState.creatures.keys.map(creatureId => creatureId -> CreatureRenderer(creatureId)).toMap
@@ -39,6 +46,9 @@ object RendererController {
     abilitySpriteRenderers.foreach {
       case (_, renderer) => renderer.update()
     }
+
+    areaRenderers(gameState.currentAreaId).setView(worldCamera)
+
   }
 
   def addRenderer(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
