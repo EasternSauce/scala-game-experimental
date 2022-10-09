@@ -4,7 +4,7 @@ import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.easternsauce.game.{CreatureBodySetSensorEvent, ExternalEvent, PlaySoundWithRandomPitchEvent}
-import com.easternsauce.model.GameState.{GameStateTransition, gameStateMonoid, getAbilitiesOfCreature, getAbility, getArea, getCreature, modifyCreature}
+import com.easternsauce.model.GameState.{GameStateTransition, gameStateMonoid, getAbilitiesOfCreature, getAbility, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
@@ -57,10 +57,10 @@ trait Creature {
 
   def facingDirection: WorldDirection =
     state.movingDir.angleDeg() match {
-      case angle if angle >= 45 && angle < 135 => WorldDirection.Up
+      case angle if angle >= 45 && angle < 135  => WorldDirection.Up
       case angle if angle >= 135 && angle < 225 => WorldDirection.Left
       case angle if angle >= 225 && angle < 315 => WorldDirection.Down
-      case _ => WorldDirection.Right
+      case _                                    => WorldDirection.Right
     }
 
   def moveInDir(dir: Vec2)(implicit gameState: GameState): GameStateTransition =
@@ -99,7 +99,7 @@ trait Creature {
     updateTimers(delta) |+|
       updateStamina(delta) |+|
       (if (isControlledAutomatically) updateAutomaticControls()
-      else Monoid[GameStateTransition].empty) |+|
+       else Monoid[GameStateTransition].empty) |+|
       state.events.foldMap { case CreatureDeathEvent() => onDeath() } |+|
       State(implicit gameState => (modifyCreature(_.modify(_.state.events).setTo(List())), List())) |+|
       State(
@@ -160,7 +160,7 @@ trait Creature {
   }
 
   def takeLifeDamage(damage: Float, sourcePosX: Float, sourcePosY: Float, knockbackVelocity: Float)(implicit
-                                                                                                    gameState: GameState
+    gameState: GameState
   ): GameStateTransition = {
     val beforeLife = getCreature.state.life
 
@@ -292,10 +292,9 @@ trait Creature {
     println("change area, current = " + gameState.currentAreaId)
     println("trying to change area to " + newAreaId)
 
-    State[GameState, List[ExternalEvent]] {
-      implicit gameState =>
+    getAbilitiesOfCreature.values.toList.foldMap(_.forceStop()) |+|
+      State[GameState, List[ExternalEvent]] { implicit gameState =>
         (
-
           if (oldAreaId.nonEmpty) {
             modifyCreature {
               _.modify(_.state.areaId).setTo(newAreaId)
@@ -310,22 +309,25 @@ trait Creature {
             } // set creature area id to new area id
               .modify(_.areas.at(newAreaId).state.creatures)
               .using(state.id :: _) // add creature id to new area
-          }
-          , List())
-    }
-
+          },
+          List()
+        )
+      }
 
   }
 
   def setPosition(newPosX: Float, newPosY: Float): GameStateTransition = {
-    State[GameState, List[ExternalEvent]] {
-      implicit gameState =>
-        (modifyCreature {
+    println("setting pos to " + newPosX + " " + newPosY)
+    State[GameState, List[ExternalEvent]] { implicit gameState =>
+      (
+        modifyCreature {
           _.modify(_.state.pos.x)
             .setTo(newPosX)
             .modify(_.state.pos.y)
             .setTo(newPosY)
-        }, List())
+        },
+        List()
+      )
     }
 
   }
@@ -340,8 +342,8 @@ trait Creature {
 }
 
 case class AbilityUsage(
-                         weight: Float,
-                         minimumDistance: Float = 0f,
-                         maximumDistance: Float = Float.MaxValue,
-                         lifeThreshold: Float = 1.0f
-                       )
+  weight: Float,
+  minimumDistance: Float = 0f,
+  maximumDistance: Float = Float.MaxValue,
+  lifeThreshold: Float = 1.0f
+)

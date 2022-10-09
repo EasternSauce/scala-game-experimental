@@ -225,6 +225,7 @@ trait Ability {
     }
 
   def forceStop(): GameStateTransition = {
+    println("force stoppingd")
     if (state.stage != AbilityStage.InactiveStage)
       State { implicit gameState =>
         (

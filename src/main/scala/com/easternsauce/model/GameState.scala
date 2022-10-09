@@ -14,14 +14,14 @@ import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId, ProjectileId}
 import com.softwaremill.quicklens._
 
 case class GameState(
-                      creatures: Map[CreatureId, Creature] = Map(),
-                      abilities: Map[AbilityId, Ability] = Map(),
-                      projectiles: Map[ProjectileId, Projectile] = Map(),
-                      areas: Map[AreaId, Area] = Map(),
-                      currentPlayerId: CreatureId,
-                      currentAreaId: AreaId,
-                      currentAreaInitialized: Boolean = false
-                    )
+  creatures: Map[CreatureId, Creature] = Map(),
+  abilities: Map[AbilityId, Ability] = Map(),
+  projectiles: Map[ProjectileId, Projectile] = Map(),
+  areas: Map[AreaId, Area] = Map(),
+  currentPlayerId: CreatureId,
+  currentAreaId: AreaId,
+  currentAreaInitialized: Boolean = false
+)
 
 object GameState {
   type GameStateTransition = State[GameState, List[ExternalEvent]]
@@ -54,8 +54,8 @@ object GameState {
     gameState.abilities.filter { case (_, ability) => ability.creatureId == creatureId }
 
   def modifyProjectile(
-                        action: Projectile => Projectile
-                      )(implicit projectileId: ProjectileId, gameState: GameState): GameState =
+    action: Projectile => Projectile
+  )(implicit projectileId: ProjectileId, gameState: GameState): GameState =
     modify(gameState)(_.projectiles.at(projectileId)).using(action)
 
   def getProjectile(implicit projectileId: ProjectileId, gameState: GameState): Projectile =
@@ -71,18 +71,18 @@ object GameState {
     gameState.creatures(gameState.currentPlayerId)
 
   def handlePlayerMovementInput(
-                                 input: Map[WorldDirection, Boolean]
-                               )(implicit gameState: GameState): GameStateTransition =
+    input: Map[WorldDirection, Boolean]
+  )(implicit gameState: GameState): GameStateTransition =
     if (gameState.currentAreaInitialized) {
       val movingDirX = (input(WorldDirection.Left), input(WorldDirection.Right)) match {
         case (true, false) => -1
         case (false, true) => 1
-        case _ => 0
+        case _             => 0
       }
       val movingDirY = (input(WorldDirection.Down), input(WorldDirection.Up)) match {
         case (true, false) => -1
         case (false, true) => 1
-        case _ => 0
+        case _             => 0
       }
 
       val movingDir = Vec2(movingDirX.toFloat, movingDirY.toFloat)
@@ -107,8 +107,8 @@ object GameState {
 
       runMovingLogic(wasMoving, isMoving, movingDir) |+|
         (if (mouseClicked)
-          getAbility.perform(mouseDirVector)
-        else Monoid[GameStateTransition].empty)
+           getAbility.perform(mouseDirVector)
+         else Monoid[GameStateTransition].empty)
     } else
       Monoid[GameStateTransition].empty
 
@@ -123,7 +123,7 @@ object GameState {
   }
 
   def runMovingLogic(wasMoving: Boolean, isMoving: Boolean, movingDir: Vec2)(implicit
-                                                                             gameState: GameState
+    gameState: GameState
   ): GameStateTransition = {
     implicit val playerId: CreatureId = gameState.currentPlayerId
 
@@ -135,13 +135,15 @@ object GameState {
       case _ =>
         Monoid[GameStateTransition].empty
     }) |+| (if (isMoving) getCreature.moveInDir(movingDir)
-    else Monoid[GameStateTransition].empty)
+            else Monoid[GameStateTransition].empty)
   }
 
   def init(areaIds: List[AreaId])(implicit gameState: GameState): GameStateTransition = {
     println("initing")
 
-    State[GameState, List[ExternalEvent]] { implicit gameState => (gameState.modify(_.areas).setTo(areaIds.map(areaId => (areaId, Area(AreaState(areaId)))).toMap), List()) } |+|
+    State[GameState, List[ExternalEvent]] { implicit gameState =>
+      (gameState.modify(_.areas).setTo(areaIds.map(areaId => (areaId, Area(AreaState(areaId)))).toMap), List())
+    } |+|
       areaIds.foldMap(areaId => initializeCreaturesInArea(areaId))
   }
 

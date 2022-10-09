@@ -3,7 +3,7 @@ package com.easternsauce.game.physics
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.physics.box2d._
 import com.easternsauce.model.GameState
-import com.easternsauce.model.GameState.getAbility
+import com.easternsauce.model.GameState.{getAbility, getCreature}
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 
 import scala.collection.mutable.ListBuffer
@@ -28,7 +28,11 @@ case object PhysicsEngineController {
     creatureBodies = gameState.creatures.keys.map(creatureId => creatureId -> CreatureBody(creatureId)).toMap
 
     creatureBodies.values.foreach { creatureBody =>
-      creatureBody.init()
+      {
+        val destinationAreaId = getCreature(creatureBody.creatureId, gameState).state.areaId
+        creatureBody.init(destinationAreaId)
+      }
+
     }
 
     abilityBodies = Map()
@@ -58,8 +62,17 @@ case object PhysicsEngineController {
     creatureBodies(creatureId).b2Body.getFixtureList.get(0).setSensor(true)
   }
 
+  def changeCreatureArea(creatureId: CreatureId, fromAreaId: AreaId, toAreaId: AreaId)(implicit
+    gameState: GameState
+  ): Unit = {
+    physicsWorlds(fromAreaId).b2world.destroyBody(creatureBodies(creatureId).b2Body)
+    creatureBodies(creatureId).b2Body = null
+    creatureBodies(creatureId).init(toAreaId)
+  }
+
   def update()(implicit gameState: GameState): Unit = {
-    physicsWorlds(gameState.currentAreaId).step()
+    physicsWorlds.values.foreach(_.step())
+//    physicsWorlds(gameState.currentAreaId).step()
     creatureBodies.values.foreach(_.update())
     abilityBodies.values.foreach(_.update())
   }
@@ -95,24 +108,27 @@ case object PhysicsEngineController {
       }
 
       override def endContact(contact: Contact): Unit = {
-        val objA = contact.getFixtureA.getBody.getUserData
-        val objB = contact.getFixtureB.getBody.getUserData
+        if (contact.getFixtureA != null && contact.getFixtureB != null) {
+          val objA = contact.getFixtureA.getBody.getUserData
+          val objB = contact.getFixtureB.getBody.getUserData
 
-        def onContactEnd(pair: (AnyRef, AnyRef)): Unit =
-          pair match { // will run onContact twice for same type objects!
-            case (entityBody: CreatureBody, _: AreaGateBody) =>
-              physicsEventQueue.prepend(AreaGateCollisionEndEvent(entityBody.creatureId))
-//            case (entityBody: EntityBody, _: AreaGateBody) =>
-//              physicsEventQueue.prepend(AreaGateCollisionEndEvent(entityBody.creatureId))
-//            case (entityBody: EntityBody, lootPileBody: LootPileBody) =>
-//              physicsEventQueue.prepend(
-//                LootPileCollisionEndEvent(entityBody.creatureId, lootPileBody.areaId, lootPileBody.lootPileId)
-//              )
-            case _ =>
-          }
+          def onContactEnd(pair: (AnyRef, AnyRef)): Unit =
+            pair match { // will run onContact twice for same type objects!
+              case (entityBody: CreatureBody, _: AreaGateBody) =>
+                physicsEventQueue.prepend(AreaGateCollisionEndEvent(entityBody.creatureId))
+              //            case (entityBody: EntityBody, _: AreaGateBody) =>
+              //              physicsEventQueue.prepend(AreaGateCollisionEndEvent(entityBody.creatureId))
+              //            case (entityBody: EntityBody, lootPileBody: LootPileBody) =>
+              //              physicsEventQueue.prepend(
+              //                LootPileCollisionEndEvent(entityBody.creatureId, lootPileBody.areaId, lootPileBody.lootPileId)
+              //              )
+              case _ =>
+            }
 
-        onContactEnd(objA, objB)
-        onContactEnd(objB, objA)
+          onContactEnd(objA, objB)
+          onContactEnd(objB, objA)
+        }
+
       }
       override def preSolve(contact: Contact, oldManifold: Manifold): Unit = {}
 

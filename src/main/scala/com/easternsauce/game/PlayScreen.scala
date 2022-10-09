@@ -6,7 +6,6 @@ import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.graphics.{Color, GL20, OrthographicCamera}
 import com.badlogic.gdx.maps.tiled.TiledMap
-import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
 import com.badlogic.gdx.utils.viewport.{FitViewport, Viewport}
@@ -15,8 +14,7 @@ import com.easternsauce.game.physics._
 import com.easternsauce.game.renderer.RendererController
 import com.easternsauce.model.GameState._
 import com.easternsauce.model.WorldDirection.WorldDirection
-import com.easternsauce.model.{GameState, _}
-import com.easternsauce.model.area.Area
+import com.easternsauce.model._
 import com.easternsauce.model.creature.{Player, Skeleton}
 import com.easternsauce.model.ids.{AreaId, CreatureId}
 import com.softwaremill.quicklens.ModifyPimp
@@ -80,8 +78,9 @@ object PlayScreen extends Screen {
     RendererController.init(atlas, maps, areaGates, mapScale)(gameState.aref.get())
     PhysicsEngineController.init(maps)(gameState.aref.get())
 
-    processExternalEvents(events)(gameState.aref.get()) // process all queued events after init and before game loop starts
-
+    processExternalEvents(events)(
+      gameState.aref.get()
+    ) // process all queued events after init and before game loop starts
 
   }
 
@@ -185,7 +184,7 @@ object PlayScreen extends Screen {
             val attackedCreature = getCreature(collidedCreatureId, gameState)
             val attackingCreature = getCreature(creatureId, gameState)
             val damage =
-            /*if (ability.isWeaponAttack) creatures(creatureId).weaponDamage else abilityComponent.damage*/ 20f // TODO
+              /*if (ability.isWeaponAttack) creatures(creatureId).weaponDamage else abilityComponent.damage*/ 20f // TODO
             attackedCreature.takeLifeDamage(
               damage,
               attackingCreature.state.pos.x,
@@ -219,13 +218,15 @@ object PlayScreen extends Screen {
             getCreature.changeArea(Some(fromAreaId), toAreaId) |+|
             getCreature.setPosition(posX, posY) |+|
             State[GameState, List[ExternalEvent]] { implicit gameState: GameState =>
-              (modifyCreature {
-                _.modify(_.state.passedGateRecently)
-                  .setTo(true)
-              }
-                .modify(_.currentAreaId)
-                .setToIf(creatureId == gameState.currentPlayerId)(toAreaId) // change game area
-                , List())
+              (
+                modifyCreature(
+                  _.modify(_.state.passedGateRecently)
+                    .setTo(true)
+                ).modify(_.currentAreaId)
+                  .setToIf(creatureId == gameState.currentPlayerId)(toAreaId) // change game area
+                ,
+                List(AreaChangeEvent(creatureId, fromAreaId, toAreaId, posX, posY))
+              )
             }
 
         } else Monoid[GameStateTransition].empty
@@ -261,21 +262,8 @@ object PlayScreen extends Screen {
         Assets.sound(soundId).play(0.1f, pitch, 1.0f)
       case PlaySoundWithRandomPitchEvent(soundId) =>
         Assets.sound(soundId).play(0.1f, Random.between(0.8f, 1.2f), 1f)
-      case AreaChangeEvent(creatureId, oldAreaId, newAreaId, posX, posY) =>
-        implicit val cId: CreatureId = creatureId
-println("event")
-        getArea(newAreaId, gameState).reset() |+|
-          getCreature.changeArea(Some(oldAreaId), newAreaId) |+|
-          getCreature.setPosition(posX, posY) |+|
-          State[GameState, List[ExternalEvent]] { implicit gameState: GameState =>
-            (modifyCreature {
-              _.modify(_.state.passedGateRecently)
-                .setTo(true)
-            }
-              .modify(_.currentAreaId)
-              .setToIf(creatureId == gameState.currentPlayerId)(newAreaId) // change game area
-              , List())
-          }
+      case AreaChangeEvent(creatureId, fromAreaId, toAreaId, posX, posY) =>
+        PhysicsEngineController.changeCreatureArea(creatureId, fromAreaId, toAreaId)
     }
 
   def update(delta: Float): Unit = {
@@ -318,7 +306,7 @@ println("event")
 
   private def updateAreas()(implicit gameState: GameState): GameStateTransition = // TODO: does nothing
 //    if (gameState.currentAreaInitialized)
-      Monoid[GameStateTransition].empty
+    Monoid[GameStateTransition].empty
 //    else
 //      initializeCreaturesInArea(gameState.currentAreaId)
 
@@ -342,14 +330,14 @@ println("event")
       Monoid[GameStateTransition].empty
 
   private def processCreaturePathfinding()(implicit
-                                           creatureId: CreatureId,
-                                           gameState: GameState
+    creatureId: CreatureId,
+    gameState: GameState
   ): GameStateTransition = {
     if (
       getCreature.state.areaId == gameState.currentAreaId &&
-        getCreature.isEnemy &&
-        getCreature.state.targetCreatureId.nonEmpty &&
-        (getCreature.state.forcePathCalculation || getCreature.state.pathCalculationCooldownTimer.time > 1f)
+      getCreature.isEnemy &&
+      getCreature.state.targetCreatureId.nonEmpty &&
+      (getCreature.state.forcePathCalculation || getCreature.state.pathCalculationCooldownTimer.time > 1f)
     ) {
       val target = gameState.creatures(getCreature.state.targetCreatureId.get)
       val terrain = PhysicsEngineController.physicsWorlds(getCreature.state.areaId)

@@ -82,6 +82,7 @@ case class AbilityBody(creatureId: CreatureId, abilityId: AbilityId) {
   }
 
   def destroy()(implicit gameState: GameState): Unit = {
+    println("destroying ability")
     PhysicsEngineController.physicsWorlds(gameState.currentAreaId).b2world.destroyBody(b2Body)
     b2Body = null
   }

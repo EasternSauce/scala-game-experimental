@@ -4,14 +4,14 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.physics.box2d.Body
 import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.getCreature
-import com.easternsauce.model.ids.CreatureId
+import com.easternsauce.model.ids.{AreaId, CreatureId}
 
 case class CreatureBody(creatureId: CreatureId) {
   var b2Body: Body = _
 
-  def init()(implicit gameState: GameState): Unit = {
+  def init(destinationAreaId: AreaId)(implicit gameState: GameState): Unit = {
     implicit val _creatureId: CreatureId = creatureId
-    val physicsWorld = PhysicsEngineController.physicsWorlds(getCreature.state.areaId)
+    val physicsWorld = PhysicsEngineController.physicsWorlds(destinationAreaId)
 
     b2Body =
       B2BodyFactory.createCreatureB2body(world = physicsWorld.b2world, creatureBody = this, creature = getCreature)
