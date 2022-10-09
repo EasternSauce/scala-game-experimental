@@ -7,7 +7,7 @@ import com.badlogic.gdx.math.Rectangle
 import com.easternsauce.game.DrawingLayer
 import com.easternsauce.game.PlayScreen.worldCamera
 import com.easternsauce.game.physics.AreaGateBody
-import com.easternsauce.model.GameState.getCreature
+import com.easternsauce.model.GameState.{getAbility, getCreature}
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
 
@@ -52,8 +52,11 @@ object RendererController {
   }
 
   def addRenderer(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
-    abilitySpriteRenderers = abilitySpriteRenderers.updated(abilityId, AbilityRenderer(abilityId))
-    abilitySpriteRenderers(abilityId).init(atlas)
+    if (!abilitySpriteRenderers.contains(abilityId)) {
+
+      abilitySpriteRenderers = abilitySpriteRenderers.updated(abilityId, AbilityRenderer(abilityId))
+      abilitySpriteRenderers(abilityId).init(atlas)
+    }
   }
 
   def renderAliveCreatures(drawingLayer: DrawingLayer, debugEnabled: Boolean)(implicit gameState: GameState): Unit = {
@@ -87,8 +90,11 @@ object RendererController {
 
   def renderAbilities(drawingLayer: DrawingLayer)(implicit gameState: GameState): Unit =
     gameState.abilities.keys.foreach { abilityId =>
-      if (abilitySpriteRenderers.contains(abilityId))
+      implicit val aId: AbilityId = abilityId
+      val areaId = getAbility.state.areaId
+      if (abilitySpriteRenderers.contains(abilityId) && gameState.currentAreaId == areaId) {
         abilitySpriteRenderers(abilityId).render(drawingLayer)
+      }
     }
 
   def renderLifeAndStamina(drawingLayer: DrawingLayer)(implicit gameState: GameState): Unit = {

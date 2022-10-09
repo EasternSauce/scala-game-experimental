@@ -103,7 +103,8 @@ object GameState {
       val mouseDirVector =
         Vec2(mouseX - centerX, (Gdx.graphics.getHeight - mouseY) - centerY).normal
 
-      implicit val abilityId: AbilityId = AbilityId.derive(gameState.currentPlayerId, "triple_slash")
+      implicit val abilityId: AbilityId =
+        AbilityId.derive(gameState.currentPlayerId, gameState.currentAreaId, "triple_slash")
 
       runMovingLogic(wasMoving, isMoving, movingDir) |+|
         (if (mouseClicked)
@@ -139,8 +140,6 @@ object GameState {
   }
 
   def init(areaIds: List[AreaId])(implicit gameState: GameState): GameStateTransition = {
-    println("initing")
-
     State[GameState, List[ExternalEvent]] { implicit gameState =>
       (gameState.modify(_.areas).setTo(areaIds.map(areaId => (areaId, Area(AreaState(areaId)))).toMap), List())
     } |+|
@@ -148,14 +147,15 @@ object GameState {
   }
 
   def initializeCreaturesInArea(areaId: AreaId)(implicit gameState: GameState): GameStateTransition = {
-    println("initing area " + areaId)
     gameState.creatures.keys.toList.foldMap(implicit id => getCreature.init()) |+|
       State { implicit gameState =>
         (
           gameState.modify(_.currentAreaInitialized).setTo(true),
           gameState.creatures.values
             .filter(_.state.areaId == areaId)
-            .flatMap(creature => creature.abilityNames.map(AbilityId.derive(creature.state.id, _)))
+            .flatMap(
+              creature => creature.abilityNames.map(AbilityId.derive(creature.state.id, creature.state.areaId, _))
+            )
             .toList
             .flatMap(abilityId => List(AbilityBodyCreateEvent(abilityId), AbilitySpriteRendererCreateEvent(abilityId)))
         )

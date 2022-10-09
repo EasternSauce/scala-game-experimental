@@ -40,10 +40,12 @@ case object PhysicsEngineController {
   }
 
   def addAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
-    val creatureId = getAbility(abilityId, gameState).creatureId
-    val abilityBody = AbilityBody(creatureId, abilityId)
+    if (!abilityBodies.contains(abilityId)) {
+      val creatureId = getAbility(abilityId, gameState).creatureId
+      val abilityBody = AbilityBody(abilityId)
 
-    abilityBodies = abilityBodies.updated(abilityId, abilityBody)
+      abilityBodies = abilityBodies.updated(abilityId, abilityBody)
+    }
   }
 
   def activateAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
@@ -51,7 +53,7 @@ case object PhysicsEngineController {
     abilityBodies(abilityId).isActive = true
   }
 
-  def removeAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
+  def deactivateAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
     if (abilityBodies(abilityId).isActive) {
       abilityBodies(abilityId).destroy()
       abilityBodies(abilityId).isActive = false
@@ -72,7 +74,7 @@ case object PhysicsEngineController {
 
   def update()(implicit gameState: GameState): Unit = {
     physicsWorlds.values.foreach(_.step())
-//    physicsWorlds(gameState.currentAreaId).step()
+//    physicsWorlds(gameState.currentAreaId).step() TODO: should non-active world be updated or not?
     creatureBodies.values.foreach(_.update())
     abilityBodies.values.foreach(_.update())
   }

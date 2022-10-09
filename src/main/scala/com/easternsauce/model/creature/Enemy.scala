@@ -76,7 +76,7 @@ trait Enemy extends Creature {
           ),
           List()
         )
-      } |+| getAbility(AbilityId.derive(getCreature.id, pickedAbilityName.get), gameState)
+      } |+| getAbility(AbilityId.derive(getCreature.id, getCreature.state.areaId, pickedAbilityName.get), gameState)
         .perform(dirVector)
     else Monoid[GameStateTransition].empty
 
@@ -138,7 +138,9 @@ trait Enemy extends Creature {
           getCreature.state.life / getCreature.state.maxLife <= usage.lifeThreshold &&
             getCreature.state.pos.distance(targetCreature.state.pos) > usage.minimumDistance &&
             getCreature.state.pos.distance(targetCreature.state.pos) < usage.maximumDistance &&
-            !gameState.abilities(AbilityId.derive(getCreature.state.id, abilityName)).onCooldown
+            !gameState
+              .abilities(AbilityId.derive(getCreature.state.id, getCreature.state.areaId, abilityName))
+              .onCooldown
       }
 
       var completeWeight = 0.0f

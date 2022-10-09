@@ -2,7 +2,7 @@ package com.easternsauce.model.ability
 import cats.data.State
 import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.GameStateTransition
-import com.easternsauce.model.ids.{AbilityId, CreatureId}
+import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 
 case class TripleSlashAbility(state: AbilityState) extends Ability {
   val cooldownTime: Float = 0.3f
@@ -51,6 +51,8 @@ case class TripleSlashAbility(state: AbilityState) extends Ability {
 }
 
 object TripleSlashAbility {
-  def apply(id: AbilityId, creatureId: CreatureId): Ability =
-    new TripleSlashAbility(AbilityState(id = id, creatureId = creatureId))
+  def apply(name: String, creatureId: CreatureId, areaId: AreaId): Ability =
+    new TripleSlashAbility(
+      AbilityState(id = AbilityId.derive(creatureId, areaId, name), creatureId = creatureId, areaId = areaId)
+    )
 }

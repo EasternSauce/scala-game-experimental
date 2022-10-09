@@ -65,7 +65,7 @@ object PlayScreen extends Screen {
     gameState = AtomicSTRef(
       GameState(
         creatures = Map(
-          CreatureId("player") -> Player(id = CreatureId("player"), areaId = AreaId("area1"), pos = Vec2(22, 4)),
+          CreatureId("player") -> Player(id = CreatureId("player"), areaId = AreaId("area1"), pos = Vec2(8, 61)),
           CreatureId("skellie") -> Skeleton(id = CreatureId("skellie"), areaId = AreaId("area1"), pos = Vec2(24, 4))
         ),
         currentPlayerId = CreatureId("player"),
@@ -199,7 +199,6 @@ object PlayScreen extends Screen {
 
       case AreaGateCollisionStartEvent(creatureId, areaGateBody: AreaGateBody) =>
         implicit val cId: CreatureId = creatureId
-        println("zzzsadad")
         if (
           gameState.creatures.contains(creatureId) && gameState
             .creatures(creatureId)
@@ -250,8 +249,8 @@ object PlayScreen extends Screen {
   def processExternalEvents(events: List[ExternalEvent])(implicit gameState: GameState): Unit =
     events.foreach {
       case AbilityBodyCreateEvent(abilityId) => PhysicsEngineController.addAbilityBody(abilityId)
-      case AbilityBodyDestroyEvent(abilityId) =>
-        PhysicsEngineController.removeAbilityBody(abilityId)
+      case AbilityBodyDeactivateEvent(abilityId) =>
+        PhysicsEngineController.deactivateAbilityBody(abilityId)
       case AbilityBodyActivateEvent(abilityId) =>
         PhysicsEngineController.activateAbilityBody(abilityId)
       case AbilitySpriteRendererCreateEvent(abilityId) =>

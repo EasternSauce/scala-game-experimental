@@ -3,13 +3,16 @@ package com.easternsauce.game.physics
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.physics.box2d.Body
 import com.easternsauce.model.GameState
+import com.easternsauce.model.GameState.getAbility
 import com.easternsauce.model.ids.{AbilityId, CreatureId}
 
-case class AbilityBody(creatureId: CreatureId, abilityId: AbilityId) {
+case class AbilityBody(abilityId: AbilityId) {
   var b2Body: Body = _
 
   private val sprite = new Sprite()
   var isActive = false
+
+  var creatureId: CreatureId = _
 
   def hitboxVertices()(implicit gameState: GameState): Array[Float] = {
     val ability = gameState.abilities(abilityId)
@@ -48,6 +51,8 @@ case class AbilityBody(creatureId: CreatureId, abilityId: AbilityId) {
       vertices = vertices
     )
 
+    creatureId = ability.creatureId
+
   }
 
   def update()(implicit gameState: GameState): Unit = {
@@ -82,8 +87,9 @@ case class AbilityBody(creatureId: CreatureId, abilityId: AbilityId) {
   }
 
   def destroy()(implicit gameState: GameState): Unit = {
-    println("destroying ability")
-    PhysicsEngineController.physicsWorlds(gameState.currentAreaId).b2world.destroyBody(b2Body)
+    implicit val aId: AbilityId = abilityId
+
+    PhysicsEngineController.physicsWorlds(getAbility.state.areaId).b2world.destroyBody(b2Body)
     b2Body = null
   }
 }

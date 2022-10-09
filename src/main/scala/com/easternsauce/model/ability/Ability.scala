@@ -4,9 +4,9 @@ import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import cats.kernel.Monoid
 import com.badlogic.gdx.math.Vector2
-import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDestroyEvent, ExternalEvent, PlaySoundEvent}
+import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDeactivateEvent, ExternalEvent, PlaySoundEvent}
 import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyAbility, modifyCreature}
-import com.easternsauce.model.ids.{AbilityId, CreatureId}
+import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
 import com.softwaremill.quicklens._
 
@@ -171,7 +171,7 @@ trait Ability {
               .modify(_.state.currentAttackPhase)
               .setTo((state.currentAttackPhase + 1) % getAbility.attackPhases.length)
           ),
-          List(AbilityBodyDestroyEvent(id))
+          List(AbilityBodyDeactivateEvent(id))
         )
       }
   }
@@ -225,14 +225,13 @@ trait Ability {
     }
 
   def forceStop(): GameStateTransition = {
-    println("force stoppingd")
     if (state.stage != AbilityStage.InactiveStage)
       State { implicit gameState =>
         (
           gameState.pipe(
             implicit gameState => modifyAbility(_.modify(_.state.stage).setTo(AbilityStage.InactiveStage))
           ),
-          List(AbilityBodyDestroyEvent(id))
+          List(AbilityBodyDeactivateEvent(id))
         )
       }
     else Monoid[GameStateTransition].empty
@@ -243,10 +242,10 @@ trait Ability {
 }
 
 object Ability {
-  def abilityByName(creatureId: CreatureId, name: String): Ability =
+  def abilityByName(creatureId: CreatureId, areaId: AreaId, name: String): Ability =
     name match {
-      case "slash"        => SlashAbility(AbilityId.derive(creatureId, name), creatureId)
-      case "triple_slash" => TripleSlashAbility(AbilityId.derive(creatureId, name), creatureId)
+      case "slash"        => SlashAbility(name, creatureId, areaId)
+      case "triple_slash" => TripleSlashAbility(name, creatureId, areaId)
 
     }
 

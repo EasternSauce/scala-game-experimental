@@ -3,7 +3,7 @@ package com.easternsauce.model.creature
 import cats.Monoid
 import cats.data.State
 import cats.implicits.{catsSyntaxSemigroup, toFoldableOps}
-import com.easternsauce.game.{CreatureBodySetSensorEvent, ExternalEvent, PlaySoundWithRandomPitchEvent}
+import com.easternsauce.game._
 import com.easternsauce.model.GameState.{GameStateTransition, gameStateMonoid, getAbilitiesOfCreature, getAbility, getCreature, modifyCreature}
 import com.easternsauce.model.WorldDirection.WorldDirection
 import com.easternsauce.model.ability.Ability
@@ -95,7 +95,8 @@ trait Creature {
       implicit gameState => (modifyCreature(_.modify(_.state.stamina).setTo(0f)), List(CreatureBodySetSensorEvent(id)))
     ) |+| getAbilitiesOfCreature.values.toList.foldMap(_.forceStop())
 
-  def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
+  def update(delta: Float)(implicit gameState: GameState): GameStateTransition = {
+//    println("pos " + state.pos)
     updateTimers(delta) |+|
       updateStamina(delta) |+|
       (if (isControlledAutomatically) updateAutomaticControls()
@@ -111,6 +112,7 @@ trait Creature {
             List()
           )
       )
+  }
 
   def activateEffect(effect: String, time: Float): GameStateTransition =
     if (state.effects.contains(effect))
@@ -153,7 +155,7 @@ trait Creature {
     Monoid[GameStateTransition].empty
 
   def attack(dir: Vec2)(implicit gameState: GameState): GameStateTransition = {
-    implicit val abilityId: AbilityId = AbilityId.derive(id, defaultAbilityName)
+    implicit val abilityId: AbilityId = AbilityId.derive(id, state.areaId, defaultAbilityName)
     if (getCreature.abilityNames.contains(defaultAbilityName))
       getAbility.perform(dir)
     else Monoid[GameStateTransition].empty
@@ -275,22 +277,34 @@ trait Creature {
     }
   }
 
-  def init()(implicit gameState: GameState): GameStateTransition =
+  def init()(implicit gameState: GameState): GameStateTransition = {
+    val areaId = state.areaId
+    initAbilities(areaId)
+  }
+
+  private def initAbilities(areaId: AreaId): GameStateTransition = {
     State { implicit gameState =>
       (
-        // init abilities
         abilityNames.foldLeft(gameState) {
           case (gameState, abilityName) =>
-            val ability = Ability.abilityByName(id, abilityName)
+            val ability = Ability.abilityByName(id, areaId, abilityName)
             gameState.modify(_.abilities).using(_.updated(ability.id, ability))
-        },
-        List()
+        }, {
+
+          abilityNames.flatMap(abilityName => {
+            val abilityId = AbilityId.derive(id, areaId, abilityName)
+            List(
+              AbilityBodyCreateEvent(AbilityId.derive(id, areaId, abilityName)),
+              AbilitySpriteRendererCreateEvent(abilityId)
+            )
+          })
+
+        }
       )
     }
+  }
 
   def changeArea(oldAreaId: Option[AreaId], newAreaId: AreaId)(implicit gameState: GameState): GameStateTransition = {
-    println("change area, current = " + gameState.currentAreaId)
-    println("trying to change area to " + newAreaId)
 
     getAbilitiesOfCreature.values.toList.foldMap(_.forceStop()) |+|
       State[GameState, List[ExternalEvent]] { implicit gameState =>
@@ -312,12 +326,11 @@ trait Creature {
           },
           List()
         )
-      }
+      } |+| initAbilities(newAreaId)
 
   }
 
   def setPosition(newPosX: Float, newPosY: Float): GameStateTransition = {
-    println("setting pos to " + newPosX + " " + newPosY)
     State[GameState, List[ExternalEvent]] { implicit gameState =>
       (
         modifyCreature {
