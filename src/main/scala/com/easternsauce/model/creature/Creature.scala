@@ -293,10 +293,7 @@ trait Creature {
 
           abilityNames.flatMap(abilityName => {
             val abilityId = AbilityId.derive(id, areaId, abilityName)
-            List(
-              AbilityBodyCreateEvent(AbilityId.derive(id, areaId, abilityName)),
-              AbilitySpriteRendererCreateEvent(abilityId)
-            )
+            List(AbilityBodyCreateEvent(abilityId), AbilitySpriteRendererCreateEvent(abilityId))
           })
 
         }

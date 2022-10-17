@@ -31,8 +31,7 @@ object SlashAnimationData extends AbilityAnimationData {
   val activeFrameCount: Int = 6
   val channelFrameDuration: Float = 0.05f
   val activeFrameDuration: Float = 0.05f
-
-  override val scale: Float = 1.4f
+  val scale: Float = 1.4f
 }
 
 object BackslashAnimationData extends AbilityAnimationData {
@@ -46,8 +45,7 @@ object BackslashAnimationData extends AbilityAnimationData {
   val activeFrameCount: Int = 6
   val channelFrameDuration: Float = 0.05f
   val activeFrameDuration: Float = 0.05f
-
-  override val scale: Float = 1.4f
+  val scale: Float = 1.4f
 }
 
 object SlamAnimationData extends AbilityAnimationData {
@@ -61,6 +59,5 @@ object SlamAnimationData extends AbilityAnimationData {
   val activeFrameCount: Int = 6
   val channelFrameDuration: Float = 0.05f
   val activeFrameDuration: Float = 0.05f
-
-  override val scale: Float = 1.4f
+  val scale: Float = 1.4f
 }

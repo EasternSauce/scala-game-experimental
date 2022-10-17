@@ -29,7 +29,7 @@ trait Ability {
 
   val attackRange: Float = 1.8f
 
-  val currentAttackPhaseResetTimeout: Float = 1.3f
+  val currentAttackPhaseResetTimeout: Float = 1.5f
 
   implicit def id: AbilityId = state.id
   implicit def creatureId: CreatureId = state.creatureId

@@ -4,22 +4,17 @@ import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import cats.kernel.Monoid
 import com.easternsauce.game.ExternalEvent
+import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.{GameStateTransition, modifyProjectile}
-import com.easternsauce.model.ability.ProjectileStage.ProjectileStage
 import com.easternsauce.model.ids.ProjectileId
-import com.easternsauce.model.{GameState, SimpleTimer}
 import com.softwaremill.quicklens.ModifyPimp
 
 import scala.util.chaining.scalaUtilChainingOps
 
 trait Projectile {
-  val id: ProjectileId
-  val timer: SimpleTimer
-  val stage: ProjectileStage
-  val channelTime: Float
-  val activeTime: Float
+  val state: ProjectileState
 
-  implicit val _id: ProjectileId = id
+  implicit val _id: ProjectileId = state.id
 
   def onChannelStart()(implicit gameState: GameState): GameStateTransition
   def onChannelUpdate()(implicit gameState: GameState): GameStateTransition
@@ -28,23 +23,23 @@ trait Projectile {
 
   private def updateTimers(delta: Float): GameStateTransition =
     State { implicit gameState =>
-      (modifyProjectile(_.modify(_.timer).using(_.update(delta))), List())
+      (modifyProjectile(_.modify(_.state.timer).using(_.update(delta))), List())
     }
 
   def runStageLogic()(implicit gameState: GameState): GameStateTransition =
-    stage match {
+    state.stage match {
       case ProjectileStage.Channel =>
         onChannelUpdate() |+|
-          (if (timer.time > channelTime)
+          (if (state.timer.time > state.channelTime)
              State[GameState, List[ExternalEvent]] { implicit gameState =>
                (
                  gameState
                    .pipe(
                      implicit gameState =>
                        modifyProjectile(
-                         _.modify(_.stage)
+                         _.modify(_.state.stage)
                            .setTo(ProjectileStage.Active)
-                           .modify(_.timer)
+                           .modify(_.state.timer)
                            .using(_.restart())
                        )
                    ),
@@ -54,10 +49,10 @@ trait Projectile {
            else Monoid[GameStateTransition].empty)
       case ProjectileStage.Active =>
         onActiveUpdate() |+|
-          (if (timer.time > activeTime) State[GameState, List[ExternalEvent]] { implicit gameState =>
+          (if (state.timer.time > state.activeTime) State[GameState, List[ExternalEvent]] { implicit gameState =>
              (
                modifyProjectile(
-                 _.modify(_.timer)
+                 _.modify(_.state.timer)
                    .using(_.restart())
                ),
                List()
@@ -70,5 +65,5 @@ trait Projectile {
     runStageLogic() |+|
       updateTimers(delta)
 
-  def copy(id: ProjectileId = id, timer: SimpleTimer = timer, stage: ProjectileStage = stage): Projectile
+  def copy(state: ProjectileState = state): Projectile
 }
