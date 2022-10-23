@@ -1,9 +1,9 @@
 package com.easternsauce.model.ability
 import cats.data.State
 import cats.kernel.Monoid
-import com.easternsauce.game.ExternalEvent
+import com.easternsauce.game.{ExternalEvent, ProjectileSpawnEvent}
 import com.easternsauce.model.GameState
-import com.easternsauce.model.GameState.GameStateTransition
+import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature}
 import com.easternsauce.model.ids.{AreaId, CreatureId, ProjectileId}
 import com.softwaremill.quicklens.ModifyPimp
 
@@ -14,22 +14,31 @@ case class BowShotAbility(state: AbilityState) extends Ability {
   override val defaultChannelTime: Float = 1f
   override val defaultActiveTime: Float = 1f
 
-  override def onActiveStart()(implicit gameState: GameState): GameStateTransition =
-    State[GameState, List[ExternalEvent]] { gameState =>
+  override def onActiveStart()(implicit gameState: GameState): GameStateTransition = {
+
+    val projectileCounter = state.projectileCounter
+
+    val projectileId = ProjectileId.derive(this, projectileCounter)
+
+    State[GameState, List[ExternalEvent]] { implicit gameState =>
       (
         {
-          val projectileCounter = state.projectileCounter
-
-          val projectileId = ProjectileId.derive(this, projectileCounter)
+          implicit val creatureId: CreatureId = getAbility.creatureId
 
           gameState
             .modify(_.projectiles)
-            .using(_.updated(projectileId, ArrowProjectile(ProjectileState(this, projectileCounter))))
+            .using(
+              _.updated(
+                projectileId,
+                ArrowProjectile(ability = this, pos = getCreature.state.pos, counter = projectileCounter)
+              )
+            )
 
         },
-        List()
+        List(ProjectileSpawnEvent(projectileId))
       )
     }
+  }
 
   override def onActiveUpdate()(implicit gameState: GameState): GameStateTransition = Monoid[GameStateTransition].empty
 

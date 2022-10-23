@@ -4,7 +4,7 @@ import cats.data.State
 import cats.implicits.catsSyntaxSemigroup
 import cats.kernel.Monoid
 import com.badlogic.gdx.math.Vector2
-import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDeactivateEvent, ExternalEvent, PlaySoundEvent}
+import com.easternsauce.game.{AbilityBodyActivateEvent, AbilityBodyDeactivateEvent, ExternalEvent, SoundPlayEvent}
 import com.easternsauce.model.GameState.{GameStateTransition, getAbility, getCreature, modifyAbility, modifyCreature}
 import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
 import com.easternsauce.model.{GameState, Vec2}
@@ -203,7 +203,7 @@ trait Ability {
           ),
           List(AbilityBodyActivateEvent(id)) ++
             (if (currentAttackActiveSoundId.nonEmpty && currentAttackActiveSoundPitch.nonEmpty)
-               List(PlaySoundEvent(currentAttackActiveSoundId.get, currentAttackActiveSoundPitch.get))
+               List(SoundPlayEvent(currentAttackActiveSoundId.get, currentAttackActiveSoundPitch.get))
              else List())
         )
       }

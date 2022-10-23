@@ -257,12 +257,14 @@ object PlayScreen extends Screen {
         RendererController.addRenderer(abilityId)
       case CreatureBodySetSensorEvent(creatureId) =>
         PhysicsEngineController.setCreatureBodyToSensor(creatureId)
-      case PlaySoundEvent(soundId, pitch) =>
+      case SoundPlayEvent(soundId, pitch) =>
         Assets.sound(soundId).play(0.1f, pitch, 1.0f)
-      case PlaySoundWithRandomPitchEvent(soundId) =>
+      case SoundPlayWithRandomPitchEvent(soundId) =>
         Assets.sound(soundId).play(0.1f, Random.between(0.8f, 1.2f), 1f)
       case AreaChangeEvent(creatureId, fromAreaId, toAreaId, posX, posY) =>
         PhysicsEngineController.changeCreatureArea(creatureId, fromAreaId, toAreaId)
+      case ProjectileSpawnEvent(projectileId) =>
+        PhysicsEngineController.addProjectileBody(projectileId)
     }
 
   def update(delta: Float): Unit = {

@@ -4,13 +4,14 @@ import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.physics.box2d._
 import com.easternsauce.model.GameState
 import com.easternsauce.model.GameState.{getAbility, getCreature}
-import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId}
+import com.easternsauce.model.ids.{AbilityId, AreaId, CreatureId, ProjectileId}
 
 import scala.collection.mutable.ListBuffer
 
 case object PhysicsEngineController {
   var creatureBodies: Map[CreatureId, CreatureBody] = _
   var abilityBodies: Map[AbilityId, AbilityBody] = _
+  var projectileBodies: Map[ProjectileId, ProjectileBody] = _
   var physicsWorlds: Map[AreaId, PhysicsWorld] = _
 
   var physicsEventQueue: ListBuffer[PhysicsEvent] = _
@@ -36,12 +37,11 @@ case object PhysicsEngineController {
     }
 
     abilityBodies = Map()
-
+    projectileBodies = Map()
   }
 
   def addAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
     if (!abilityBodies.contains(abilityId)) {
-      val creatureId = getAbility(abilityId, gameState).creatureId
       val abilityBody = AbilityBody(abilityId)
 
       abilityBodies = abilityBodies.updated(abilityId, abilityBody)
@@ -61,6 +61,14 @@ case object PhysicsEngineController {
     if (abilityBodies(abilityId).isActive) {
       abilityBodies(abilityId).destroy()
       abilityBodies(abilityId).isActive = false
+    }
+  }
+
+  def addProjectileBody(projectileId: ProjectileId)(implicit gameState: GameState): Unit = {
+    if (!projectileBodies.contains(projectileId)) {
+      val projectileBody = ProjectileBody(projectileId)
+
+      projectileBodies = projectileBodies.updated(projectileId, projectileBody)
     }
   }
 

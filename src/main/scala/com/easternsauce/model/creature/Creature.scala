@@ -186,7 +186,7 @@ trait Creature {
             else gameState
         ),
         if (getCreature.onGettingHitSoundId.nonEmpty)
-          List(PlaySoundWithRandomPitchEvent(getCreature.onGettingHitSoundId.get))
+          List(SoundPlayWithRandomPitchEvent(getCreature.onGettingHitSoundId.get))
         else List()
       )
     }

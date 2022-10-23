@@ -89,6 +89,25 @@ object B2BodyFactory {
       isSensor = true
     )
 
+  def createProjectileB2Body(
+    world: World,
+    projectileBody: ProjectileBody,
+    posX: Float,
+    posY: Float,
+    width: Float
+  ): Body = {
+
+    createB2body(
+      world = world,
+      posX = posX,
+      posY = posY,
+      bodyType = BodyType.KinematicBody,
+      userData = projectileBody,
+      shape = Circle(width / 2),
+      isSensor = true
+    )
+  }
+
   def createAreaGateEntryPointB2body(
     world: World,
     areaGateBody: AreaGateBody,
