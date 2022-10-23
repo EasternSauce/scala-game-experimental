@@ -18,10 +18,11 @@ trait Ability {
 
   val attackPhases: List[AttackPhase]
 
-  def currentAttackPhase: AttackPhase = attackPhases(state.currentAttackPhase)
-  def currentAnimation: AbilityAnimationData = currentAttackPhase.animation
-  def currentAttackActiveSoundId: Option[String] = currentAttackPhase.attackActiveSoundId
-  def currentAttackActiveSoundPitch: Option[Float] = currentAttackPhase.attackActiveSoundPitch
+  def currentAttackPhase: Option[AttackPhase] =
+    if (attackPhases.nonEmpty) Some(attackPhases(state.currentAttackPhase)) else None
+  def currentAnimation: Option[AbilityAnimationData] = currentAttackPhase.map(_.animation)
+  def currentAttackActiveSoundId: Option[String] = currentAttackPhase.flatMap(_.attackActiveSoundId)
+  def currentAttackActiveSoundPitch: Option[Float] = currentAttackPhase.flatMap(_.attackActiveSoundPitch)
 
   val initSpeed: Float = 0f
   val activeAnimationLooping: Boolean = false
@@ -31,6 +32,10 @@ trait Ability {
 
   val currentAttackPhaseResetTimeout: Float = 1.5f
 
+  val defaultChannelTime: Float = 0f
+  val defaultActiveTime: Float = 0f
+  val defaultKnockbackVelocity: Float = 0f
+
   implicit def id: AbilityId = state.id
   implicit def creatureId: CreatureId = state.creatureId
 
@@ -39,7 +44,11 @@ trait Ability {
 
   def onCooldown: Boolean = false // TODO
 
-  def knockbackVelocity: Float = currentAttackPhase.knockbackVelocity
+  def knockbackVelocity: Float =
+    if (currentAttackPhase.nonEmpty) currentAttackPhase.get.knockbackVelocity else defaultKnockbackVelocity
+
+  def channelTime: Float = if (attackPhases.nonEmpty) currentAnimation.get.channelTime else defaultChannelTime
+  def activeTime: Float = if (attackPhases.nonEmpty) currentAnimation.get.activeTime else defaultActiveTime
 
   def perform(dir: Vec2)(implicit gameState: GameState): GameStateTransition =
     if (ableToPerform)
@@ -97,39 +106,45 @@ trait Ability {
     if (state.dirVector.isEmpty)
       throw new RuntimeException("trying to update hitbox without setting dir vector!")
 
-    val dirVector = state.dirVector.get match {
-      case dirVector if dirVector.length <= 0 => Vec2(1, 0).normal
-      case dirVector                          => dirVector
-    }
+    if (currentAnimation.nonEmpty) {
 
-    val creature = getCreature
+      val dirVector = state.dirVector.get match {
+        case dirVector if dirVector.length <= 0 => Vec2(1, 0).normal
+        case dirVector                          => dirVector
+      }
 
-    val theta = new Vector2(dirVector.x, dirVector.y).angleDeg()
+      val creature = getCreature
 
-    val attackShiftX = dirVector.normal.x * attackRange
-    val attackShiftY = dirVector.normal.y * attackRange
+      val theta = new Vector2(dirVector.x, dirVector.y).angleDeg()
 
-    val attackRectX = attackShiftX + creature.state.pos.x
-    val attackRectY = attackShiftY + creature.state.pos.y
+      val attackShiftX = dirVector.normal.x * attackRange
+      val attackShiftY = dirVector.normal.y * attackRange
 
-    State { implicit gameState =>
-      (
-        modifyAbility(
-          _.modify(_.state.hitbox).setTo(
-            Some(
-              Hitbox(
-                pos = Vec2(attackRectX, attackRectY),
-                width = currentAnimation.width,
-                height = currentAnimation.height,
-                rotation = theta,
-                scale = currentAnimation.scale
+      val attackRectX = attackShiftX + creature.state.pos.x
+      val attackRectY = attackShiftY + creature.state.pos.y
+
+      State { implicit gameState =>
+        (
+          modifyAbility(
+            _.modify(_.state.hitbox).setTo(
+              Some(
+                Hitbox(
+                  pos = Vec2(attackRectX, attackRectY),
+                  width = currentAnimation.get.width,
+                  height = currentAnimation.get.height,
+                  rotation = theta,
+                  scale = currentAnimation.get.scale
+                )
               )
             )
-          )
-        ),
-        List()
-      )
+          ),
+          List()
+        )
+      }
+    } else {
+      Monoid[GameStateTransition].empty
     }
+
   }
 
   def update(delta: Float)(implicit gameState: GameState): GameStateTransition =
@@ -140,14 +155,14 @@ trait Ability {
       case AbilityStage.ChannelStage =>
         onChannelUpdate() |+|
           (
-            if (state.stageTimer.time > getAbility.currentAnimation.channelTime)
+            if (state.stageTimer.time > getAbility.channelTime)
               updateStateToActive()
             else
               Monoid[GameStateTransition].empty
           )
       case AbilityStage.ActiveStage =>
         onActiveUpdate() |+| (
-          if (state.stageTimer.time > getAbility.currentAnimation.activeTime)
+          if (state.stageTimer.time > getAbility.activeTime)
             updateStateToInactive()
           else
             Monoid[GameStateTransition].empty
@@ -169,7 +184,7 @@ trait Ability {
               .modify(_.state.stageTimer)
               .using(_.restart())
               .modify(_.state.currentAttackPhase)
-              .setTo((state.currentAttackPhase + 1) % getAbility.attackPhases.length)
+              .setToIf(attackPhases.nonEmpty)((state.currentAttackPhase + 1) % getAbility.attackPhases.length)
           ),
           List(AbilityBodyDeactivateEvent(id))
         )
@@ -246,6 +261,7 @@ object Ability {
     name match {
       case "slash"        => SlashAbility(name, creatureId, areaId)
       case "triple_slash" => TripleSlashAbility(name, creatureId, areaId)
+      case "bow_shot"     => BowShotAbility(name, creatureId, areaId)
 
     }
 

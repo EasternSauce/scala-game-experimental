@@ -49,8 +49,12 @@ case object PhysicsEngineController {
   }
 
   def activateAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {
-    abilityBodies(abilityId).init()
-    abilityBodies(abilityId).isActive = true
+    val ability = getAbility(abilityId, gameState)
+
+    if (ability.currentAttackPhase.nonEmpty) {
+      abilityBodies(abilityId).init()
+      abilityBodies(abilityId).isActive = true
+    }
   }
 
   def deactivateAbilityBody(abilityId: AbilityId)(implicit gameState: GameState): Unit = {

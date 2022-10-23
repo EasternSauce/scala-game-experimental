@@ -4,7 +4,6 @@ import com.easternsauce.model.Vec2
 import com.softwaremill.quicklens._
 
 import scala.annotation.tailrec
-import scala.collection.immutable.Map
 import scala.util.chaining.scalaUtilChainingOps
 
 object Astar {

@@ -75,26 +75,31 @@ case class AbilityRenderer(abilityId: AbilityId) {
           "cannot update sprite without filling in hitbox information! dir vector for ability probably not set"
         )
 
-    if (getAbility.state.stage == AbilityStage.ChannelStage) {
+    if (getAbility.attackPhases.nonEmpty) {
 
-      val texture =
-        channelAnimations(getAbility.state.currentAttackPhase)
-          .getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
-      updateSprite(texture)
+      if (getAbility.state.stage == AbilityStage.ChannelStage) {
 
-    }
+        val texture =
+          channelAnimations(getAbility.state.currentAttackPhase)
+            .getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
+        updateSprite(texture)
 
-    if (getAbility.state.stage == AbilityStage.ActiveStage) {
+      }
 
-      val texture =
-        activeAnimations(getAbility.state.currentAttackPhase)
-          .getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
-      updateSprite(texture)
+      if (getAbility.state.stage == AbilityStage.ActiveStage) {
+
+        val texture =
+          activeAnimations(getAbility.state.currentAttackPhase)
+            .getKeyFrame(getAbility.state.stageTimer.time, getAbility.channelAnimationLooping)
+        updateSprite(texture)
+      }
     }
 
   }
 
   def render(drawingLayer: DrawingLayer)(implicit gameState: GameState): Unit =
-    if (getAbility.state.stage == AbilityStage.ChannelStage || getAbility.state.stage == AbilityStage.ActiveStage)
+    if (
+      getAbility.currentAnimation.nonEmpty && (getAbility.state.stage == AbilityStage.ChannelStage || getAbility.state.stage == AbilityStage.ActiveStage)
+    )
       sprite.draw(drawingLayer.spriteBatch)
 }

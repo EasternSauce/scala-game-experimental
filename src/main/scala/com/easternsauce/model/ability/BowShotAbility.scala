@@ -7,9 +7,12 @@ import com.easternsauce.model.GameState.GameStateTransition
 import com.easternsauce.model.ids.{AreaId, CreatureId, ProjectileId}
 import com.softwaremill.quicklens.ModifyPimp
 
-case class BowAbility(state: AbilityState) extends Ability {
+case class BowShotAbility(state: AbilityState) extends Ability {
   override val cooldownTime: Float = 1f
   override val attackPhases: List[AttackPhase] = List()
+
+  override val defaultChannelTime: Float = 1f
+  override val defaultActiveTime: Float = 1f
 
   override def onActiveStart()(implicit gameState: GameState): GameStateTransition =
     State[GameState, List[ExternalEvent]] { gameState =>
@@ -36,10 +39,10 @@ case class BowAbility(state: AbilityState) extends Ability {
 
   override def onInactiveStart()(implicit gameState: GameState): GameStateTransition = Monoid[GameStateTransition].empty
 
-  override def copy(state: AbilityState): Ability = BowAbility(state)
+  override def copy(state: AbilityState): Ability = BowShotAbility(state)
 }
 
-object BowAbility {
+object BowShotAbility {
   def apply(name: String, creatureId: CreatureId, areaId: AreaId): Ability =
-    new BowAbility(AbilityState(name = name, creatureId = creatureId, areaId = areaId))
+    new BowShotAbility(AbilityState(name = name, creatureId = creatureId, areaId = areaId))
 }

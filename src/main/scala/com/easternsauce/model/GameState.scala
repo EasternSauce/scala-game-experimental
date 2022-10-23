@@ -104,7 +104,7 @@ object GameState {
         Vec2(mouseX - centerX, (Gdx.graphics.getHeight - mouseY) - centerY).normal
 
       implicit val abilityId: AbilityId =
-        AbilityId.derive(gameState.currentPlayerId, gameState.currentAreaId, "triple_slash")
+        AbilityId.derive(gameState.currentPlayerId, gameState.currentAreaId, "bow_shot")
 
       runMovingLogic(wasMoving, isMoving, movingDir) |+|
         (if (mouseClicked)
